@@ -1,0 +1,12 @@
+{
+  "extends": "@gustav/config-typescript",
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "lib": ["ESNext", "DOM"]
+  },
+  "include": ["src/**/*.ts"]
+}

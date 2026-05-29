@@ -1,0 +1,19 @@
+{
+  "name": "@gustav/sdk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/**/*.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "@gustav/config-typescript": "workspace:*",
+    "@gustav/config-eslint": "workspace:*",
+    "@gustav/types": "workspace:*"
+  }
+}
