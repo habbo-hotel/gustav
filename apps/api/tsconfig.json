@@ -1,0 +1,9 @@
+{
+  "extends": "@gustav/config-typescript",
+  "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "outDir": "./dist",
+    "baseUrl": "./"
+  }
+}
