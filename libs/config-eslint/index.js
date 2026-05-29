@@ -1,0 +1,8 @@
+module.exports = {
+  extends: [
+    './node_modules/gts/',
+  ],
+  rules: {
+    '@typescript-eslint/no-explicit-any': 'warn',
+  }
+};

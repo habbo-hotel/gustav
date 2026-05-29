@@ -1,0 +1,22 @@
+{
+  "name": "gustav",
+  "private": true,
+  "description": "Full-stack TypeScript monorepo",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "lint": "pnpm -r lint",
+    "build": "pnpm -r build",
+    "dev": "pnpm -r dev",
+    "app:api": "pnpm --filter @gustav/api",
+    "app:web": "pnpm --filter @gustav/web",
+    "lib:types": "pnpm --filter @gustav/types",
+    "lib:sdk": "pnpm --filter @gustav/sdk"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "typescript": "^5.4.5"
+  }
+}

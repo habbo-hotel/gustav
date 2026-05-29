@@ -1,0 +1,11 @@
+{
+  "name": "@gustav/config-eslint",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "gts": "^5.3.1",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5"
+  }
+}
