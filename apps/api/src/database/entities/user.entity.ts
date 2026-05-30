@@ -1,9 +1,9 @@
 import {Entity, Column} from 'typeorm';
 import {BaseEntity} from './base.entity';
-import {User as UserInterface} from '@gustav/types';
+import {UserWire} from '@gustav/types';
 
 @Entity('users')
-export class User extends BaseEntity implements UserInterface {
+export class User extends BaseEntity implements UserWire {
   @Column({unique: true})
   username!: string;
 

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { AuthSDK } from '@gustav/sdk';
-import { User } from '@gustav/types';
+import { UserWire } from '@gustav/types';
 
 const authSdk = new AuthSDK('http://localhost:3000/api');
 
 function App() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserWire | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');

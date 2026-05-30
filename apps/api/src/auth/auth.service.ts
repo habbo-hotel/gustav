@@ -1,5 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {UserService} from '../user/user.service';
+import {RegisterInput, UserWire} from '@gustav/types';
 
 @Injectable()
 export class AuthService {
@@ -27,10 +28,10 @@ export class AuthService {
     return user;
   }
 
-  async register(userData: any) {
+  async register(userData: RegisterInput): Promise<UserWire> {
     // Note: Hash password in a real production application
-    const user = await this.userService.create(userData);
+    const user = await this.userService.create(userData as any);
     const {password, ...result} = user;
-    return result;
+    return result as UserWire;
   }
 }

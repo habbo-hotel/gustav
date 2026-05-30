@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import {AuthGuard} from '@nestjs/passport';
 import {AuthService} from './auth.service';
+import {UserWire, RegisterInput} from '@gustav/types';
 
 @Controller('auth')
 export class AuthController {
@@ -17,12 +18,12 @@ export class AuthController {
   @UseGuards(AuthGuard('local'))
   @Post('login')
   @HttpCode(200)
-  async login(@Request() req: any) {
+  async login(@Request() req: any): Promise<UserWire> {
     return req.user;
   }
 
   @Post('register')
-  async register(@Body() userData: any) {
+  async register(@Body() userData: RegisterInput): Promise<UserWire> {
     return this.authService.register(userData);
   }
 
@@ -34,12 +35,12 @@ export class AuthController {
 
   @UseGuards(AuthGuard('discord'))
   @Get('discord/callback')
-  async discordAuthCallback(@Request() req: any) {
+  async discordAuthCallback(@Request() req: any): Promise<UserWire> {
     return req.user;
   }
 
   @Get('profile')
-  getProfile(@Request() req: any) {
+  getProfile(@Request() req: any): UserWire {
     return req.user;
   }
 
