@@ -1,3 +1,4 @@
+import {Request} from 'express';
 import {AuthGuard} from '@nestjs/passport';
 import {UserWire, RegisterInput} from '@gustav/types';
 import {
@@ -12,14 +13,7 @@ import {
 
 import {AuthService} from './auth.service';
 
-interface RequestWithUser extends NestRequest {
-  user: UserWire;
-  logIn: (user: UserWire, callback: (err: Error | null) => void) => void;
-  session: {
-    save: (callback: (err: Error | null) => void) => void;
-    destroy: () => void;
-  };
-}
+type RequestWithUser = any;
 
 @Controller('auth')
 export class AuthController {
