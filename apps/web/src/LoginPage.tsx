@@ -1,6 +1,7 @@
 import {useState, useEffect} from 'react';
-import {useAuth} from './AuthContext';
 import {useNavigate, Link} from 'react-router-dom';
+
+import {useAuth} from './AuthContext';
 
 interface LoginPageProps {
   mode: 'login' | 'register';
@@ -24,7 +25,7 @@ export function LoginPage({mode}: LoginPageProps) {
     try {
       await login(email, password);
       navigate('/me');
-    } catch (err: any) {
+    } catch {
       // Error is handled by context
     }
   };
@@ -35,7 +36,7 @@ export function LoginPage({mode}: LoginPageProps) {
       await register({email, password, username});
       setError('Registration successful! Please login.');
       navigate('/login');
-    } catch (err: any) {
+    } catch {
       // Error is handled by context
     }
   };

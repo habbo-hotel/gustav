@@ -1,3 +1,5 @@
+import {AuthSDK} from '@gustav/sdk';
+import {UserWire, RegisterInput} from '@gustav/types';
 import React, {
   createContext,
   useContext,
@@ -5,8 +7,6 @@ import React, {
   useEffect,
   ReactNode,
 } from 'react';
-import {AuthSDK} from '@gustav/sdk';
-import {UserWire, RegisterInput} from '@gustav/types';
 
 const API_URL = 'http://localhost:3000/api';
 const authSdk = new AuthSDK(API_URL);
@@ -30,22 +30,13 @@ export const AuthProvider: React.FC<{children: ReactNode}> = ({children}) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchProfile = async () => {
-    const start = Date.now();
-    console.log(`[Auth] Fetching profile at ${new Date().toISOString()}...`);
     try {
       const profile = await authSdk.me();
-      console.log(
-        `[Auth] Profile fetched in ${Date.now() - start}ms:`,
-        profile
-      );
       if (profile && profile.id) {
         setUser(profile);
       }
-    } catch (err: any) {
-      console.log(
-        `[Auth] Not authenticated or error in ${Date.now() - start}ms:`,
-        err.message
-      );
+    } catch {
+      // Not authenticated
     } finally {
       setIsLoading(false);
     }
@@ -60,8 +51,8 @@ export const AuthProvider: React.FC<{children: ReactNode}> = ({children}) => {
     try {
       const profile = await authSdk.loginWithPassword(email, pass);
       setUser(profile);
-    } catch (err: any) {
-      const msg = err.message || 'Login failed';
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Login failed';
       setError(msg);
       throw new Error(msg);
     }
@@ -71,8 +62,8 @@ export const AuthProvider: React.FC<{children: ReactNode}> = ({children}) => {
     setError(null);
     try {
       await authSdk.register(data);
-    } catch (err: any) {
-      const msg = err.message || 'Registration failed';
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Registration failed';
       setError(msg);
       throw new Error(msg);
     }
