@@ -13,8 +13,8 @@ export abstract class BaseRepository<
     super(entity, dataSource.createEntityManager());
   }
 
-  async findById(id: any): Promise<T | null> {
-    return this.findOne({where: {id} as any});
+  async findById(id: string | number): Promise<T | null> {
+    return this.findOne({where: {id} as unknown as any});
   }
 
   async findAll(): Promise<T[]> {
@@ -26,12 +26,15 @@ export abstract class BaseRepository<
     return this.save(entity);
   }
 
-  async updateOne(id: any, data: DeepPartial<T>): Promise<T | null> {
-    await this.update(id, data as any);
+  async updateOne(
+    id: string | number,
+    data: DeepPartial<T>
+  ): Promise<T | null> {
+    await this.update(id, data as unknown as any);
     return this.findById(id);
   }
 
-  async deleteOne(id: any): Promise<void> {
+  async deleteOne(id: string | number): Promise<void> {
     await this.delete(id);
   }
 }

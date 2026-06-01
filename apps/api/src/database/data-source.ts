@@ -1,8 +1,9 @@
 import 'reflect-metadata';
-import {DataSource} from 'typeorm';
-import {User} from './entities/user.entity';
-import * as dotenv from 'dotenv';
 import {join} from 'path';
+import * as dotenv from 'dotenv';
+import {DataSource} from 'typeorm';
+
+import {User} from './entities/user.entity';
 
 // Load environment variables from apps/api/.env
 dotenv.config({path: join(__dirname, '../../.env')});

@@ -1,8 +1,9 @@
-import {NestFactory} from '@nestjs/core';
-import {AppModule} from './app.module';
-import session from 'express-session';
 import passport from 'passport';
+import session from 'express-session';
+import {NestFactory} from '@nestjs/core';
 import cookieParser from 'cookie-parser';
+
+import {AppModule} from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -18,11 +19,6 @@ async function bootstrap() {
   });
 
   app.use((req: any, res: any, next: any) => {
-    if (req.url.startsWith('/api/auth')) {
-      console.log(
-        `[API] ${req.method} ${req.url} - Cookie: ${req.headers.cookie ? 'Present' : 'None'}`
-      );
-    }
     next();
   });
 
@@ -48,6 +44,5 @@ async function bootstrap() {
   const port = 3000;
   // Listen on 0.0.0.0 to accept everything
   await app.listen(port, '0.0.0.0');
-  console.log(`Backend is running on http://localhost:${port}`);
 }
 bootstrap();

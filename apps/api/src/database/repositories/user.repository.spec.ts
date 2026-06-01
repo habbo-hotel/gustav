@@ -1,6 +1,7 @@
-import {Test, TestingModule} from '@nestjs/testing';
-import {UserRepository} from './user.repository';
 import {DataSource} from 'typeorm';
+import {Test, TestingModule} from '@nestjs/testing';
+
+import {UserRepository} from './user.repository';
 
 describe('UserRepository', () => {
   let repository: UserRepository;

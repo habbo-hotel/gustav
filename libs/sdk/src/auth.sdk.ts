@@ -1,5 +1,6 @@
-import {BaseSDK} from './base.sdk';
 import {UserWire, RegisterInput} from '@gustav/types';
+
+import {BaseSDK} from './base.sdk';
 
 export class AuthSDK extends BaseSDK {
   async loginWithPassword(email: string, password: string): Promise<UserWire> {

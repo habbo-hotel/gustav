@@ -1,5 +1,6 @@
-import {PassportSerializer} from '@nestjs/passport';
 import {Injectable} from '@nestjs/common';
+import {PassportSerializer} from '@nestjs/passport';
+
 import {UserService} from '../user/user.service';
 import {User} from '../database/entities/user.entity';
 
@@ -10,7 +11,6 @@ export class SessionSerializer extends PassportSerializer {
   }
 
   serializeUser(user: User, done: (err: Error | null, user: number) => void) {
-    console.log('Serializing user:', user.id);
     done(null, user.id);
   }
 
@@ -18,10 +18,8 @@ export class SessionSerializer extends PassportSerializer {
     userId: number,
     done: (err: Error | null, payload: User | null) => void
   ) {
-    console.log('Deserializing user:', userId);
     try {
       const user = await this.userService.findOne(userId);
-      console.log('User found during deserialization:', !!user);
       done(null, user);
     } catch (err) {
       console.error('Error during deserialization:', err);

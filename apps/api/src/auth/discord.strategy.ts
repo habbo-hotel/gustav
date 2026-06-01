@@ -1,7 +1,9 @@
-import {PassportStrategy} from '@nestjs/passport';
 import {Injectable} from '@nestjs/common';
 import {Strategy} from 'passport-discord';
+import {PassportStrategy} from '@nestjs/passport';
+
 import {AuthService} from './auth.service';
+import {User} from '../database/entities/user.entity';
 
 @Injectable()
 export class DiscordStrategy extends PassportStrategy(Strategy) {
@@ -19,8 +21,12 @@ export class DiscordStrategy extends PassportStrategy(Strategy) {
   async validate(
     accessToken: string,
     refreshToken: string,
-    profile: any
-  ): Promise<any> {
+    profile: {
+      id: string;
+      username: string;
+      email: string;
+    }
+  ): Promise<User> {
     return this.authService.validateDiscordUser(profile);
   }
 }

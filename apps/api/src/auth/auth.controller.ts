@@ -1,15 +1,25 @@
+import {AuthGuard} from '@nestjs/passport';
+import {UserWire, RegisterInput} from '@gustav/types';
 import {
   Controller,
   Post,
   UseGuards,
-  Request,
+  Request as NestRequest,
   Get,
   Body,
   HttpCode,
 } from '@nestjs/common';
-import {AuthGuard} from '@nestjs/passport';
+
 import {AuthService} from './auth.service';
-import {UserWire, RegisterInput} from '@gustav/types';
+
+interface RequestWithUser extends NestRequest {
+  user: UserWire;
+  logIn: (user: UserWire, callback: (err: Error | null) => void) => void;
+  session: {
+    save: (callback: (err: Error | null) => void) => void;
+    destroy: () => void;
+  };
+}
 
 @Controller('auth')
 export class AuthController {
@@ -18,21 +28,18 @@ export class AuthController {
   @UseGuards(AuthGuard('local'))
   @Post('login')
   @HttpCode(200)
-  async login(@Request() req: any): Promise<UserWire> {
-    console.log('Login attempt for user:', req.user.id);
+  async login(@NestRequest() req: RequestWithUser): Promise<UserWire> {
     return new Promise((resolve, reject) => {
-      req.logIn(req.user, (err: any) => {
+      req.logIn(req.user, (err: Error | null) => {
         if (err) {
           console.error('Passport logIn error:', err);
           return reject(err);
         }
-        console.log('Passport logIn successful');
-        req.session.save((saveErr: any) => {
+        req.session.save((saveErr: Error | null) => {
           if (saveErr) {
             console.error('Session save error:', saveErr);
             return reject(saveErr);
           }
-          console.log('Session saved successfully');
           resolve(req.user);
         });
       });
@@ -52,18 +59,20 @@ export class AuthController {
 
   @UseGuards(AuthGuard('discord'))
   @Get('discord/callback')
-  async discordAuthCallback(@Request() req: any): Promise<UserWire> {
+  async discordAuthCallback(
+    @NestRequest() req: RequestWithUser
+  ): Promise<UserWire> {
     return req.user;
   }
 
   @Get('me')
-  me(@Request() req: any): UserWire {
+  me(@NestRequest() req: RequestWithUser): UserWire {
     return req.user;
   }
 
   @Post('logout')
   @HttpCode(200)
-  logout(@Request() req: any) {
+  logout(@NestRequest() req: RequestWithUser) {
     req.session.destroy();
     return {message: 'Logged out'};
   }
