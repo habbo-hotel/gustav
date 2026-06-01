@@ -45,10 +45,10 @@ describe('AuthController', () => {
     });
   });
 
-  describe('getProfile', () => {
+  describe('me', () => {
     it('should return the user profile', () => {
-      const result = controller.getProfile({user: mockUser});
-      expect(result).toEqual(mockUser);
+      const result = controller.me({user: mockUser});
+      expect(result).toBe(mockUser);
     });
   });
 });

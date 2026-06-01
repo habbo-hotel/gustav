@@ -1,1 +1,1 @@
-module.exports = { extends: ['@gustav/config-eslint'] };
+module.exports = { extends: [require.resolve('@gustav/config-eslint')] };

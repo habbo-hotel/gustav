@@ -7,11 +7,15 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "lint": "eslint src/**/*.ts"
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "pnpm exec eslint src/**/*.ts --fix --no-error-on-unmatched-pattern && pnpm exec prettier src/**/*.ts --write"
   },
   "devDependencies": {
-    "typescript": "^5.4.5",
+    "@gustav/config-eslint": "workspace:*",
     "@gustav/config-typescript": "workspace:*",
-    "@gustav/config-eslint": "workspace:*"
+    "eslint": "8.57.1",
+    "gts": "5.3.1",
+    "prettier": "^3.8.3",
+    "typescript": "^5.4.5"
   }
 }

@@ -3,7 +3,7 @@ import {UserService} from './user.service';
 import {IsSuperAdmin} from '../auth/is-super-admin.decorator';
 import {AdminStatsWire, UserWire} from '@gustav/types';
 
-@Controller('users')
+@Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -17,7 +17,7 @@ export class UserController {
     };
   }
 
-  @Get(':id')
+  @Get('find/:id')
   async findOne(@Param('id') id: string): Promise<UserWire> {
     return this.userService.findOne(+id) as any;
   }

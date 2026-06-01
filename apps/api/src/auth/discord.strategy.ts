@@ -19,7 +19,7 @@ export class DiscordStrategy extends PassportStrategy(Strategy) {
   async validate(
     accessToken: string,
     refreshToken: string,
-    profile: any,
+    profile: any
   ): Promise<any> {
     return this.authService.validateDiscordUser(profile);
   }

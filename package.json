@@ -8,6 +8,7 @@
   },
   "scripts": {
     "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r --if-present lint:fix && pnpm --filter @gustav/config-eslint exec eslint \"*.{js,ts}\" --fix --no-error-on-unmatched-pattern && pnpm --filter @gustav/config-eslint exec prettier \"*.{js,ts,json,md}\" --write",
     "build": "pnpm -r build",
     "dev": "pnpm -r dev",
     "app:api": "pnpm --filter @gustav/api",

@@ -18,7 +18,7 @@ export class AuthSDK extends BaseSDK {
     window.location.href = `${this.baseUrl}/auth/discord`;
   }
 
-  async getProfile(): Promise<UserWire> {
-    return this.get<UserWire>('/auth/profile');
+  async me(): Promise<UserWire> {
+    return this.get<UserWire>('/auth/me');
   }
 }

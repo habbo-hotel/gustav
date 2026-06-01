@@ -7,7 +7,7 @@ export class AuthService {
   constructor(private userService: UserService) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
-    const user = await this.userService.findByEmail(email);
+    const user = await this.userService.findByEmail(email, true);
     // Note: Use bcrypt in a real production application
     if (user && user.password === pass) {
       const {password, ...result} = user;

@@ -2,5 +2,14 @@
   "name": "@gustav/config-typescript",
   "version": "0.0.0",
   "private": true,
-  "main": "tsconfig.json"
+  "main": "tsconfig.json",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "pnpm exec eslint . --fix --no-error-on-unmatched-pattern && pnpm exec prettier . --write"
+  },
+  "devDependencies": {
+    "eslint": "8.57.1",
+    "gts": "5.3.1",
+    "prettier": "^3.8.3"
+  }
 }
