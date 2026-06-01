@@ -25,6 +25,7 @@ This document summarizes the architectural decisions, coding standards, and proj
   - ALL entities and repositories must reside in `./apps/api/src/database`.
   - Subdirectories: `database/entities/` and `database/repositories/`.
   - The `DatabaseModule` is the parent for all DB assets to avoid circular dependencies.
+  - **Naming:** All database table names must be prefixed with `gustav_` (e.g., `@Entity('gustav_users')`).
 - **Base Repository:** A reusable `BaseRepository<T>` provides standard CRUD (`findAll`, `findById`, `createOne`, `updateOne`, `deleteOne`) and simplifies dependency injection by only requiring the entity and `DataSource`.
 - **Authentication:**
   - **Method:** Cookie-based sessions using `express-session` and `cookie-parser`.
