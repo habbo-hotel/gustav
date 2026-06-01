@@ -20,3 +20,9 @@ export interface HealthWire {
   status: string;
   timestamp: string;
 }
+
+export interface AdminStatsWire {
+  totalUsers: number;
+  activeSessions: number;
+  systemHealth: string;
+}
