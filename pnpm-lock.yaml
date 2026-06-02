@@ -164,7 +164,7 @@ importers:
         version: 3.2.2(react@18.3.1)
       '@gustav/core-plugin':
         specifier: workspace:*
-        version: link:../../libs/core-plugin
+        version: link:../../plugins/core
       '@gustav/sdk':
         specifier: workspace:*
         version: link:../../libs/sdk
@@ -258,39 +258,6 @@ importers:
         specifier: ^3.8.3
         version: 3.8.3
 
-  libs/core-plugin:
-    devDependencies:
-      '@gustav/config-eslint':
-        specifier: workspace:*
-        version: link:../config-eslint
-      '@gustav/config-typescript':
-        specifier: workspace:*
-        version: link:../config-typescript
-      '@gustav/types':
-        specifier: workspace:*
-        version: link:../types
-      '@types/react':
-        specifier: ^18.0.0
-        version: 18.3.29
-      '@types/react-dom':
-        specifier: ^18.0.0
-        version: 18.3.7(@types/react@18.3.29)
-      eslint:
-        specifier: 8.57.1
-        version: 8.57.1
-      prettier:
-        specifier: ^3.8.3
-        version: 3.8.3
-      react:
-        specifier: ^18.0.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.0.0
-        version: 18.3.1(react@18.3.1)
-      typescript:
-        specifier: ^5.4.5
-        version: 5.9.3
-
   libs/sdk:
     devDependencies:
       '@gustav/config-eslint':
@@ -332,6 +299,39 @@ importers:
       prettier:
         specifier: ^3.8.3
         version: 3.8.3
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
+
+  plugins/core:
+    devDependencies:
+      '@gustav/config-eslint':
+        specifier: workspace:*
+        version: link:../../libs/config-eslint
+      '@gustav/config-typescript':
+        specifier: workspace:*
+        version: link:../../libs/config-typescript
+      '@gustav/types':
+        specifier: workspace:*
+        version: link:../../libs/types
+      '@types/react':
+        specifier: ^18.0.0
+        version: 18.3.29
+      '@types/react-dom':
+        specifier: ^18.0.0
+        version: 18.3.7(@types/react@18.3.29)
+      eslint:
+        specifier: 8.57.1
+        version: 8.57.1
+      prettier:
+        specifier: ^3.8.3
+        version: 3.8.3
+      react:
+        specifier: ^18.0.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.0.0
+        version: 18.3.1(react@18.3.1)
       typescript:
         specifier: ^5.4.5
         version: 5.9.3
