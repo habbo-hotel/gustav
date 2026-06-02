@@ -155,7 +155,7 @@ export function AdminLayout() {
 
       <footer className="w-full py-6 px-6 border-t border-gray-200 dark:border-zinc-800 text-center">
         <p className="text-[10px] font-black text-gray-400 dark:text-zinc-600 uppercase tracking-[0.2em]">
-          Gustav Infrastructure Management • Secure Environment
+          Powered by Gustav
         </p>
       </footer>
     </div>

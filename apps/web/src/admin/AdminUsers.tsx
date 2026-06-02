@@ -1,6 +1,6 @@
+import toast from 'react-hot-toast';
 import {UserWire} from '@gustav/types';
 import {useState, useEffect} from 'react';
-import toast from 'react-hot-toast';
 
 import {userSdk} from '../sdk';
 
@@ -17,6 +17,7 @@ export function AdminUsers() {
   });
 
   useEffect(() => {
+    document.title = 'Gustav - Users';
     fetchUsers();
   }, []);
 
@@ -47,7 +48,9 @@ export function AdminUsers() {
       await userSdk.resetPassword(id);
       toast.success('Password reset email sent');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to reset password');
+      toast.error(
+        err instanceof Error ? err.message : 'Failed to reset password'
+      );
     }
   };
 

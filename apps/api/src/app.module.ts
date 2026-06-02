@@ -1,6 +1,6 @@
-import {DynamicModule, Module} from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
+import {DynamicModule, Module} from '@nestjs/common';
 
 import {UserModule} from './user/user.module';
 import {AuthModule} from './auth/auth.module';
@@ -38,7 +38,9 @@ export class AppModule {
           console.log(`[Plugin System] No backend module found for ${pkg}`);
         }
       } catch (err: any) {
-        console.log(`[Plugin System] Skipping backend loading for ${pkg}: ${err.message}`);
+        console.log(
+          `[Plugin System] Skipping backend loading for ${pkg}: ${err.message}`
+        );
       }
     }
 

@@ -1,7 +1,7 @@
+import toast from 'react-hot-toast';
 import {Link} from 'react-router-dom';
 import React, {useState, useEffect} from 'react';
 import {PageWire, PageStatus} from '@gustav/types';
-import toast from 'react-hot-toast';
 
 import {pageSdk} from '../sdk';
 
@@ -49,6 +49,7 @@ export function AdminPages() {
   };
 
   useEffect(() => {
+    document.title = 'Gustav - Pages';
     fetchPages();
   }, []);
 

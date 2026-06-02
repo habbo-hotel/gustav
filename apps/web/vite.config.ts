@@ -1,7 +1,7 @@
-import {defineConfig} from 'vite';
-import react from '@vitejs/plugin-react';
 import fs from 'fs';
 import path from 'path';
+import {defineConfig} from 'vite';
+import react from '@vitejs/plugin-react';
 
 function gustavPlugins() {
   const virtualModuleId = 'virtual:gustav-plugins';
@@ -19,7 +19,7 @@ function gustavPlugins() {
         const rootDir = path.resolve(__dirname, '../../');
         const manifestPath = path.join(rootDir, 'gustav.plugins.json');
         let pluginPackages: string[] = [];
-        
+
         if (fs.existsSync(manifestPath)) {
           try {
             const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
@@ -31,7 +31,7 @@ function gustavPlugins() {
 
         let imports = '';
         const exportsList: string[] = [];
-        
+
         pluginPackages.forEach((pkg, idx) => {
           imports += `import { plugin as plugin_${idx} } from '${pkg}';\n`;
           exportsList.push(`plugin_${idx}`);
@@ -39,7 +39,7 @@ function gustavPlugins() {
 
         return `${imports}\nexport const plugins = [${exportsList.join(', ')}];\n`;
       }
-    }
+    },
   };
 }
 

@@ -9,6 +9,7 @@ export function AdminDashboard() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    document.title = 'Gustav - Dashboard';
     fetchStats();
   }, []);
 

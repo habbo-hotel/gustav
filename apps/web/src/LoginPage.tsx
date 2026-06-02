@@ -17,8 +17,9 @@ export function LoginPage({mode}: LoginPageProps) {
   const isRegistering = mode === 'register';
 
   useEffect(() => {
+    document.title = `Gustav - ${isRegistering ? 'Register' : 'Login'}`;
     setError(null);
-  }, [mode, setError]);
+  }, [mode, setError, isRegistering]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

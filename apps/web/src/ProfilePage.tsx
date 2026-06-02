@@ -1,9 +1,14 @@
+import {useState, useEffect} from 'react';
 import {Link, Navigate} from 'react-router-dom';
 
 import {useAuth} from './AuthContext';
 
 export function ProfilePage() {
   const {user, logout} = useAuth();
+
+  useEffect(() => {
+    document.title = 'Gustav - Profile';
+  }, []);
 
   if (!user) {
     return <Navigate to="/" replace />;

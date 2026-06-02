@@ -1,8 +1,8 @@
-import React, {useState, useEffect} from 'react';
-import {useParams, useNavigate, Link} from 'react-router-dom';
-import {plugins} from 'virtual:gustav-plugins';
-import {ComponentSchemaField} from '@gustav/types';
 import toast from 'react-hot-toast';
+import {plugins} from 'virtual:gustav-plugins';
+import React, {useState, useEffect} from 'react';
+import {ComponentSchemaField} from '@gustav/types';
+import {useParams, useNavigate, Link} from 'react-router-dom';
 
 import {pageSdk} from '../sdk';
 
@@ -14,7 +14,10 @@ export function PluginSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (name) fetchSettings(name);
+    if (name) {
+      document.title = `Gustav - ${name} Settings`;
+      fetchSettings(name);
+    }
   }, [name]);
 
   const fetchSettings = async (pluginName: string) => {

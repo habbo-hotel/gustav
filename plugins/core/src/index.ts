@@ -1,11 +1,11 @@
 import {Hero} from './components/Hero';
+import {Grid} from './components/Grid';
+import {Card} from './components/Card';
 import {Image} from './components/Image';
 import {Button} from './components/Button';
 import {Heading} from './components/Heading';
 import {Divider} from './components/Divider';
 import {RichText} from './components/RichText';
-import {Grid} from './components/Grid';
-import {Card} from './components/Card';
 import {ComponentDefinition, PluginDefinition} from './types';
 
 export * from './types';

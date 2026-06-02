@@ -1,6 +1,6 @@
-import {PageWire, PageComponentWire} from '@gustav/types';
 import {useLocation} from 'react-router-dom';
 import {plugins} from 'virtual:gustav-plugins';
+import {PageWire, PageComponentWire} from '@gustav/types';
 import React, {useState, useEffect, useMemo} from 'react';
 
 import {pageSdk} from './sdk';
@@ -14,6 +14,16 @@ export function PageRenderer() {
   useEffect(() => {
     fetchPageByPath(location.pathname);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (page) {
+      document.title = `Gustav - ${page.title}`;
+    } else if (error) {
+      document.title = 'Gustav - 404';
+    } else {
+      document.title = 'Gustav';
+    }
+  }, [page, error]);
 
   const fetchPageByPath = async (path: string) => {
     try {
@@ -29,7 +39,10 @@ export function PageRenderer() {
     }
   };
 
-  const renderComponent = (comp: PageComponentWire, allComponents: PageComponentWire[]) => {
+  const renderComponent = (
+    comp: PageComponentWire,
+    allComponents: PageComponentWire[]
+  ) => {
     // Resolve component from plugins
     const plugin = plugins.find(p => p.name === comp.pluginName);
     const pluginComp = plugin?.components.find(
@@ -42,8 +55,8 @@ export function PageRenderer() {
           key={comp.id}
           className="p-4 bg-red-50 text-red-500 rounded-xl my-4 text-xs font-mono"
         >
-          [Plugin Error] Component "{comp.componentName}" not found in
-          registry for plugin "{comp.pluginName}".
+          [Plugin Error] Component "{comp.componentName}" not found in registry
+          for plugin "{comp.pluginName}".
         </div>
       );
     }
@@ -105,7 +118,9 @@ export function PageRenderer() {
   return (
     <div className="gustav-page min-h-screen bg-white dark:bg-zinc-950">
       <div className="max-w-5xl mx-auto px-6 py-12">
-        {rootComponents.map(comp => renderComponent(comp, page.components || []))}
+        {rootComponents.map(comp =>
+          renderComponent(comp, page.components || [])
+        )}
       </div>
     </div>
   );

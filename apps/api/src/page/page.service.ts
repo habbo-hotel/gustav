@@ -296,7 +296,10 @@ export class PageService {
     // 2. It belongs to a published version, find or create a draft
     let draft = identity.versions.find(v => v.status === PageStatus.DRAFT);
     if (!draft) {
-      draft = await this.createDraftFromPublished(pageId, component.pageVersion);
+      draft = await this.createDraftFromPublished(
+        pageId,
+        component.pageVersion
+      );
     }
 
     // 3. Find the equivalent component in the draft
@@ -394,23 +397,24 @@ export class PageService {
         // Actually, createDraftFromPublished doesn't return mapping yet.
         // Let's find the equivalent components manually.
         draft = await this.createDraftFromPublished(identity.id, published);
-        
+
         const draftComponents = await this.componentRepository.find({
-            where: { pageVersionId: draft.id }
+          where: {pageVersionId: draft.id},
         });
-        
+
         const publishedComponents = await this.componentRepository.find({
-            where: { pageVersionId: published.id }
+          where: {pageVersionId: published.id},
         });
 
         idMapping = {};
         publishedComponents.forEach(pc => {
-            const match = draftComponents.find(dc => 
-                dc.pluginName === pc.pluginName && 
-                dc.componentName === pc.componentName && 
-                dc.displayOrder === pc.displayOrder
-            );
-            if (match) idMapping![pc.id] = match.id;
+          const match = draftComponents.find(
+            dc =>
+              dc.pluginName === pc.pluginName &&
+              dc.componentName === pc.componentName &&
+              dc.displayOrder === pc.displayOrder
+          );
+          if (match) idMapping![pc.id] = match.id;
         });
       }
     }

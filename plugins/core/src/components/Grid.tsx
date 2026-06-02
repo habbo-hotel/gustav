@@ -6,7 +6,11 @@ export interface GridProps {
   children?: ReactNode;
 }
 
-export const Grid: React.FC<GridProps> = ({columns = 3, gap = 'md', children}) => {
+export const Grid: React.FC<GridProps> = ({
+  columns = 3,
+  gap = 'md',
+  children,
+}) => {
   const gridColumnsClasses = {
     1: 'grid-cols-1',
     2: 'grid-cols-1 md:grid-cols-2',
@@ -24,7 +28,9 @@ export const Grid: React.FC<GridProps> = ({columns = 3, gap = 'md', children}) =
   };
 
   return (
-    <div className={`grid ${gridColumnsClasses[columns]} ${gapClasses[gap]} w-full`}>
+    <div
+      className={`grid ${gridColumnsClasses[columns]} ${gapClasses[gap]} w-full`}
+    >
       {children}
     </div>
   );
