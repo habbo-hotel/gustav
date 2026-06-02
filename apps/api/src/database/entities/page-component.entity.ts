@@ -14,6 +14,18 @@ export class PageComponent extends BaseEntity {
   @JoinColumn({name: 'pageVersionId'})
   pageVersion?: PageVersion;
 
+  @Column({nullable: true})
+  parentId?: number;
+
+  @ManyToOne(() => PageComponent, component => component.children, {
+    onDelete: 'CASCADE',
+    nullable: true,
+  })
+  @JoinColumn({name: 'parentId'})
+  parent?: PageComponent;
+
+  children?: PageComponent[];
+
   @Column()
   pluginName!: string;
 

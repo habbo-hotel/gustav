@@ -50,13 +50,34 @@ export abstract class BaseSDK {
         }
       }
 
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.message || `HTTP error! status: ${response.status}`
-      );
+      const errorText = await response.text().catch(() => '');
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        if (errorText) {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        }
+      } catch {
+        // Not JSON error, use default message
+      }
+      throw new Error(errorMessage);
     }
 
-    return response.json();
+    if (response.status === 204) {
+      return undefined as unknown as T;
+    }
+
+    const responseText = await response.text();
+    if (!responseText) {
+      return undefined as unknown as T;
+    }
+
+    try {
+      return JSON.parse(responseText) as T;
+    } catch (e) {
+      console.error('Failed to parse JSON response:', responseText);
+      throw e;
+    }
   }
 
   protected get<T>(path: string, options?: RequestInit) {

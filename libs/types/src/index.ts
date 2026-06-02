@@ -45,19 +45,19 @@ export enum PageStatus {
 }
 
 export interface PageWire {
-  id: number; // Logical Identity ID
-  versionId?: number; // Specific version ID
+  id: number;
+  versionId?: number;
   versionNumber?: number;
   title: string;
   slug: string;
   path: string;
   status: PageStatus;
   showInNavigation: boolean;
-  parentId?: number; // Maps to parent Identity ID
+  parentId?: number;
   parent?: PageWire;
   children?: PageWire[];
   components?: PageComponentWire[];
-  hasDraft?: boolean; // For admin UI
+  hasDraft?: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -65,16 +65,40 @@ export interface PageWire {
 export interface PageComponentWire {
   id: number;
   pageId: number;
+  parentId?: number;
   pluginName: string;
   componentName: string;
-  props: string; // Stored as serialized string for now based on user preference against JSON columns
+  props: string;
   displayOrder: number;
 }
 
 export interface PluginSettingWire {
   id: number;
   pluginName: string;
-  settings: string; // Serialized JSON
+  settings: string;
   createdAt: Date | string;
   updatedAt: Date | string;
+}
+
+export interface ComponentSchemaField {
+  name: string;
+  label: string;
+  type: 'text' | 'textarea' | 'select' | 'checkbox' | 'number' | 'color';
+  options?: {label: string; value: any}[];
+}
+
+export interface ComponentDefinition {
+  name: string;
+  component: any; // Using any instead of React.FC to decouple @gustav/types from react
+  description: string;
+  icon?: string;
+  defaultProps: Record<string, any>;
+  schema: ComponentSchemaField[];
+  canHaveChildren?: boolean;
+}
+
+export interface PluginDefinition {
+  name: string;
+  components: ComponentDefinition[];
+  settingsSchema?: ComponentSchemaField[];
 }

@@ -4,7 +4,8 @@ import cookieParser from 'cookie-parser';
 import {AppModule} from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const appModule = await AppModule.registerPlugins();
+  const app = await NestFactory.create(appModule);
 
   app.setGlobalPrefix('api');
 
