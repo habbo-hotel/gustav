@@ -4,6 +4,8 @@ import {Button} from './components/Button';
 import {Heading} from './components/Heading';
 import {Divider} from './components/Divider';
 import {RichText} from './components/RichText';
+import {Grid} from './components/Grid';
+import {Card} from './components/Card';
 import {ComponentDefinition, PluginDefinition} from './types';
 
 export * from './types';
@@ -13,12 +15,15 @@ export * from './components/Divider';
 export * from './components/Heading';
 export * from './components/Button';
 export * from './components/Image';
+export * from './components/Grid';
+export * from './components/Card';
 
 const components: ComponentDefinition[] = [
   {
     name: 'Heading',
     component: Heading,
     description: 'A structural heading text',
+    icon: 'heading',
     defaultProps: {
       text: 'Page Section',
       level: 2,
@@ -55,6 +60,7 @@ const components: ComponentDefinition[] = [
     name: 'RichText',
     component: RichText,
     description: 'A simple rich text block',
+    icon: 'text',
     defaultProps: {
       content: '<p>Hello world</p>',
     },
@@ -70,6 +76,7 @@ const components: ComponentDefinition[] = [
     name: 'Button',
     component: Button,
     description: 'A clickable call to action',
+    icon: 'button',
     defaultProps: {
       label: 'Get Started',
       link: '#',
@@ -105,6 +112,7 @@ const components: ComponentDefinition[] = [
     name: 'Image',
     component: Image,
     description: 'A visual media block',
+    icon: 'image',
     defaultProps: {
       src: '',
       alt: 'Image description',
@@ -122,6 +130,7 @@ const components: ComponentDefinition[] = [
     name: 'Hero',
     component: Hero,
     description: 'A big hero section',
+    icon: 'hero',
     defaultProps: {
       title: 'Welcome to Gustav',
       subtitle: 'The pro CMS',
@@ -155,12 +164,79 @@ const components: ComponentDefinition[] = [
     name: 'Divider',
     component: Divider,
     description: 'A horizontal line',
+    icon: 'divider',
     defaultProps: {},
     schema: [],
   },
+  {
+    name: 'Grid',
+    component: Grid,
+    description: 'A responsive grid layout container',
+    icon: 'grid',
+    canHaveChildren: true,
+    defaultProps: {
+      columns: 3,
+      gap: 'md',
+    },
+    schema: [
+      {
+        name: 'columns',
+        label: 'Columns',
+        type: 'select',
+        options: [
+          {label: '1 Column', value: 1},
+          {label: '2 Columns', value: 2},
+          {label: '3 Columns', value: 3},
+          {label: '4 Columns', value: 4},
+          {label: '5 Columns', value: 5},
+          {label: '6 Columns', value: 6},
+        ],
+      },
+      {
+        name: 'gap',
+        label: 'Gap Size',
+        type: 'select',
+        options: [
+          {label: 'None', value: 'none'},
+          {label: 'Small', value: 'sm'},
+          {label: 'Medium', value: 'md'},
+          {label: 'Large', value: 'lg'},
+        ],
+      },
+    ],
+  },
+  {
+    name: 'Card',
+    component: Card,
+    description: 'A flexible content card',
+    icon: 'card',
+    canHaveChildren: true,
+    defaultProps: {
+      title: 'Card Title',
+      padding: 'md',
+      shadow: true,
+      border: true,
+    },
+    schema: [
+      {name: 'title', label: 'Title', type: 'text'},
+      {
+        name: 'padding',
+        label: 'Padding',
+        type: 'select',
+        options: [
+          {label: 'None', value: 'none'},
+          {label: 'Small', value: 'sm'},
+          {label: 'Medium', value: 'md'},
+          {label: 'Large', value: 'lg'},
+        ],
+      },
+      {name: 'shadow', label: 'Show Shadow', type: 'checkbox'},
+      {name: 'border', label: 'Show Border', type: 'checkbox'},
+    ],
+  },
 ];
 
-export const corePlugin: PluginDefinition = {
+export const plugin: PluginDefinition = {
   name: '@gustav/core-plugin',
   components,
   settingsSchema: [
