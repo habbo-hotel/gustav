@@ -1,3 +1,4 @@
+import {JwtService} from '@nestjs/jwt';
 import {Test, TestingModule} from '@nestjs/testing';
 
 import {AuthService} from './auth.service';
@@ -13,6 +14,15 @@ describe('AuthService', () => {
         {
           provide: UserService,
           useValue: {},
+        },
+        {
+          provide: JwtService,
+          useValue: {
+            sign: jest.fn().mockReturnValue('mocked-token'),
+            verify: jest
+              .fn()
+              .mockReturnValue({email: 'test@example.com', sub: 1}),
+          },
         },
       ],
     }).compile();

@@ -1,3 +1,4 @@
+import {JwtService} from '@nestjs/jwt';
 import {Injectable} from '@nestjs/common';
 import {RegisterInput, UserWire} from '@gustav/types';
 
@@ -5,7 +6,10 @@ import {UserService} from '../user/user.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private jwtService: JwtService
+  ) {}
 
   async validateUser(email: string, pass: string): Promise<UserWire | null> {
     const user = await this.userService.findByEmail(email, true);
@@ -38,5 +42,19 @@ export class AuthService {
     return this.userService.mapToWire(user);
   }
 
-  // Remove private mapToWire method as it's now in UserService
+  generateTokens(user: UserWire) {
+    const payload = {email: user.email, sub: user.id};
+    return {
+      accessToken: this.jwtService.sign(payload),
+      refreshToken: this.jwtService.sign(payload, {expiresIn: '7d'}),
+    };
+  }
+
+  verifyRefreshToken(token: string) {
+    try {
+      return this.jwtService.verify(token);
+    } catch {
+      return null;
+    }
+  }
 }

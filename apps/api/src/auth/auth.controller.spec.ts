@@ -1,3 +1,4 @@
+import {Response} from 'express';
 import {Test, TestingModule} from '@nestjs/testing';
 
 import {AuthService} from './auth.service';
@@ -9,8 +10,15 @@ describe('AuthController', () => {
   const mockUser = {
     id: 1,
     username: 'testuser',
+    email: 'test@example.com',
     isSuperAdmin: false,
   };
+
+  const mockRes = {
+    cookie: jest.fn(),
+    clearCookie: jest.fn(),
+    redirect: jest.fn(),
+  } as unknown as Response;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -20,6 +28,14 @@ describe('AuthController', () => {
           provide: AuthService,
           useValue: {
             register: jest.fn().mockResolvedValue(mockUser),
+            generateTokens: jest.fn().mockReturnValue({
+              accessToken: 'mock-access',
+              refreshToken: 'mock-refresh',
+            }),
+            verifyRefreshToken: jest.fn().mockReturnValue({
+              email: 'test@example.com',
+              sub: 1,
+            }),
           },
         },
       ],
@@ -34,21 +50,29 @@ describe('AuthController', () => {
 
   describe('login', () => {
     it('should return the user object from request', async () => {
-      const result = await controller.login({user: mockUser});
+      const mockReq: any = {user: mockUser};
+      const result = await controller.login(mockReq, mockRes);
       expect(result).toEqual(mockUser);
+      expect(mockRes.cookie).toHaveBeenCalledWith(
+        'accessToken',
+        'mock-access',
+        expect.any(Object)
+      );
     });
   });
 
   describe('discordAuthCallback', () => {
-    it('should return the user object after discord callback', async () => {
-      const result = await controller.discordAuthCallback({user: mockUser});
-      expect(result).toEqual(mockUser);
+    it('should redirect after discord callback', async () => {
+      const mockReq: any = {user: mockUser};
+      await controller.discordAuthCallback(mockReq, mockRes);
+      expect(mockRes.redirect).toHaveBeenCalledWith('http://localhost:5173');
     });
   });
 
   describe('me', () => {
     it('should return the user profile', () => {
-      const result = controller.me({user: mockUser});
+      const mockReq: any = {user: mockUser};
+      const result = controller.me(mockReq);
       expect(result).toBe(mockUser);
     });
   });

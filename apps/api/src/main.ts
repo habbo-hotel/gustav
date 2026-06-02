@@ -1,5 +1,3 @@
-import passport from 'passport';
-import session from 'express-session';
 import {NestFactory} from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 
@@ -23,23 +21,6 @@ async function bootstrap() {
   });
 
   app.use(cookieParser());
-  app.use(
-    session({
-      name: 'gustav.sid',
-      secret: 'secretKey',
-      resave: true,
-      saveUninitialized: true,
-      cookie: {
-        maxAge: 3600000,
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
-      },
-    })
-  );
-
-  app.use(passport.initialize());
-  app.use(passport.session());
 
   const port = 3000;
   // Listen on 0.0.0.0 to accept everything

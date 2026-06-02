@@ -1,5 +1,6 @@
 export abstract class BaseSDK {
   protected baseUrl: string;
+  private isRefreshing = false;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
@@ -9,7 +10,8 @@ export abstract class BaseSDK {
     path: string,
     method: string,
     body?: any,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    isRetry = false
   ): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -25,6 +27,29 @@ export abstract class BaseSDK {
     });
 
     if (!response.ok) {
+      // If 401 Unauthorized and not already retrying, attempt to refresh tokens
+      if (
+        response.status === 401 &&
+        !isRetry &&
+        !path.includes('/auth/refresh')
+      ) {
+        if (!this.isRefreshing) {
+          this.isRefreshing = true;
+          try {
+            const refreshRes = await fetch(`${this.baseUrl}/auth/refresh`, {
+              method: 'POST',
+              credentials: 'include',
+            });
+            if (refreshRes.ok) {
+              // Retry the original request
+              return await this.request<T>(path, method, body, options, true);
+            }
+          } finally {
+            this.isRefreshing = false;
+          }
+        }
+      }
+
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData.message || `HTTP error! status: ${response.status}`
