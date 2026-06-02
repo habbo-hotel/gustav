@@ -15,8 +15,42 @@ export function AdminPages() {
     title: '',
     slug: '',
     parentId: undefined as number | undefined,
-    status: PageStatus.DRAFT,
+    showInNavigation: true,
   });
+
+  const [showVersionsModal, setShowVersionsModal] = useState(false);
+  const [pageVersions, setPageVersions] = useState<PageWire[]>([]);
+  const [selectedPageForVersions, setSelectedPageForVersions] =
+    useState<PageWire | null>(null);
+
+  const fetchVersions = async (page: PageWire) => {
+    try {
+      setSelectedPageForVersions(page);
+      const data = await pageSdk.findVersions(page.id);
+      setPageVersions(data);
+      setShowVersionsModal(true);
+    } catch {
+      alert('Failed to fetch versions');
+    }
+  };
+
+  const handleRevert = async (version: PageWire) => {
+    if (!selectedPageForVersions) return;
+    if (
+      !confirm(
+        `Are you sure you want to revert to Version ${version.versionNumber}? This will create a new draft from this version.`
+      )
+    )
+      return;
+
+    try {
+      await pageSdk.revert(selectedPageForVersions.id, version.versionId!);
+      setShowVersionsModal(false);
+      fetchPages();
+    } catch (err) {
+      alert('Failed to revert');
+    }
+  };
 
   useEffect(() => {
     fetchPages();
@@ -41,7 +75,7 @@ export function AdminPages() {
         title: page.title,
         slug: page.slug,
         parentId: page.parentId,
-        status: page.status,
+        showInNavigation: page.showInNavigation ?? true,
       });
     } else {
       setEditingPage(null);
@@ -49,7 +83,7 @@ export function AdminPages() {
         title: '',
         slug: '',
         parentId: undefined,
-        status: PageStatus.DRAFT,
+        showInNavigation: true,
       });
     }
     setShowModal(true);
@@ -82,19 +116,6 @@ export function AdminPages() {
       fetchPages();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete page');
-    }
-  };
-
-  const handleToggleStatus = async (page: PageWire) => {
-    const newStatus =
-      page.status === PageStatus.PUBLISHED
-        ? PageStatus.DRAFT
-        : PageStatus.PUBLISHED;
-    try {
-      await pageSdk.update(page.id, {status: newStatus});
-      fetchPages();
-    } catch (err) {
-      alert('Failed to update status');
     }
   };
 
@@ -139,8 +160,30 @@ export function AdminPages() {
                 </div>
               </div>
               <div>
-                <div className="font-bold text-gray-900 dark:text-white">
-                  {page.title}
+                <div className="flex items-center space-x-2">
+                  <div className="font-bold text-gray-900 dark:text-white">
+                    {page.title}
+                  </div>
+                  {!page.showInNavigation && (
+                    <span
+                      title="Hidden from navigation"
+                      className="text-gray-400"
+                    >
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        />
+                      </svg>
+                    </span>
+                  )}
                 </div>
                 <div className="text-xs text-gray-400 font-medium font-mono">
                   {page.path}
@@ -149,15 +192,24 @@ export function AdminPages() {
             </div>
           </td>
           <td className="py-5 px-8">
-            <span
-              className={`inline-flex items-center text-[10px] font-black uppercase px-2 py-1 rounded-md border ${
-                page.status === PageStatus.PUBLISHED
-                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                  : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
-              }`}
-            >
-              {page.status}
-            </span>
+            <div className="flex flex-col space-y-1">
+              <span
+                className={`inline-flex items-center self-start text-[10px] font-black uppercase px-2 py-1 rounded-md border ${
+                  page.status === PageStatus.PUBLISHED
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                    : page.status === PageStatus.ARCHIVED
+                      ? 'bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20'
+                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                }`}
+              >
+                {page.status}
+              </span>
+              {page.hasDraft && page.status === PageStatus.PUBLISHED && (
+                <span className="text-[9px] font-black text-amber-500 uppercase tracking-tighter">
+                  Unpublished Changes
+                </span>
+              )}
+            </div>
           </td>
           <td className="py-5 px-8 text-right">
             <div className="flex items-center justify-end space-x-1">
@@ -182,16 +234,40 @@ export function AdminPages() {
                   />
                 </svg>
               </a>
+              {page.status !== PageStatus.PUBLISHED || page.hasDraft ? (
+                <button
+                  onClick={async () => {
+                    try {
+                      await pageSdk.update(page.id, {
+                        status: PageStatus.PUBLISHED,
+                      });
+                      fetchPages();
+                    } catch {
+                      alert('Failed to publish');
+                    }
+                  }}
+                  className="p-2 text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-all"
+                  title="Publish Changes"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </button>
+              ) : null}
               <button
-                onClick={() => handleToggleStatus(page)}
-                className={`p-2 rounded-lg transition-all ${
-                  page.status === PageStatus.PUBLISHED
-                    ? 'text-emerald-500 hover:bg-emerald-50'
-                    : 'text-amber-500 hover:bg-amber-50'
-                }`}
-                title={
-                  page.status === PageStatus.PUBLISHED ? 'Unpublish' : 'Publish'
-                }
+                onClick={() => fetchVersions(page)}
+                className="p-2 text-amber-500 hover:bg-amber-500/10 rounded-lg transition-all"
+                title="Version History"
               >
                 <svg
                   className="w-5 h-5"
@@ -203,13 +279,7 @@ export function AdminPages() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
               </button>
@@ -411,38 +481,25 @@ export function AdminPages() {
                     ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">
-                  Status
+              <div className="flex items-center space-x-3 bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-800">
+                <input
+                  type="checkbox"
+                  id="showInNavigation"
+                  checked={formData.showInNavigation}
+                  onChange={e =>
+                    setFormData({
+                      ...formData,
+                      showInNavigation: e.target.checked,
+                    })
+                  }
+                  className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <label
+                  htmlFor="showInNavigation"
+                  className="text-sm font-bold text-gray-700 dark:text-gray-300 cursor-pointer"
+                >
+                  Show in navigation menu
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData({...formData, status: PageStatus.DRAFT})
-                    }
-                    className={`py-3 rounded-xl text-xs font-black uppercase border transition-all ${
-                      formData.status === PageStatus.DRAFT
-                        ? 'bg-amber-500/10 border-amber-500/50 text-amber-600'
-                        : 'bg-gray-50 dark:bg-zinc-800/50 border-gray-100 dark:border-zinc-800 text-gray-400'
-                    }`}
-                  >
-                    Draft
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData({...formData, status: PageStatus.PUBLISHED})
-                    }
-                    className={`py-3 rounded-xl text-xs font-black uppercase border transition-all ${
-                      formData.status === PageStatus.PUBLISHED
-                        ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600'
-                        : 'bg-gray-50 dark:bg-zinc-800/50 border-gray-100 dark:border-zinc-800 text-gray-400'
-                    }`}
-                  >
-                    Published
-                  </button>
-                </div>
               </div>
               <div className="flex space-x-3 pt-4">
                 <button
@@ -460,6 +517,100 @@ export function AdminPages() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showVersionsModal && (
+        <div className="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 w-full max-w-2xl shadow-2xl border border-gray-100 dark:border-zinc-800 animate-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-2xl font-black dark:text-white tracking-tight">
+                  Version History
+                </h3>
+                <p className="text-sm text-gray-400 font-medium">
+                  {selectedPageForVersions?.title} •{' '}
+                  {selectedPageForVersions?.path}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowVersionsModal(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl text-gray-400 transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-2">
+              <div className="space-y-3">
+                {pageVersions.map(v => (
+                  <div
+                    key={v.versionId}
+                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-100 dark:border-zinc-800"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="w-10 h-10 bg-white dark:bg-zinc-900 rounded-xl flex items-center justify-center font-black text-xs border border-gray-100 dark:border-zinc-800">
+                        v{v.versionNumber}
+                      </div>
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-bold text-gray-900 dark:text-white">
+                            {v.title}
+                          </span>
+                          <span
+                            className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded border ${
+                              v.status === PageStatus.PUBLISHED
+                                ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                                : v.status === PageStatus.DRAFT
+                                  ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                                  : 'bg-gray-500/10 text-gray-600 border-gray-500/20'
+                            }`}
+                          >
+                            {v.status}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-gray-400 font-medium">
+                          {new Date(v.updatedAt).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {v.status === PageStatus.ARCHIVED && (
+                        <button
+                          onClick={() => handleRevert(v)}
+                          className="px-4 py-2 bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white text-[10px] font-black uppercase rounded-lg shadow-md hover:scale-105 active:scale-95 transition-all"
+                        >
+                          Revert to this
+                        </button>
+                      )}
+                      {v.status === PageStatus.PUBLISHED && (
+                        <span className="text-[10px] font-black text-emerald-500 uppercase px-3">
+                          Current Live
+                        </span>
+                      )}
+                      {v.status === PageStatus.DRAFT && (
+                        <span className="text-[10px] font-black text-amber-500 uppercase px-3">
+                          Working Draft
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}

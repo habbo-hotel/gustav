@@ -307,6 +307,21 @@ export function PageEditor() {
     if (id) fetchPage(parseInt(id));
   }, [id]);
 
+  const [pages, setPages] = useState<PageWire[]>([]);
+
+  useEffect(() => {
+    fetchPages();
+  }, []);
+
+  const fetchPages = async () => {
+    try {
+      const data = await pageSdk.findAll();
+      setPages(data);
+    } catch {
+      // Ignored
+    }
+  };
+
   const fetchPage = async (pageId: number) => {
     try {
       setLoading(true);
@@ -317,6 +332,7 @@ export function PageEditor() {
         slug: data.slug,
         parentId: data.parentId,
         status: data.status,
+        showInNavigation: data.showInNavigation ?? true,
       });
     } catch {
       navigate('/admin/pages');
@@ -358,12 +374,6 @@ export function PageEditor() {
             newComponents.map(c => c.id)
           );
           setIsDirty(true);
-          if (page.status === PageStatus.PUBLISHED) {
-            await pageSdk.update(page.id, {status: PageStatus.DRAFT});
-            setPage(prev =>
-              prev ? {...prev, status: PageStatus.DRAFT} : null
-            );
-          }
         } catch (err) {
           alert('Failed to save order');
           fetchPage(page.id);
@@ -392,9 +402,6 @@ export function PageEditor() {
       });
 
       setIsDirty(true);
-      if (page.status === PageStatus.PUBLISHED) {
-        await pageSdk.update(page.id, {status: PageStatus.DRAFT});
-      }
       setActiveDrawer(null);
       fetchPage(page.id);
     } catch (err) {
@@ -446,9 +453,6 @@ export function PageEditor() {
       JSON.parse(propsToSave);
       await pageSdk.updateComponent(selectedComponentId, {props: propsToSave});
       setIsDirty(true);
-      if (page && page.status === PageStatus.PUBLISHED) {
-        await pageSdk.update(page.id, {status: PageStatus.DRAFT});
-      }
       setActiveDrawer(null);
       if (page) fetchPage(page.id);
     } catch (err) {
@@ -569,9 +573,6 @@ export function PageEditor() {
     try {
       await pageSdk.removeComponent(compId);
       setIsDirty(true);
-      if (page && page.status === PageStatus.PUBLISHED) {
-        await pageSdk.update(page.id, {status: PageStatus.DRAFT});
-      }
       if (page) fetchPage(page.id);
     } catch (err) {
       alert('Failed to remove component');
@@ -592,9 +593,6 @@ export function PageEditor() {
       const newProps = {...currentProps, [name]: value};
       await pageSdk.updateComponent(compId, {props: JSON.stringify(newProps)});
       setIsDirty(true);
-      if (page.status === PageStatus.PUBLISHED) {
-        await pageSdk.update(page.id, {status: PageStatus.DRAFT});
-      }
       fetchPage(page.id);
     } catch (err) {
       console.error('Failed to update inline prop', err);
@@ -946,39 +944,49 @@ export function PageEditor() {
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">
-              Status
+              Parent Page
             </label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  setPageSettings({...pageSettings, status: PageStatus.DRAFT})
-                }
-                className={`py-3 rounded-xl text-xs font-black uppercase border transition-all ${
-                  pageSettings.status === PageStatus.DRAFT
-                    ? 'bg-amber-500/10 border-amber-500/50 text-amber-600'
-                    : 'bg-gray-50 dark:bg-zinc-800/50 border-gray-100 dark:border-zinc-800 text-gray-400'
-                }`}
-              >
-                Draft
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setPageSettings({
-                    ...pageSettings,
-                    status: PageStatus.PUBLISHED,
-                  })
-                }
-                className={`py-3 rounded-xl text-xs font-black uppercase border transition-all ${
-                  pageSettings.status === PageStatus.PUBLISHED
-                    ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600'
-                    : 'bg-gray-50 dark:bg-zinc-800/50 border-gray-100 dark:border-zinc-800 text-gray-400'
-                }`}
-              >
-                Published
-              </button>
-            </div>
+            <select
+              value={pageSettings.parentId || ''}
+              onChange={e =>
+                setPageSettings({
+                  ...pageSettings,
+                  parentId: e.target.value
+                    ? parseInt(e.target.value)
+                    : undefined,
+                })
+              }
+              className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none dark:text-white transition-all appearance-none"
+            >
+              <option value="">None (Root Level)</option>
+              {pages
+                .filter(p => p.id !== page.id) // Prevent self-parenting
+                .map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.path}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div className="flex items-center space-x-3 bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-800">
+            <input
+              type="checkbox"
+              id="showInNavigation"
+              checked={pageSettings.showInNavigation}
+              onChange={e =>
+                setPageSettings({
+                  ...pageSettings,
+                  showInNavigation: e.target.checked,
+                })
+              }
+              className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <label
+              htmlFor="showInNavigation"
+              className="text-sm font-bold text-gray-700 dark:text-gray-300 cursor-pointer"
+            >
+              Show in navigation menu
+            </label>
           </div>
           <button
             type="submit"
