@@ -8,6 +8,7 @@ import {useAuth} from './AuthContext';
 export function PublicLayout() {
   const [pages, setPages] = useState<PageWire[]>([]);
   const [settings, setSettings] = useState<Record<string, any>>({});
+  const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
   const location = useLocation();
   const {user} = useAuth();
 
@@ -20,7 +21,7 @@ export function PublicLayout() {
         ]);
 
         const published = allPages.filter(
-          p => p.status === PageStatus.PUBLISHED
+          p => p.status === PageStatus.PUBLISHED && p.showInNavigation
         );
         setPages(published);
         setSettings(coreSettings);
@@ -32,6 +33,82 @@ export function PublicLayout() {
   }, []);
 
   const brandColor = settings.primaryBrandColor || '#4f46e5';
+
+  const rootPages = pages.filter(p => !p.parentId && p.path !== '/');
+
+  const NavItem = ({page}: {page: PageWire}) => {
+    const children = pages.filter(p => p.parentId === page.id);
+    const hasChildren = children.length > 0;
+    const isActive = location.pathname === page.path;
+    const isChildActive = children.some(c => location.pathname === c.path);
+
+    return (
+      <div
+        className="relative group"
+        onMouseEnter={() => hasChildren && setActiveDropdown(page.id)}
+        onMouseLeave={() => setActiveDropdown(null)}
+      >
+        <Link
+          to={page.path}
+          className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center space-x-1 ${
+            isActive || isChildActive
+              ? 'bg-opacity-10'
+              : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800'
+          }`}
+          style={
+            isActive || isChildActive
+              ? {
+                  color: brandColor,
+                  backgroundColor: `${brandColor}20`,
+                }
+              : {}
+          }
+        >
+          <span>{page.title}</span>
+          {hasChildren && (
+            <svg
+              className={`w-4 h-4 transition-transform ${
+                activeDropdown === page.id ? 'rotate-180' : ''
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          )}
+        </Link>
+
+        {hasChildren && activeDropdown === page.id && (
+          <div className="absolute top-full left-0 pt-1 w-48 z-50">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+              {children.map(child => (
+                <Link
+                  key={child.id}
+                  to={child.path}
+                  className={`block px-4 py-2 text-sm font-bold transition-colors ${
+                    location.pathname === child.path
+                      ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10'
+                      : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                  style={
+                    location.pathname === child.path ? {color: brandColor} : {}
+                  }
+                >
+                  {child.title}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 flex flex-col">
@@ -73,26 +150,8 @@ export function PublicLayout() {
               >
                 Home
               </Link>
-              {pages.map(page => (
-                <Link
-                  key={page.id}
-                  to={page.path}
-                  className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                    location.pathname === page.path
-                      ? 'bg-opacity-10'
-                      : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                  }`}
-                  style={
-                    location.pathname === page.path
-                      ? {
-                          color: brandColor,
-                          backgroundColor: `${brandColor}20`,
-                        }
-                      : {}
-                  }
-                >
-                  {page.title}
-                </Link>
+              {rootPages.map(page => (
+                <NavItem key={page.id} page={page} />
               ))}
             </nav>
           </div>

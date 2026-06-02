@@ -1,41 +1,12 @@
-import {PageWire, PageStatus} from '@gustav/types';
-import {Entity, Column, ManyToOne, OneToMany, Index, JoinColumn} from 'typeorm';
+import {Entity, OneToMany} from 'typeorm';
 
 import {BaseEntity} from './base.entity';
-import {PageComponent} from './page-component.entity';
+import {PageVersion} from './page-version.entity';
 
 @Entity('gustav_pages')
-export class Page extends BaseEntity implements PageWire {
-  @Column()
-  title!: string;
-
-  @Column()
-  @Index({unique: true})
-  slug!: string;
-
-  @Column()
-  @Index({unique: true})
-  path!: string;
-
-  @Column({
-    type: 'enum',
-    enum: PageStatus,
-    default: PageStatus.DRAFT,
-  })
-  status!: PageStatus;
-
-  @Column({nullable: true})
-  parentId?: number;
-
-  @ManyToOne(() => Page, page => page.children, {onDelete: 'SET NULL'})
-  @JoinColumn({name: 'parentId'})
-  parent?: Page;
-
-  @OneToMany(() => Page, page => page.parent)
-  children?: Page[];
-
-  @OneToMany(() => PageComponent, component => component.page, {
+export class Page extends BaseEntity {
+  @OneToMany(() => PageVersion, version => version.page, {
     cascade: true,
   })
-  components?: PageComponent[];
+  versions!: PageVersion[];
 }
