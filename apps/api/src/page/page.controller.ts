@@ -28,6 +28,12 @@ export class PageController {
     return this.pageService.findByPath(path);
   }
 
+  @Get('used-plugins')
+  @IsSuperAdmin()
+  async findUsedPlugins() {
+    return this.pageService.findUsedPlugins();
+  }
+
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.pageService.findOne(id);

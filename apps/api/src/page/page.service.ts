@@ -85,6 +85,20 @@ export class PageService {
     );
   }
 
+  async findUsedPlugins(): Promise<{name: string; usageCount: number}[]> {
+    const result = await this.pageComponentRepository
+      .createQueryBuilder('comp')
+      .select('comp.pluginName', 'name')
+      .addSelect('COUNT(*)', 'usageCount')
+      .groupBy('comp.pluginName')
+      .getRawMany();
+    
+    return result.map(r => ({
+      name: r.name,
+      usageCount: parseInt(r.usageCount),
+    }));
+  }
+
   private async updatePath(page: Page): Promise<void> {
     if (!page.parentId) {
       page.path = `/${page.slug}`;

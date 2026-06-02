@@ -14,6 +14,18 @@ export class PageSDK extends BaseSDK {
     return this.get<PageWire>(`/pages/by-path?path=${encodeURIComponent(path)}`);
   }
 
+  async getUsedPlugins(): Promise<{name: string; usageCount: number}[]> {
+    return this.get<{name: string; usageCount: number}[]>('/pages/used-plugins');
+  }
+
+  async getPluginSettings(pluginName: string): Promise<Record<string, any>> {
+    return this.get<Record<string, any>>(`/plugins/${encodeURIComponent(pluginName)}/settings`);
+  }
+
+  async updatePluginSettings(pluginName: string, settings: Record<string, any>): Promise<void> {
+    return this.post(`/plugins/${encodeURIComponent(pluginName)}/settings`, settings);
+  }
+
   async create(data: Partial<PageWire>): Promise<PageWire> {
     return this.post<PageWire>('/pages', data);
   }

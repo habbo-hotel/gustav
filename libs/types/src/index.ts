@@ -65,3 +65,11 @@ export interface PageComponentWire {
   props: string; // Stored as serialized string for now based on user preference against JSON columns
   displayOrder: number;
 }
+
+export interface PluginSettingWire {
+  id: number;
+  pluginName: string;
+  settings: string; // Serialized JSON
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
