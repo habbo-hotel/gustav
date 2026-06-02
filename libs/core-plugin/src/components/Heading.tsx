@@ -44,7 +44,9 @@ export const Heading: React.FC<HeadingProps> = ({
       suppressContentEditableWarning={editable}
       onBlur={handleBlur}
       className={`${sizeClasses[level]} ${alignClasses[align]} text-slate-900 dark:text-white my-4 outline-none ${
-        editable ? 'hover:bg-indigo-50/50 focus:bg-indigo-50/50 rounded transition-colors cursor-text' : ''
+        editable
+          ? 'hover:bg-indigo-50/50 focus:bg-indigo-50/50 rounded transition-colors cursor-text'
+          : ''
       }`}
     >
       {text}

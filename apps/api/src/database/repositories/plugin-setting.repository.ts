@@ -1,7 +1,8 @@
 import {DataSource} from 'typeorm';
 import {Injectable} from '@nestjs/common';
-import {PluginSetting} from '../entities/plugin-setting.entity';
+
 import {BaseRepository} from './base.repository';
+import {PluginSetting} from '../entities/plugin-setting.entity';
 
 @Injectable()
 export class PluginSettingRepository extends BaseRepository<PluginSetting> {

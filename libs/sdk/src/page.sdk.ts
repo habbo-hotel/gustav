@@ -1,4 +1,5 @@
 import {PageWire, PageComponentWire} from '@gustav/types';
+
 import {BaseSDK} from './base.sdk';
 
 export class PageSDK extends BaseSDK {
@@ -11,19 +12,31 @@ export class PageSDK extends BaseSDK {
   }
 
   async findByPath(path: string): Promise<PageWire> {
-    return this.get<PageWire>(`/pages/by-path?path=${encodeURIComponent(path)}`);
+    return this.get<PageWire>(
+      `/pages/by-path?path=${encodeURIComponent(path)}`
+    );
   }
 
   async getUsedPlugins(): Promise<{name: string; usageCount: number}[]> {
-    return this.get<{name: string; usageCount: number}[]>('/pages/used-plugins');
+    return this.get<{name: string; usageCount: number}[]>(
+      '/pages/used-plugins'
+    );
   }
 
   async getPluginSettings(pluginName: string): Promise<Record<string, any>> {
-    return this.get<Record<string, any>>(`/plugins/${encodeURIComponent(pluginName)}/settings`);
+    return this.get<Record<string, any>>(
+      `/plugins/${encodeURIComponent(pluginName)}/settings`
+    );
   }
 
-  async updatePluginSettings(pluginName: string, settings: Record<string, any>): Promise<void> {
-    return this.post(`/plugins/${encodeURIComponent(pluginName)}/settings`, settings);
+  async updatePluginSettings(
+    pluginName: string,
+    settings: Record<string, any>
+  ): Promise<void> {
+    return this.post(
+      `/plugins/${encodeURIComponent(pluginName)}/settings`,
+      settings
+    );
   }
 
   async create(data: Partial<PageWire>): Promise<PageWire> {
@@ -38,11 +51,17 @@ export class PageSDK extends BaseSDK {
     return this.delete<void>(`/pages/${id}`);
   }
 
-  async addComponent(pageId: number, data: Partial<PageComponentWire>): Promise<PageComponentWire> {
+  async addComponent(
+    pageId: number,
+    data: Partial<PageComponentWire>
+  ): Promise<PageComponentWire> {
     return this.post<PageComponentWire>(`/pages/${pageId}/components`, data);
   }
 
-  async updateComponent(id: number, data: Partial<PageComponentWire>): Promise<PageComponentWire> {
+  async updateComponent(
+    id: number,
+    data: Partial<PageComponentWire>
+  ): Promise<PageComponentWire> {
     return this.put<PageComponentWire>(`/pages/components/${id}`, data);
   }
 
@@ -50,7 +69,10 @@ export class PageSDK extends BaseSDK {
     return this.delete<void>(`/pages/components/${id}`);
   }
 
-  async reorderComponents(pageId: number, componentIds: number[]): Promise<void> {
+  async reorderComponents(
+    pageId: number,
+    componentIds: number[]
+  ): Promise<void> {
     return this.post(`/pages/${pageId}/reorder-components`, {componentIds});
   }
 }

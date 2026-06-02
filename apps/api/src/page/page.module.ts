@@ -1,4 +1,5 @@
 import {Module} from '@nestjs/common';
+
 import {PageService} from './page.service';
 import {PluginService} from './plugin.service';
 import {PageController} from './page.controller';
@@ -9,11 +10,11 @@ import {PluginSettingRepository} from '../database/repositories/plugin-setting.r
 
 @Module({
   providers: [
-    PageService, 
+    PageService,
     PluginService,
-    PageRepository, 
+    PageRepository,
     PageComponentRepository,
-    PluginSettingRepository
+    PluginSettingRepository,
   ],
   controllers: [PageController, PluginController],
   exports: [PageService, PluginService],

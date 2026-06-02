@@ -1,15 +1,15 @@
-import {Entity, Column, ManyToOne, JoinColumn} from 'typeorm';
 import {PageComponentWire} from '@gustav/types';
+import {Entity, Column, ManyToOne, JoinColumn} from 'typeorm';
 
-import {BaseEntity} from './base.entity';
 import {Page} from './page.entity';
+import {BaseEntity} from './base.entity';
 
 @Entity('gustav_page_components')
 export class PageComponent extends BaseEntity implements PageComponentWire {
   @Column()
   pageId!: number;
 
-  @ManyToOne(() => Page, (page) => page.components, {onDelete: 'CASCADE'})
+  @ManyToOne(() => Page, page => page.components, {onDelete: 'CASCADE'})
   @JoinColumn({name: 'pageId'})
   page?: Page;
 

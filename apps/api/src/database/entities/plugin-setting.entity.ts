@@ -1,5 +1,6 @@
 import {Entity, Column, Index} from 'typeorm';
 import {PluginSettingWire} from '@gustav/types';
+
 import {BaseEntity} from './base.entity';
 
 @Entity('gustav_plugin_settings')

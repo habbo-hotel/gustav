@@ -1,7 +1,8 @@
 import React, {useState, useEffect} from 'react';
 import {useParams, useNavigate, Link} from 'react-router-dom';
-import {pageSdk} from '../sdk';
 import {corePlugin, ComponentSchemaField} from '@gustav/core-plugin';
+
+import {pageSdk} from '../sdk';
 
 export function PluginSettingsPage() {
   const {name} = useParams<{name: string}>();
@@ -42,7 +43,8 @@ export function PluginSettingsPage() {
 
   const renderField = (field: ComponentSchemaField) => {
     const value = settings[field.name];
-    const onChange = (val: any) => setSettings({...settings, [field.name]: val});
+    const onChange = (val: any) =>
+      setSettings({...settings, [field.name]: val});
 
     return (
       <div key={field.name} className="max-w-2xl">
@@ -50,26 +52,26 @@ export function PluginSettingsPage() {
           {field.label}
         </label>
         {field.type === 'text' && (
-          <input 
-            type="text" 
-            value={value || ''} 
+          <input
+            type="text"
+            value={value || ''}
             onChange={e => onChange(e.target.value)}
             className="w-full bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-800 rounded-2xl px-6 py-4 text-sm outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 dark:text-white transition-all shadow-sm"
           />
         )}
         {field.type === 'color' && (
           <div className="flex items-center space-x-4">
-            <input 
-              type="color" 
-              value={value || '#000000'} 
-              onChange={e => onChange(e.target.value)} 
-              className="w-16 h-16 rounded-2xl cursor-pointer p-1 bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-800 shadow-sm" 
+            <input
+              type="color"
+              value={value || '#000000'}
+              onChange={e => onChange(e.target.value)}
+              className="w-16 h-16 rounded-2xl cursor-pointer p-1 bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-800 shadow-sm"
             />
-            <input 
-              type="text" 
-              value={value || '#000000'} 
-              onChange={e => onChange(e.target.value)} 
-              className="flex-1 bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-800 rounded-2xl px-6 py-4 text-sm font-mono dark:text-white outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm" 
+            <input
+              type="text"
+              value={value || '#000000'}
+              onChange={e => onChange(e.target.value)}
+              className="flex-1 bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-800 rounded-2xl px-6 py-4 text-sm font-mono dark:text-white outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm"
             />
           </div>
         )}
@@ -83,7 +85,11 @@ export function PluginSettingsPage() {
   };
 
   if (loading) {
-    return <div className="p-8 animate-pulse text-gray-400 font-black uppercase tracking-widest text-xs">Accessing plugin core...</div>;
+    return (
+      <div className="p-8 animate-pulse text-gray-400 font-black uppercase tracking-widest text-xs">
+        Accessing plugin core...
+      </div>
+    );
   }
 
   const schema = name ? getSettingsSchema(name) : undefined;
@@ -93,19 +99,32 @@ export function PluginSettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Link 
+          <Link
             to="/admin/plugins"
             className="p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 text-gray-400 hover:text-indigo-500 transition-colors shadow-sm"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
           </Link>
           <div>
             <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
-              {name} <span className="text-gray-300 dark:text-zinc-700">/</span> Settings
+              {name} <span className="text-gray-300 dark:text-zinc-700">/</span>{' '}
+              Settings
             </h1>
-            <p className="text-sm text-gray-400 font-medium">Manage global configuration for {name}</p>
+            <p className="text-sm text-gray-400 font-medium">
+              Manage global configuration for {name}
+            </p>
           </div>
         </div>
 
@@ -117,8 +136,18 @@ export function PluginSettingsPage() {
           {isSaving ? (
             <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
           ) : (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M5 13l4 4L19 7"
+              />
             </svg>
           )}
           <span>{isSaving ? 'Saving...' : 'Save Configuration'}</span>
@@ -129,7 +158,9 @@ export function PluginSettingsPage() {
       <div className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-gray-100 dark:border-zinc-800 p-12 shadow-sm">
         {!schema || schema.length === 0 ? (
           <div className="py-20 text-center">
-            <p className="text-gray-400 font-bold uppercase text-xs">This plugin does not have any configurable settings.</p>
+            <p className="text-gray-400 font-bold uppercase text-xs">
+              This plugin does not have any configurable settings.
+            </p>
           </div>
         ) : (
           <form onSubmit={handleSave} className="space-y-10">

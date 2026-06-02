@@ -1,8 +1,9 @@
 import {Injectable, NotFoundException} from '@nestjs/common';
+
 import {Page} from '../database/entities/page.entity';
 import {PageRepository} from '../database/repositories/page.repository';
-import {PageComponentRepository} from '../database/repositories/page-component.repository';
 import {PageComponent} from '../database/entities/page-component.entity';
+import {PageComponentRepository} from '../database/repositories/page-component.repository';
 
 @Injectable()
 export class PageService {
@@ -42,12 +43,12 @@ export class PageService {
     Object.assign(page, data);
     await this.updatePath(page);
     const updated = await this.pageRepository.save(page);
-    
+
     // If parent or slug changed, update children paths recursively
     if (data.parentId !== undefined || data.slug !== undefined) {
       await this.updateChildrenPaths(updated);
     }
-    
+
     return updated;
   }
 
@@ -55,7 +56,10 @@ export class PageService {
     await this.pageRepository.deleteOne(id);
   }
 
-  async addComponent(pageId: number, data: Partial<PageComponent>): Promise<PageComponent> {
+  async addComponent(
+    pageId: number,
+    data: Partial<PageComponent>
+  ): Promise<PageComponent> {
     const page = await this.findOne(pageId);
     const component = this.pageComponentRepository.create({
       ...data,
@@ -64,7 +68,10 @@ export class PageService {
     return this.pageComponentRepository.save(component);
   }
 
-  async updateComponent(id: number, data: Partial<PageComponent>): Promise<PageComponent> {
+  async updateComponent(
+    id: number,
+    data: Partial<PageComponent>
+  ): Promise<PageComponent> {
     const component = await this.pageComponentRepository.findById(id);
     if (!component) {
       throw new NotFoundException(`Component with ID ${id} not found`);
@@ -77,7 +84,10 @@ export class PageService {
     await this.pageComponentRepository.deleteOne(id);
   }
 
-  async reorderComponents(pageId: number, componentIds: number[]): Promise<void> {
+  async reorderComponents(
+    pageId: number,
+    componentIds: number[]
+  ): Promise<void> {
     await Promise.all(
       componentIds.map((id, index) =>
         this.pageComponentRepository.update(id, {displayOrder: index})
@@ -92,7 +102,7 @@ export class PageService {
       .addSelect('COUNT(*)', 'usageCount')
       .groupBy('comp.pluginName')
       .getRawMany();
-    
+
     return result.map(r => ({
       name: r.name,
       usageCount: parseInt(r.usageCount),
@@ -113,7 +123,9 @@ export class PageService {
   }
 
   private async updateChildrenPaths(page: Page): Promise<void> {
-    const children = await this.pageRepository.find({where: {parentId: page.id}});
+    const children = await this.pageRepository.find({
+      where: {parentId: page.id},
+    });
     for (const child of children) {
       await this.updatePath(child);
       const updatedChild = await this.pageRepository.save(child);

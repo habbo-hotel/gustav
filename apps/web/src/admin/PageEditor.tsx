@@ -1,7 +1,16 @@
-import React, {useState, useEffect, useMemo} from 'react';
-import {useParams, useNavigate} from 'react-router-dom';
-import {PageWire, PageComponentWire, PageStatus} from '@gustav/types';
+import {CSS} from '@dnd-kit/utilities';
 import {corePlugin} from '@gustav/core-plugin';
+import {useParams, useNavigate} from 'react-router-dom';
+import React, {useState, useEffect, useMemo} from 'react';
+import {restrictToVerticalAxis} from '@dnd-kit/modifiers';
+import {PageWire, PageComponentWire, PageStatus} from '@gustav/types';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
 import {
   DndContext,
   closestCenter,
@@ -14,15 +23,6 @@ import {
   DragOverlay,
   useDraggable,
 } from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-} from '@dnd-kit/sortable';
-import {CSS} from '@dnd-kit/utilities';
-import {restrictToVerticalAxis} from '@dnd-kit/modifiers';
 
 import {pageSdk} from '../sdk';
 
@@ -36,17 +36,20 @@ const DraggableLibraryComponent: React.FC<DraggableLibraryComponentProps> = ({
   component,
   onAdd,
 }) => {
-  const {attributes, listeners, setNodeRef, transform, isDragging} = useDraggable({
-    id: `library-${component.name}`,
-    data: {
-      type: 'library',
-      componentName: component.name,
-    },
-  });
+  const {attributes, listeners, setNodeRef, transform, isDragging} =
+    useDraggable({
+      id: `library-${component.name}`,
+      data: {
+        type: 'library',
+        componentName: component.name,
+      },
+    });
 
-  const style = transform ? {
-    transform: CSS.Translate.toString(transform),
-  } : undefined;
+  const style = transform
+    ? {
+        transform: CSS.Translate.toString(transform),
+      }
+    : undefined;
 
   return (
     <div
@@ -88,14 +91,8 @@ const SortableComponent: React.FC<SortableComponentProps> = ({
   onInlinePropChange,
   isPreview,
 }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({id, disabled: isPreview});
+  const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
+    useSortable({id, disabled: isPreview});
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -106,8 +103,14 @@ const SortableComponent: React.FC<SortableComponentProps> = ({
   const pluginComponent = corePlugin.components.find(
     c => c.name === component.componentName
   );
-  
-  const Comp = pluginComponent?.component || (() => <div className="p-4 bg-red-100 text-red-600">Component Not Found: {component.componentName}</div>);
+
+  const Comp =
+    pluginComponent?.component ||
+    (() => (
+      <div className="p-4 bg-red-100 text-red-600">
+        Component Not Found: {component.componentName}
+      </div>
+    ));
   const props = JSON.parse(component.props || '{}');
 
   return (
@@ -117,42 +120,82 @@ const SortableComponent: React.FC<SortableComponentProps> = ({
       className={`relative group transition-all ${
         isPreview ? '' : 'border-2 rounded-xl mb-4'
       } ${
-        isDragging ? 'border-indigo-500 bg-indigo-50 shadow-xl opacity-50 scale-[1.02]' : (isPreview ? 'border-transparent' : 'border-transparent hover:border-indigo-300')
+        isDragging
+          ? 'border-indigo-500 bg-indigo-50 shadow-xl opacity-50 scale-[1.02]'
+          : isPreview
+            ? 'border-transparent'
+            : 'border-transparent hover:border-indigo-300'
       }`}
     >
       {/* Overlay controls */}
       {!isPreview && (
         <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-          <div 
-            {...attributes} 
+          <div
+            {...attributes}
             {...listeners}
             className="p-1.5 bg-white shadow-sm border border-gray-200 rounded-lg cursor-grab active:cursor-grabbing hover:bg-gray-50 text-gray-400"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9h8m-8 4h8" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M8 9h8m-8 4h8"
+              />
             </svg>
           </div>
           <button
             onClick={onEdit}
             className="p-1.5 bg-white shadow-sm border border-gray-200 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 text-gray-400"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+              />
             </svg>
           </button>
           <button
             onClick={onRemove}
             className="p-1.5 bg-white shadow-sm border border-gray-200 rounded-lg hover:bg-rose-50 hover:text-rose-600 text-gray-400"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
             </svg>
           </button>
         </div>
       )}
 
-      <div className={`transition-all ${isPreview ? '' : 'p-4 bg-white dark:bg-zinc-900 rounded-xl'}`}>
-        <Comp {...props} editable={!isPreview} onPropChange={onInlinePropChange} />
+      <div
+        className={`transition-all ${isPreview ? '' : 'p-4 bg-white dark:bg-zinc-900 rounded-xl'}`}
+      >
+        <Comp
+          {...props}
+          editable={!isPreview}
+          onPropChange={onInlinePropChange}
+        />
       </div>
     </div>
   );
@@ -168,26 +211,47 @@ interface DrawerProps {
   isBlocking?: boolean;
 }
 
-const Drawer: React.FC<DrawerProps> = ({ isOpen, onClose, title, children, side = 'right', isBlocking = true }) => {
+const Drawer: React.FC<DrawerProps> = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  side = 'right',
+  isBlocking = true,
+}) => {
   if (!isOpen) return null;
 
   const content = (
-    <div className={`fixed inset-y-0 ${side === 'right' ? 'right-0' : 'left-0'} max-w-md w-full flex z-50`}>
-      <div className={`w-full bg-white dark:bg-zinc-900 shadow-2xl flex flex-col ${side === 'right' ? 'border-l' : 'border-r'} dark:border-zinc-800 animate-in ${side === 'right' ? 'slide-in-from-right' : 'slide-in-from-left'} duration-300`}>
+    <div
+      className={`fixed inset-y-0 ${side === 'right' ? 'right-0' : 'left-0'} max-w-md w-full flex z-50`}
+    >
+      <div
+        className={`w-full bg-white dark:bg-zinc-900 shadow-2xl flex flex-col ${side === 'right' ? 'border-l' : 'border-r'} dark:border-zinc-800 animate-in ${side === 'right' ? 'slide-in-from-right' : 'slide-in-from-left'} duration-300`}
+      >
         <div className="p-6 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
-          <h2 className="text-xl font-black dark:text-white tracking-tight uppercase">{title}</h2>
-          <button 
+          <h2 className="text-xl font-black dark:text-white tracking-tight uppercase">
+            {title}
+          </h2>
+          <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl text-gray-400 transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-6">
-          {children}
-        </div>
+        <div className="flex-1 overflow-y-auto p-6">{children}</div>
       </div>
     </div>
   );
@@ -196,9 +260,9 @@ const Drawer: React.FC<DrawerProps> = ({ isOpen, onClose, title, children, side 
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
-      <div 
-        className="absolute inset-0 bg-zinc-950/20 backdrop-blur-sm transition-opacity" 
-        onClick={onClose} 
+      <div
+        className="absolute inset-0 bg-zinc-950/20 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
       />
       {content}
     </div>
@@ -211,14 +275,20 @@ export function PageEditor() {
   const navigate = useNavigate();
   const [page, setPage] = useState<PageWire | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Drag States
   const [activeId, setActiveId] = useState<string | number | null>(null);
-  const [activeType, setActiveType] = useState<'library' | 'canvas' | null>(null);
+  const [activeType, setActiveType] = useState<'library' | 'canvas' | null>(
+    null
+  );
 
   // Drawer States
-  const [activeDrawer, setActiveDrawer] = useState<'settings' | 'properties' | null>(null);
-  const [selectedComponentId, setSelectedComponentId] = useState<number | null>(null);
+  const [activeDrawer, setActiveDrawer] = useState<
+    'settings' | 'properties' | null
+  >(null);
+  const [selectedComponentId, setSelectedComponentId] = useState<number | null>(
+    null
+  );
   const [isDirty, setIsDirty] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
 
@@ -270,9 +340,10 @@ export function PageEditor() {
       if (activeType === 'library') {
         const componentName = active.data.current?.componentName;
         const overId = over.id;
-        
+
         // Find where to insert
-        const overIndex = page?.components?.findIndex(c => c.id === overId) ?? -1;
+        const overIndex =
+          page?.components?.findIndex(c => c.id === overId) ?? -1;
         await handleAddComponent(componentName, overIndex);
       } else if (page?.components) {
         const oldIndex = page.components.findIndex(c => c.id === active.id);
@@ -282,11 +353,16 @@ export function PageEditor() {
         setPage({...page, components: newComponents});
 
         try {
-          await pageSdk.reorderComponents(page.id, newComponents.map(c => c.id));
+          await pageSdk.reorderComponents(
+            page.id,
+            newComponents.map(c => c.id)
+          );
           setIsDirty(true);
           if (page.status === PageStatus.PUBLISHED) {
             await pageSdk.update(page.id, {status: PageStatus.DRAFT});
-            setPage(prev => prev ? {...prev, status: PageStatus.DRAFT} : null);
+            setPage(prev =>
+              prev ? {...prev, status: PageStatus.DRAFT} : null
+            );
           }
         } catch (err) {
           alert('Failed to save order');
@@ -296,9 +372,14 @@ export function PageEditor() {
     }
   };
 
-  const handleAddComponent = async (componentName: string, atIndex?: number) => {
+  const handleAddComponent = async (
+    componentName: string,
+    atIndex?: number
+  ) => {
     if (!page) return;
-    const pluginComp = corePlugin.components.find(c => c.name === componentName);
+    const pluginComp = corePlugin.components.find(
+      c => c.name === componentName
+    );
     if (!pluginComp) return;
 
     try {
@@ -306,9 +387,10 @@ export function PageEditor() {
         pluginName: corePlugin.name,
         componentName,
         props: JSON.stringify(pluginComp.defaultProps),
-        displayOrder: atIndex !== undefined ? atIndex : (page.components?.length || 0),
+        displayOrder:
+          atIndex !== undefined ? atIndex : page.components?.length || 0,
       });
-      
+
       setIsDirty(true);
       if (page.status === PageStatus.PUBLISHED) {
         await pageSdk.update(page.id, {status: PageStatus.DRAFT});
@@ -357,7 +439,10 @@ export function PageEditor() {
     if (!selectedComponentId) return;
     try {
       // Validate JSON
-      const propsToSave = typeof componentProps === 'string' ? componentProps : JSON.stringify(componentProps);
+      const propsToSave =
+        typeof componentProps === 'string'
+          ? componentProps
+          : JSON.stringify(componentProps);
       JSON.parse(propsToSave);
       await pageSdk.updateComponent(selectedComponentId, {props: propsToSave});
       setIsDirty(true);
@@ -367,13 +452,20 @@ export function PageEditor() {
       setActiveDrawer(null);
       if (page) fetchPage(page.id);
     } catch (err) {
-      alert(err instanceof Error ? 'Invalid Data: ' + err.message : 'Failed to update component');
+      alert(
+        err instanceof Error
+          ? 'Invalid Data: ' + err.message
+          : 'Failed to update component'
+      );
     }
   };
 
   const handlePropChange = (name: string, value: any) => {
     try {
-      const currentProps = typeof componentProps === 'string' ? JSON.parse(componentProps) : componentProps;
+      const currentProps =
+        typeof componentProps === 'string'
+          ? JSON.parse(componentProps)
+          : componentProps;
       const newProps = {...currentProps, [name]: value};
       setComponentProps(JSON.stringify(newProps, null, 2));
     } catch {
@@ -400,7 +492,7 @@ export function PageEditor() {
           <input
             type="text"
             value={value || ''}
-            onChange={(e) => handlePropChange(field.name, e.target.value)}
+            onChange={e => handlePropChange(field.name, e.target.value)}
             className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none dark:text-white transition-all"
           />
         )}
@@ -408,14 +500,14 @@ export function PageEditor() {
           <textarea
             value={value || ''}
             rows={4}
-            onChange={(e) => handlePropChange(field.name, e.target.value)}
+            onChange={e => handlePropChange(field.name, e.target.value)}
             className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none dark:text-white transition-all"
           />
         )}
         {field.type === 'select' && (
           <select
             value={value || ''}
-            onChange={(e) => handlePropChange(field.name, e.target.value)}
+            onChange={e => handlePropChange(field.name, e.target.value)}
             className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none dark:text-white transition-all appearance-none"
           >
             {field.options.map((opt: any) => (
@@ -429,7 +521,9 @@ export function PageEditor() {
           <input
             type="number"
             value={value || 0}
-            onChange={(e) => handlePropChange(field.name, parseFloat(e.target.value))}
+            onChange={e =>
+              handlePropChange(field.name, parseFloat(e.target.value))
+            }
             className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none dark:text-white transition-all"
           />
         )}
@@ -438,13 +532,13 @@ export function PageEditor() {
             <input
               type="color"
               value={value || '#000000'}
-              onChange={(e) => handlePropChange(field.name, e.target.value)}
+              onChange={e => handlePropChange(field.name, e.target.value)}
               className="w-12 h-12 rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 cursor-pointer p-1"
             />
             <input
               type="text"
               value={value || '#000000'}
-              onChange={(e) => handlePropChange(field.name, e.target.value)}
+              onChange={e => handlePropChange(field.name, e.target.value)}
               className="flex-1 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-mono focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none dark:text-white transition-all"
             />
           </div>
@@ -455,10 +549,13 @@ export function PageEditor() {
               type="checkbox"
               id={`field-${field.name}`}
               checked={!!value}
-              onChange={(e) => handlePropChange(field.name, e.target.checked)}
+              onChange={e => handlePropChange(field.name, e.target.checked)}
               className="w-5 h-5 rounded-lg border-gray-200 dark:border-zinc-700 text-indigo-500 focus:ring-indigo-500/20 transition-all cursor-pointer"
             />
-            <label htmlFor={`field-${field.name}`} className="text-sm font-bold text-gray-600 dark:text-zinc-400 cursor-pointer">
+            <label
+              htmlFor={`field-${field.name}`}
+              className="text-sm font-bold text-gray-600 dark:text-zinc-400 cursor-pointer"
+            >
               Enable
             </label>
           </div>
@@ -481,7 +578,11 @@ export function PageEditor() {
     }
   };
 
-  const handleInlinePropChange = async (compId: number, name: string, value: any) => {
+  const handleInlinePropChange = async (
+    compId: number,
+    name: string,
+    value: any
+  ) => {
     if (!page) return;
     const comp = page.components?.find(c => c.id === compId);
     if (!comp) return;
@@ -507,26 +608,45 @@ export function PageEditor() {
 
   const pluginSchema = useMemo(() => {
     if (!selectedComponent) return null;
-    return corePlugin.components.find(c => c.name === selectedComponent.componentName)?.schema;
+    return corePlugin.components.find(
+      c => c.name === selectedComponent.componentName
+    )?.schema;
   }, [selectedComponent]);
 
-  if (loading || !page) return <div className="p-8 animate-pulse text-gray-400 font-bold uppercase tracking-widest text-sm">Initializing visual builder...</div>;
+  if (loading || !page)
+    return (
+      <div className="p-8 animate-pulse text-gray-400 font-bold uppercase tracking-widest text-sm">
+        Initializing visual builder...
+      </div>
+    );
 
   return (
-    <div className={`min-h-[calc(100vh-12rem)] flex flex-col ${isPreview ? 'bg-white dark:bg-zinc-950 -mx-6 -my-8' : ''}`}>
+    <div
+      className={`min-h-[calc(100vh-12rem)] flex flex-col ${isPreview ? 'bg-white dark:bg-zinc-950 -mx-6 -my-8' : ''}`}
+    >
       {/* Page Toolbar */}
       {!isPreview && (
         <div className="flex items-center justify-between mb-8 bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm">
           <div className="flex items-center space-x-4">
-            <button 
+            <button
               onClick={() => navigate('/admin/pages')}
               className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl text-gray-400 transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
               </svg>
             </button>
-            <div 
+            <div
               className="cursor-pointer group"
               onClick={() => setActiveDrawer('settings')}
             >
@@ -538,8 +658,18 @@ export function PageEditor() {
                     Draft
                   </div>
                 )}
-                <svg className="w-4 h-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                <svg
+                  className="w-4 h-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                  />
                 </svg>
               </h1>
               <p className="text-xs font-mono text-gray-400">{page.path}</p>
@@ -552,9 +682,24 @@ export function PageEditor() {
               className="p-3 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-all shadow-sm"
               title="Live Preview"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
               </svg>
             </button>
 
@@ -565,8 +710,18 @@ export function PageEditor() {
               className="p-3 bg-white dark:bg-zinc-800 text-gray-600 dark:text-gray-300 rounded-xl border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all shadow-sm"
               title="Public Link"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
               </svg>
             </a>
 
@@ -576,8 +731,18 @@ export function PageEditor() {
                 className="p-3 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/25 hover:scale-110 active:scale-95 transition-all"
                 title="Publish Changes"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </button>
             )}
@@ -590,26 +755,55 @@ export function PageEditor() {
           onClick={() => setIsPreview(false)}
           className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-zinc-900 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center space-x-3 border border-zinc-700"
         >
-          <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          <svg
+            className="w-5 h-5 text-amber-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+            />
           </svg>
           <span>Exit Preview Mode</span>
         </button>
       )}
 
       {/* Main Content Area */}
-      <div className={`flex-1 flex gap-8 transition-all ${isPreview ? 'p-0' : ''}`}>
+      <div
+        className={`flex-1 flex gap-8 transition-all ${isPreview ? 'p-0' : ''}`}
+      >
         {/* Main Canvas Area */}
-        <div className={`flex-1 transition-all ${isPreview ? 'p-0 border-none' : 'bg-gray-50/50 dark:bg-zinc-950 rounded-3xl border-2 border-dashed border-gray-200 dark:border-zinc-800 p-8 min-h-[500px]'}`}>
-          {(!page.components || page.components.length === 0) ? (
+        <div
+          className={`flex-1 transition-all ${isPreview ? 'p-0 border-none' : 'bg-gray-50/50 dark:bg-zinc-950 rounded-3xl border-2 border-dashed border-gray-200 dark:border-zinc-800 p-8 min-h-[500px]'}`}
+        >
+          {!page.components || page.components.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center py-20">
               <div className="w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-3xl flex items-center justify-center text-gray-300 dark:text-zinc-600 mb-6">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                <svg
+                  className="w-8 h-8"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  />
                 </svg>
               </div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2 uppercase tracking-tight">Empty Canvas</h2>
-              <p className="text-sm text-gray-400 max-w-xs mx-auto font-medium">Your page has no components yet. Select a component from the library on the right to start building.</p>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2 uppercase tracking-tight">
+                Empty Canvas
+              </h2>
+              <p className="text-sm text-gray-400 max-w-xs mx-auto font-medium">
+                Your page has no components yet. Select a component from the
+                library on the right to start building.
+              </p>
             </div>
           ) : (
             <DndContext
@@ -623,44 +817,60 @@ export function PageEditor() {
                 items={page.components.map(c => c.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {page.components.map((component) => (
+                {page.components.map(component => (
                   <SortableComponent
                     key={component.id}
                     id={component.id}
                     component={component}
-                    onEdit={() => !isPreview && handleOpenProperties(component.id)}
-                    onRemove={() => !isPreview && handleRemoveComponent(component.id)}
-                    onInlinePropChange={(name, value) => !isPreview && handleInlinePropChange(component.id, name, value)}
+                    onEdit={() =>
+                      !isPreview && handleOpenProperties(component.id)
+                    }
+                    onRemove={() =>
+                      !isPreview && handleRemoveComponent(component.id)
+                    }
+                    onInlinePropChange={(name, value) =>
+                      !isPreview &&
+                      handleInlinePropChange(component.id, name, value)
+                    }
                     isPreview={isPreview}
                   />
                 ))}
               </SortableContext>
 
               <DragOverlay>
-                {activeId && activeType === 'canvas' && page.components ? (
-                   (() => {
-                     const comp = page.components.find(c => c.id === activeId);
-                     if (!comp) return null;
-                     const pluginComp = corePlugin.components.find(c => c.name === comp.componentName);
-                     const Comp = pluginComp?.component || (() => null);
-                     const props = JSON.parse(comp.props || '{}');
-                     return (
-                       <div className="p-4 bg-white dark:bg-zinc-900 rounded-xl border-2 border-indigo-500 shadow-2xl opacity-90 scale-[1.02] w-full">
-                         <Comp {...props} />
-                       </div>
-                     );
-                   })()
-                ) : activeId && activeType === 'library' ? (
-                  (() => {
-                    const name = (activeId as string).replace('library-', '');
-                    return (
-                      <div className="w-80 p-6 bg-white dark:bg-zinc-900 rounded-2xl border-2 border-indigo-500 shadow-2xl flex flex-col items-start">
-                        <span className="font-black uppercase text-base tracking-tighter text-indigo-600 dark:text-indigo-400">{name}</span>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">Dropping Block...</p>
-                      </div>
-                    );
-                  })()
-                ) : null}
+                {activeId && activeType === 'canvas' && page.components
+                  ? (() => {
+                      const comp = page.components.find(c => c.id === activeId);
+                      if (!comp) return null;
+                      const pluginComp = corePlugin.components.find(
+                        c => c.name === comp.componentName
+                      );
+                      const Comp = pluginComp?.component || (() => null);
+                      const props = JSON.parse(comp.props || '{}');
+                      return (
+                        <div className="p-4 bg-white dark:bg-zinc-900 rounded-xl border-2 border-indigo-500 shadow-2xl opacity-90 scale-[1.02] w-full">
+                          <Comp {...props} />
+                        </div>
+                      );
+                    })()
+                  : activeId && activeType === 'library'
+                    ? (() => {
+                        const name = (activeId as string).replace(
+                          'library-',
+                          ''
+                        );
+                        return (
+                          <div className="w-80 p-6 bg-white dark:bg-zinc-900 rounded-2xl border-2 border-indigo-500 shadow-2xl flex flex-col items-start">
+                            <span className="font-black uppercase text-base tracking-tighter text-indigo-600 dark:text-indigo-400">
+                              {name}
+                            </span>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">
+                              Dropping Block...
+                            </p>
+                          </div>
+                        );
+                      })()
+                    : null}
               </DragOverlay>
             </DndContext>
           )}
@@ -670,13 +880,17 @@ export function PageEditor() {
         {!isPreview && (
           <div className="w-80 bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 flex flex-col h-fit sticky top-24 shadow-sm overflow-hidden">
             <div className="p-6 border-b border-gray-100 dark:border-zinc-800">
-              <h2 className="text-sm font-black dark:text-white tracking-tight uppercase">Component Library</h2>
-              <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">Available Blocks</p>
+              <h2 className="text-sm font-black dark:text-white tracking-tight uppercase">
+                Component Library
+              </h2>
+              <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">
+                Available Blocks
+              </p>
             </div>
             <div className="p-4 space-y-3 max-h-[calc(100vh-20rem)] overflow-y-auto">
-              <DndContext 
-                sensors={sensors} 
-                onDragStart={handleDragStart} 
+              <DndContext
+                sensors={sensors}
+                onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
               >
                 {corePlugin.components.map(comp => (
@@ -700,31 +914,46 @@ export function PageEditor() {
       >
         <form onSubmit={handleUpdatePage} className="space-y-6">
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Title</label>
+            <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">
+              Title
+            </label>
             <input
               type="text"
               required
               value={pageSettings.title || ''}
-              onChange={e => setPageSettings({...pageSettings, title: e.target.value})}
+              onChange={e =>
+                setPageSettings({...pageSettings, title: e.target.value})
+              }
               className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none dark:text-white transition-all"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Slug</label>
+            <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">
+              Slug
+            </label>
             <input
               type="text"
               required
               value={pageSettings.slug || ''}
-              onChange={e => setPageSettings({...pageSettings, slug: e.target.value.toLowerCase().replace(/\s+/g, '-')})}
+              onChange={e =>
+                setPageSettings({
+                  ...pageSettings,
+                  slug: e.target.value.toLowerCase().replace(/\s+/g, '-'),
+                })
+              }
               className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none dark:text-white transition-all font-mono"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Status</label>
+            <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">
+              Status
+            </label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => setPageSettings({...pageSettings, status: PageStatus.DRAFT})}
+                onClick={() =>
+                  setPageSettings({...pageSettings, status: PageStatus.DRAFT})
+                }
                 className={`py-3 rounded-xl text-xs font-black uppercase border transition-all ${
                   pageSettings.status === PageStatus.DRAFT
                     ? 'bg-amber-500/10 border-amber-500/50 text-amber-600'
@@ -735,7 +964,12 @@ export function PageEditor() {
               </button>
               <button
                 type="button"
-                onClick={() => setPageSettings({...pageSettings, status: PageStatus.PUBLISHED})}
+                onClick={() =>
+                  setPageSettings({
+                    ...pageSettings,
+                    status: PageStatus.PUBLISHED,
+                  })
+                }
                 className={`py-3 rounded-xl text-xs font-black uppercase border transition-all ${
                   pageSettings.status === PageStatus.PUBLISHED
                     ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-600'
@@ -762,8 +996,10 @@ export function PageEditor() {
         title={`${selectedComponent?.componentName} Properties`}
       >
         <div className="mb-6 flex items-center justify-between">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Configuration</p>
-          <button 
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            Configuration
+          </p>
+          <button
             onClick={() => {
               const el = document.getElementById('json-editor-toggle');
               if (el) el.click();
@@ -780,10 +1016,23 @@ export function PageEditor() {
           </div>
 
           <details className="group border-t border-gray-100 dark:border-zinc-800 pt-6">
-            <summary id="json-editor-toggle" className="list-none cursor-pointer flex items-center justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-indigo-500 transition-colors">
+            <summary
+              id="json-editor-toggle"
+              className="list-none cursor-pointer flex items-center justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-indigo-500 transition-colors"
+            >
               <span>Advanced JSON Editor</span>
-              <svg className="w-4 h-4 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              <svg
+                className="w-4 h-4 group-open:rotate-180 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </summary>
             <div className="mt-4">
@@ -795,7 +1044,7 @@ export function PageEditor() {
               />
             </div>
           </details>
-          
+
           <button
             type="submit"
             className="w-full bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white font-bold py-4 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95"

@@ -24,18 +24,20 @@ export const Hero: React.FC<HeroProps> = ({
   };
 
   return (
-    <div 
+    <div
       className="gustav-hero p-12 rounded-lg text-center my-8"
-      style={{ backgroundColor: bgColor }}
+      style={{backgroundColor: bgColor}}
     >
       <h1
         contentEditable={editable}
         suppressContentEditableWarning={editable}
         onBlur={handleBlur('title')}
         className={`text-4xl font-bold outline-none ${
-          editable ? 'hover:bg-black/5 focus:bg-black/5 rounded transition-colors' : ''
+          editable
+            ? 'hover:bg-black/5 focus:bg-black/5 rounded transition-colors'
+            : ''
         }`}
-        style={{ color: textColor }}
+        style={{color: textColor}}
       >
         {title}
       </h1>
@@ -44,9 +46,11 @@ export const Hero: React.FC<HeroProps> = ({
         suppressContentEditableWarning={editable}
         onBlur={handleBlur('subtitle')}
         className={`text-xl mt-4 outline-none ${
-          editable ? 'hover:bg-black/5 focus:bg-black/5 rounded transition-colors' : ''
+          editable
+            ? 'hover:bg-black/5 focus:bg-black/5 rounded transition-colors'
+            : ''
         }`}
-        style={{ color: textColor, opacity: 0.8 }}
+        style={{color: textColor, opacity: 0.8}}
       >
         {subtitle}
       </p>

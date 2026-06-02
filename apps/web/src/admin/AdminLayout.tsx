@@ -96,7 +96,11 @@ export function AdminLayout() {
         <div className="px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-12">
             <Link to="/" className="flex items-center space-x-2">
-              <img src="/gustav.png" alt="Gustav Logo" className="w-12 h-12 rounded-lg object-contain" />
+              <img
+                src="/gustav.png"
+                alt="Gustav Logo"
+                className="w-12 h-12 rounded-lg object-contain"
+              />
               <span className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
                 Gustav Admin
               </span>

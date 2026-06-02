@@ -24,9 +24,11 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const variantClasses = {
-    primary: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/20',
+    primary:
+      'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/20',
     secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200',
-    outline: 'border-2 border-slate-200 text-slate-600 hover:border-indigo-500 hover:text-indigo-600',
+    outline:
+      'border-2 border-slate-200 text-slate-600 hover:border-indigo-500 hover:text-indigo-600',
   };
 
   const sizeClasses = {

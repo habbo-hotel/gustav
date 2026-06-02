@@ -9,9 +9,10 @@ import {
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
+
 import {PageService} from './page.service';
-import {IsSuperAdmin} from '../auth/is-super-admin.decorator';
 import {Page} from '../database/entities/page.entity';
+import {IsSuperAdmin} from '../auth/is-super-admin.decorator';
 import {PageComponent} from '../database/entities/page-component.entity';
 
 @Controller('pages')
@@ -47,7 +48,10 @@ export class PageController {
 
   @Put(':id')
   @IsSuperAdmin()
-  async update(@Param('id', ParseIntPipe) id: number, @Body() data: Partial<Page>) {
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() data: Partial<Page>
+  ) {
     return this.pageService.update(id, data);
   }
 

@@ -23,7 +23,9 @@ export const RichText: React.FC<RichTextProps> = ({
       suppressContentEditableWarning={editable}
       onBlur={handleBlur}
       className={`gustav-rich-text py-4 outline-none ${
-        editable ? 'hover:bg-indigo-50/50 focus:bg-indigo-50/50 rounded transition-colors cursor-text' : ''
+        editable
+          ? 'hover:bg-indigo-50/50 focus:bg-indigo-50/50 rounded transition-colors cursor-text'
+          : ''
       }`}
       dangerouslySetInnerHTML={{__html: content}}
     />

@@ -1,4 +1,5 @@
 import {Controller, Get, Post, Body, Param} from '@nestjs/common';
+
 import {PluginService} from './plugin.service';
 import {IsSuperAdmin} from '../auth/is-super-admin.decorator';
 
@@ -13,7 +14,10 @@ export class PluginController {
 
   @Post(':name/settings')
   @IsSuperAdmin()
-  async updateSettings(@Param('name') name: string, @Body() settings: Record<string, any>) {
+  async updateSettings(
+    @Param('name') name: string,
+    @Body() settings: Record<string, any>
+  ) {
     return this.pluginService.updateSettings(name, settings);
   }
 }

@@ -7,11 +7,11 @@ import {PageRenderer} from './PageRenderer';
 import {PublicLayout} from './PublicLayout';
 import {AdminUsers} from './admin/AdminUsers';
 import {AdminPages} from './admin/AdminPages';
-import {AdminPlugins} from './admin/AdminPlugins';
-import {PluginSettingsPage} from './admin/PluginSettingsPage';
 import {PageEditor} from './admin/PageEditor';
 import {AdminLayout} from './admin/AdminLayout';
+import {AdminPlugins} from './admin/AdminPlugins';
 import {AdminDashboard} from './admin/AdminDashboard';
+import {PluginSettingsPage} from './admin/PluginSettingsPage';
 
 function App() {
   const {user} = useAuth();
@@ -52,9 +52,17 @@ function App() {
                 <Navigate to="/me" replace />
               ) : (
                 <div className="p-20 text-center">
-                  <h1 className="text-6xl font-black uppercase tracking-tighter mb-4 text-gray-900 dark:text-white">Welcome to Gustav</h1>
-                  <p className="text-xl text-gray-500 font-medium mb-12">The next generation headless CMS with a professional visual builder.</p>
-                  <Link to="/login" className="bg-indigo-600 text-white px-10 py-5 rounded-2xl font-black uppercase text-sm shadow-2xl shadow-indigo-500/30 hover:scale-105 active:scale-95 transition-all inline-block">
+                  <h1 className="text-6xl font-black uppercase tracking-tighter mb-4 text-gray-900 dark:text-white">
+                    Welcome to Gustav
+                  </h1>
+                  <p className="text-xl text-gray-500 font-medium mb-12">
+                    The next generation headless CMS with a professional visual
+                    builder.
+                  </p>
+                  <Link
+                    to="/login"
+                    className="bg-indigo-600 text-white px-10 py-5 rounded-2xl font-black uppercase text-sm shadow-2xl shadow-indigo-500/30 hover:scale-105 active:scale-95 transition-all inline-block"
+                  >
                     Start Your Journey
                   </Link>
                 </div>

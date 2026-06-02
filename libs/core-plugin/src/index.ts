@@ -1,10 +1,10 @@
-import {ComponentDefinition, PluginDefinition} from './types';
-import {Heading} from './components/Heading';
-import {RichText} from './components/RichText';
-import {Button} from './components/Button';
-import {Image} from './components/Image';
 import {Hero} from './components/Hero';
+import {Image} from './components/Image';
+import {Button} from './components/Button';
+import {Heading} from './components/Heading';
 import {Divider} from './components/Divider';
+import {RichText} from './components/RichText';
+import {ComponentDefinition, PluginDefinition} from './types';
 
 export * from './types';
 export * from './components/RichText';

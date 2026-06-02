@@ -1,12 +1,5 @@
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  OneToMany,
-  Index,
-  JoinColumn,
-} from 'typeorm';
 import {PageWire, PageStatus} from '@gustav/types';
+import {Entity, Column, ManyToOne, OneToMany, Index, JoinColumn} from 'typeorm';
 
 import {BaseEntity} from './base.entity';
 import {PageComponent} from './page-component.entity';
@@ -34,14 +27,14 @@ export class Page extends BaseEntity implements PageWire {
   @Column({nullable: true})
   parentId?: number;
 
-  @ManyToOne(() => Page, (page) => page.children, {onDelete: 'SET NULL'})
+  @ManyToOne(() => Page, page => page.children, {onDelete: 'SET NULL'})
   @JoinColumn({name: 'parentId'})
   parent?: Page;
 
-  @OneToMany(() => Page, (page) => page.parent)
+  @OneToMany(() => Page, page => page.parent)
   children?: Page[];
 
-  @OneToMany(() => PageComponent, (component) => component.page, {
+  @OneToMany(() => PageComponent, component => component.page, {
     cascade: true,
   })
   components?: PageComponent[];
