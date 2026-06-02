@@ -1,3 +1,4 @@
+import {PageWire, PageComponentWire} from '@gustav/types';
 import {
   Controller,
   Get,
@@ -11,7 +12,6 @@ import {
 } from '@nestjs/common';
 
 import {PageService} from './page.service';
-import {Page} from '../database/entities/page.entity';
 import {IsSuperAdmin} from '../auth/is-super-admin.decorator';
 import {PageComponent} from '../database/entities/page-component.entity';
 
@@ -20,12 +20,12 @@ export class PageController {
   constructor(private readonly pageService: PageService) {}
 
   @Get()
-  async findAll() {
+  async findAll(): Promise<PageWire[]> {
     return this.pageService.findAll();
   }
 
   @Get('by-path')
-  async findByPath(@Query('path') path: string) {
+  async findByPath(@Query('path') path: string): Promise<PageWire> {
     return this.pageService.findByPath(path);
   }
 
@@ -36,13 +36,13 @@ export class PageController {
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<PageWire> {
     return this.pageService.findOne(id);
   }
 
   @Post()
   @IsSuperAdmin()
-  async create(@Body() data: Partial<Page>) {
+  async create(@Body() data: Partial<PageWire>): Promise<PageWire> {
     return this.pageService.create(data);
   }
 
@@ -50,9 +50,26 @@ export class PageController {
   @IsSuperAdmin()
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() data: Partial<Page>
-  ) {
+    @Body() data: Partial<PageWire>
+  ): Promise<PageWire> {
     return this.pageService.update(id, data);
+  }
+
+  @Get(':id/versions')
+  @IsSuperAdmin()
+  async findVersions(
+    @Param('id', ParseIntPipe) id: number
+  ): Promise<PageWire[]> {
+    return this.pageService.findVersions(id);
+  }
+
+  @Post(':id/revert/:versionId')
+  @IsSuperAdmin()
+  async revert(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('versionId', ParseIntPipe) versionId: number
+  ): Promise<PageWire> {
+    return this.pageService.revert(id, versionId);
   }
 
   @Delete(':id')
@@ -66,7 +83,7 @@ export class PageController {
   async addComponent(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: Partial<PageComponent>
-  ) {
+  ): Promise<PageComponentWire> {
     return this.pageService.addComponent(id, data);
   }
 
@@ -75,7 +92,7 @@ export class PageController {
   async updateComponent(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: Partial<PageComponent>
-  ) {
+  ): Promise<PageComponentWire> {
     return this.pageService.updateComponent(id, data);
   }
 

@@ -8,6 +8,7 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  NotFoundException,
 } from '@nestjs/common';
 
 import {UserService} from './user.service';
@@ -31,13 +32,15 @@ export class UserController {
   @IsSuperAdmin()
   @Get('list')
   async list(): Promise<UserWire[]> {
-    return this.userService.findAll() as any;
+    const users = await this.userService.findAll();
+    return users.map(user => this.userService.mapToWire(user));
   }
 
   @IsSuperAdmin()
   @Post('create')
   async create(@Body() input: CreateUserInput): Promise<UserWire> {
-    return this.userService.create(input) as any;
+    const user = await this.userService.create(input);
+    return this.userService.mapToWire(user);
   }
 
   @IsSuperAdmin()
@@ -56,6 +59,12 @@ export class UserController {
 
   @Get('find/:id')
   async findOne(@Param('id') id: string): Promise<UserWire> {
-    return this.userService.findOne(+id) as any;
+    const user = await this.userService.findOne(+id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return this.userService.mapToWire(user);
   }
+
+  // Remove private mapToWire method as it's now in UserService
 }

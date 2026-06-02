@@ -2,7 +2,6 @@ import {Injectable} from '@nestjs/common';
 import {RegisterInput, UserWire} from '@gustav/types';
 
 import {UserService} from '../user/user.service';
-import {User} from '../database/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -12,9 +11,7 @@ export class AuthService {
     const user = await this.userService.findByEmail(email, true);
     // Note: Use bcrypt in a real production application
     if (user && user.password === pass) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const {password, ...result} = user;
-      return result as UserWire;
+      return this.userService.mapToWire(user);
     }
     return null;
   }
@@ -23,7 +20,7 @@ export class AuthService {
     id: string;
     username: string;
     email: string;
-  }): Promise<User> {
+  }): Promise<UserWire> {
     let user = await this.userService.findByDiscordId(profile.id);
     if (!user) {
       user = await this.userService.create({
@@ -32,14 +29,14 @@ export class AuthService {
         email: profile.email,
       });
     }
-    return user;
+    return this.userService.mapToWire(user);
   }
 
   async register(userData: RegisterInput): Promise<UserWire> {
     // Note: Hash password in a real production application
     const user = await this.userService.create(userData);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const {password, ...result} = user;
-    return result as UserWire;
+    return this.userService.mapToWire(user);
   }
+
+  // Remove private mapToWire method as it's now in UserService
 }

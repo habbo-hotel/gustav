@@ -1,55 +1,235 @@
 import {Injectable, NotFoundException} from '@nestjs/common';
+import {PageComponentWire, PageStatus, PageWire} from '@gustav/types';
 
 import {Page} from '../database/entities/page.entity';
+import {PageVersion} from '../database/entities/page-version.entity';
 import {PageRepository} from '../database/repositories/page.repository';
 import {PageComponent} from '../database/entities/page-component.entity';
+import {PageVersionRepository} from '../database/repositories/page-version.repository';
 import {PageComponentRepository} from '../database/repositories/page-component.repository';
 
 @Injectable()
 export class PageService {
   constructor(
     private readonly pageRepository: PageRepository,
-    private readonly pageComponentRepository: PageComponentRepository
+    private readonly versionRepository: PageVersionRepository,
+    private readonly componentRepository: PageComponentRepository
   ) {}
 
-  async findAll(): Promise<Page[]> {
-    return this.pageRepository.findAll();
+  async findAll(): Promise<PageWire[]> {
+    const identities = await this.pageRepository.find({
+      relations: ['versions'],
+    });
+
+    return identities.map(identity => {
+      // For listing/navigation, prioritize the PUBLISHED version
+      // This ensures the public site sees live content and the admin list shows the current live state
+      const current =
+        identity.versions.find(v => v.status === PageStatus.PUBLISHED) ||
+        identity.versions.find(v => v.status === PageStatus.DRAFT) ||
+        identity.versions[0];
+
+      return this.mapToWire(identity, current);
+    });
   }
 
-  async findOne(id: number): Promise<Page> {
-    const page = await this.pageRepository.findWithComponents(id);
-    if (!page) {
+  async findOne(id: number): Promise<PageWire> {
+    const identity = await this.pageRepository.findOne({
+      where: {id},
+      relations: ['versions'],
+    });
+
+    if (!identity) {
       throw new NotFoundException(`Page with ID ${id} not found`);
     }
-    return page;
+
+    // For the editor/detailed view, prioritize the DRAFT version
+    const latest =
+      identity.versions.find(v => v.status === PageStatus.DRAFT) ||
+      identity.versions.find(v => v.status === PageStatus.PUBLISHED) ||
+      identity.versions[0];
+
+    // Load components for the chosen version
+    const versionWithComponents = await this.versionRepository.findOne({
+      where: {id: latest.id},
+      relations: ['components'],
+      order: {components: {displayOrder: 'ASC'}},
+    });
+
+    return this.mapToWire(identity, versionWithComponents!);
   }
 
-  async findByPath(path: string): Promise<Page> {
-    const page = await this.pageRepository.findByPath(path);
-    if (!page) {
-      throw new NotFoundException(`Page with path ${path} not found`);
+  async findByPath(path: string): Promise<PageWire> {
+    const version = await this.versionRepository.findOne({
+      where: {path, status: PageStatus.PUBLISHED},
+      relations: ['components'],
+      order: {components: {displayOrder: 'ASC'}},
+    });
+
+    if (!version) {
+      throw new NotFoundException(`Published page with path ${path} not found`);
     }
-    return page;
+
+    const identity = await this.pageRepository.findById(version.pageId);
+    return this.mapToWire(identity!, version);
   }
 
-  async create(data: Partial<Page>): Promise<Page> {
-    const page = this.pageRepository.create(data);
-    await this.updatePath(page);
-    return this.pageRepository.save(page);
+  async create(data: Partial<PageWire>): Promise<PageWire> {
+    const identity = await this.pageRepository.createOne({});
+    const version = this.versionRepository.create({
+      pageId: identity.id,
+      versionNumber: 1,
+      title: data.title || 'Untitled Page',
+      slug: data.slug || 'untitled',
+      status: data.status || PageStatus.DRAFT,
+      showInNavigation: data.showInNavigation ?? true,
+      parentId: data.parentId,
+    });
+
+    await this.updatePath(version);
+    const savedVersion = await this.versionRepository.save(version);
+    return this.mapToWire(identity, savedVersion);
   }
 
-  async update(id: number, data: Partial<Page>): Promise<Page> {
-    const page = await this.findOne(id);
-    Object.assign(page, data);
-    await this.updatePath(page);
-    const updated = await this.pageRepository.save(page);
+  async update(id: number, data: Partial<PageWire>): Promise<PageWire> {
+    const identity = await this.pageRepository.findOne({
+      where: {id},
+      relations: ['versions'],
+    });
+    if (!identity) throw new NotFoundException(`Page ${id} not found`);
 
-    // If parent or slug changed, update children paths recursively
-    if (data.parentId !== undefined || data.slug !== undefined) {
-      await this.updateChildrenPaths(updated);
+    let draft = identity.versions.find(v => v.status === PageStatus.DRAFT);
+    const isPublishing = data.status === PageStatus.PUBLISHED;
+
+    // If no draft exists and we are making an edit, create a draft
+    const hasMetadataChanges =
+      data.title !== undefined ||
+      data.slug !== undefined ||
+      data.parentId !== undefined ||
+      data.showInNavigation !== undefined;
+
+    if (!draft && hasMetadataChanges) {
+      const published = identity.versions.find(
+        v => v.status === PageStatus.PUBLISHED
+      );
+      if (published) {
+        draft = await this.createDraftFromPublished(identity.id, published);
+      } else {
+        draft = identity.versions[0];
+      }
     }
 
-    return updated;
+    // If no draft exists and no changes, return the latest
+    if (!draft) {
+      const latest =
+        identity.versions.find(v => v.status === PageStatus.PUBLISHED) ||
+        identity.versions[0];
+
+      if (isPublishing && latest.status === PageStatus.PUBLISHED) {
+        return this.mapToWire(identity, latest);
+      }
+
+      draft = latest;
+    }
+
+    // Apply updates to the draft
+    if (data.title !== undefined) draft.title = data.title;
+    if (data.slug !== undefined) draft.slug = data.slug;
+    if (data.parentId !== undefined) draft.parentId = data.parentId;
+    if (data.showInNavigation !== undefined)
+      draft.showInNavigation = data.showInNavigation;
+
+    await this.updatePath(draft);
+
+    if (isPublishing) {
+      // Archive current published version
+      const currentPub = identity.versions.find(
+        v => v.status === PageStatus.PUBLISHED
+      );
+      if (currentPub && currentPub.id !== draft.id) {
+        currentPub.status = PageStatus.ARCHIVED;
+        await this.versionRepository.save(currentPub);
+      }
+      draft.status = PageStatus.PUBLISHED;
+    }
+
+    const savedVersion = await this.versionRepository.save(draft);
+
+    // If path might have changed, update all children's versions
+    if (
+      data.slug !== undefined ||
+      data.parentId !== undefined ||
+      isPublishing
+    ) {
+      await this.updateChildrenPaths(identity.id);
+    }
+
+    return this.mapToWire(identity, savedVersion);
+  }
+
+  async findVersions(pageId: number): Promise<PageWire[]> {
+    const identity = await this.pageRepository.findOne({
+      where: {id: pageId},
+      relations: ['versions'],
+    });
+
+    if (!identity) throw new NotFoundException(`Page ${pageId} not found`);
+
+    return identity.versions
+      .sort((a, b) => b.versionNumber - a.versionNumber)
+      .map(v => this.mapToWire(identity, v));
+  }
+
+  async revert(pageId: number, versionId: number): Promise<PageWire> {
+    const identity = await this.pageRepository.findOne({
+      where: {id: pageId},
+      relations: ['versions'],
+    });
+    if (!identity) throw new NotFoundException(`Page ${pageId} not found`);
+
+    const targetVersion = await this.versionRepository.findOne({
+      where: {id: versionId, pageId},
+      relations: ['components'],
+    });
+    if (!targetVersion)
+      throw new NotFoundException(`Version ${versionId} not found`);
+
+    // Archive current draft if it exists
+    const currentDraft = identity.versions.find(
+      v => v.status === PageStatus.DRAFT
+    );
+    if (currentDraft) {
+      currentDraft.status = PageStatus.ARCHIVED;
+      await this.versionRepository.save(currentDraft);
+    }
+
+    // Create a new draft as a clone of the target version
+    const maxVersion = Math.max(...identity.versions.map(v => v.versionNumber));
+    const newDraft = this.versionRepository.create({
+      pageId: identity.id,
+      versionNumber: maxVersion + 1,
+      title: targetVersion.title,
+      slug: targetVersion.slug,
+      path: targetVersion.path,
+      status: PageStatus.DRAFT,
+      showInNavigation: targetVersion.showInNavigation,
+      parentId: targetVersion.parentId,
+    });
+    const savedDraft = await this.versionRepository.save(newDraft);
+
+    // Clone components
+    const clonedComponents = targetVersion.components!.map(c =>
+      this.componentRepository.create({
+        pluginName: c.pluginName,
+        componentName: c.componentName,
+        props: c.props,
+        displayOrder: c.displayOrder,
+        pageVersionId: savedDraft.id,
+      })
+    );
+    await this.componentRepository.save(clonedComponents);
+
+    return this.mapToWire(identity, savedDraft);
   }
 
   async delete(id: number): Promise<void> {
@@ -59,44 +239,183 @@ export class PageService {
   async addComponent(
     pageId: number,
     data: Partial<PageComponent>
-  ): Promise<PageComponent> {
-    const page = await this.findOne(pageId);
-    const component = this.pageComponentRepository.create({
-      ...data,
-      pageId: page.id,
+  ): Promise<PageComponentWire> {
+    const identity = await this.pageRepository.findOne({
+      where: {id: pageId},
+      relations: ['versions'],
     });
-    return this.pageComponentRepository.save(component);
+    if (!identity) throw new NotFoundException(`Page ${pageId} not found`);
+
+    let draft = identity.versions.find(v => v.status === PageStatus.DRAFT);
+    if (!draft) {
+      const published = identity.versions.find(
+        v => v.status === PageStatus.PUBLISHED
+      );
+      if (published) {
+        draft = await this.createDraftFromPublished(identity.id, published);
+      } else {
+        // Fallback for draft-only pages
+        draft = identity.versions[0];
+      }
+    }
+
+    const component = this.componentRepository.create({
+      ...data,
+      pageVersionId: draft.id,
+    });
+    const saved = await this.componentRepository.save(component);
+    return this.mapComponentToWire(saved, pageId);
   }
 
   async updateComponent(
     id: number,
     data: Partial<PageComponent>
-  ): Promise<PageComponent> {
-    const component = await this.pageComponentRepository.findById(id);
-    if (!component) {
+  ): Promise<PageComponentWire> {
+    const component = await this.componentRepository.findOne({
+      where: {id},
+      relations: [
+        'pageVersion',
+        'pageVersion.page',
+        'pageVersion.page.versions',
+      ],
+    });
+    if (!component || !component.pageVersion) {
       throw new NotFoundException(`Component with ID ${id} not found`);
     }
-    Object.assign(component, data);
-    return this.pageComponentRepository.save(component);
+
+    const pageId = component.pageVersion.pageId;
+    const identity = component.pageVersion.page;
+    let draft = identity.versions.find(v => v.status === PageStatus.DRAFT);
+
+    if (!draft) {
+      // We are editing a component that belongs to a published version
+      const published = component.pageVersion;
+      draft = await this.createDraftFromPublished(pageId, published);
+
+      // We need to find the equivalent component in the NEW draft
+      // Components were cloned with the same pluginName/componentName/displayOrder
+      const clonedComponent = await this.componentRepository.findOne({
+        where: {
+          pageVersionId: draft.id,
+          pluginName: component.pluginName,
+          componentName: component.componentName,
+          displayOrder: component.displayOrder,
+        },
+      });
+
+      if (!clonedComponent) {
+        throw new NotFoundException('Cloned component not found in new draft');
+      }
+
+      Object.assign(clonedComponent, data);
+      const saved = await this.componentRepository.save(clonedComponent);
+      return this.mapComponentToWire(saved, pageId);
+    }
+
+    // If the component already belongs to a draft, just update it
+    if (component.pageVersion.status === PageStatus.DRAFT) {
+      Object.assign(component, data);
+      const saved = await this.componentRepository.save(component);
+      return this.mapComponentToWire(saved, pageId);
+    }
+
+    // Component belongs to a PUBLISHED version but a DRAFT already exists for the page
+    // We should probably find the component in that draft and update it instead
+    const draftComponent = await this.componentRepository.findOne({
+      where: {
+        pageVersionId: draft.id,
+        pluginName: component.pluginName,
+        componentName: component.componentName,
+        displayOrder: component.displayOrder,
+      },
+    });
+
+    if (!draftComponent) {
+      throw new NotFoundException('Component not found in existing draft');
+    }
+
+    Object.assign(draftComponent, data);
+    const saved = await this.componentRepository.save(draftComponent);
+    return this.mapComponentToWire(saved, pageId);
   }
 
   async removeComponent(id: number): Promise<void> {
-    await this.pageComponentRepository.deleteOne(id);
+    const component = await this.componentRepository.findOne({
+      where: {id},
+      relations: [
+        'pageVersion',
+        'pageVersion.page',
+        'pageVersion.page.versions',
+      ],
+    });
+    if (!component || !component.pageVersion) return;
+
+    const identity = component.pageVersion.page;
+    let draft = identity.versions.find(v => v.status === PageStatus.DRAFT);
+
+    if (!draft) {
+      const published = component.pageVersion;
+      draft = await this.createDraftFromPublished(identity.id, published);
+      const draftComponent = await this.componentRepository.findOne({
+        where: {
+          pageVersionId: draft.id,
+          pluginName: component.pluginName,
+          componentName: component.componentName,
+          displayOrder: component.displayOrder,
+        },
+      });
+      if (draftComponent) {
+        await this.componentRepository.deleteOne(draftComponent.id);
+      }
+    } else {
+      // Draft exists, find and remove component in draft
+      const draftComponent = await this.componentRepository.findOne({
+        where: {
+          pageVersionId: draft.id,
+          pluginName: component.pluginName,
+          componentName: component.componentName,
+          displayOrder: component.displayOrder,
+        },
+      });
+      if (draftComponent) {
+        await this.componentRepository.deleteOne(draftComponent.id);
+      }
+    }
   }
 
   async reorderComponents(
     pageId: number,
     componentIds: number[]
   ): Promise<void> {
+    const identity = await this.pageRepository.findOne({
+      where: {id: pageId},
+      relations: ['versions'],
+    });
+    if (!identity) return;
+
+    let draft = identity.versions.find(v => v.status === PageStatus.DRAFT);
+    if (!draft) {
+      const published = identity.versions.find(
+        v => v.status === PageStatus.PUBLISHED
+      );
+      if (published) {
+        draft = await this.createDraftFromPublished(identity.id, published);
+      }
+    }
+
+    if (!draft) return;
+
+    // Ideally we should map componentIds to their draft counterparts here,
+    // but for now we assume the frontend sends the correct IDs if it just fetched the latest.
     await Promise.all(
       componentIds.map((id, index) =>
-        this.pageComponentRepository.update(id, {displayOrder: index})
+        this.componentRepository.update(id, {displayOrder: index})
       )
     );
   }
 
   async findUsedPlugins(): Promise<{name: string; usageCount: number}[]> {
-    const result = await this.pageComponentRepository
+    const result = await this.componentRepository
       .createQueryBuilder('comp')
       .select('comp.pluginName', 'name')
       .addSelect('COUNT(*)', 'usageCount')
@@ -109,27 +428,111 @@ export class PageService {
     }));
   }
 
-  private async updatePath(page: Page): Promise<void> {
-    if (!page.parentId) {
-      page.path = `/${page.slug}`;
+  private mapToWire(identity: Page, version: PageVersion): PageWire {
+    return {
+      id: identity.id,
+      versionId: version.id,
+      versionNumber: version.versionNumber,
+      title: version.title,
+      slug: version.slug,
+      path: version.path,
+      status: version.status,
+      showInNavigation: version.showInNavigation,
+      parentId: version.parentId,
+      components: version.components?.map(c =>
+        this.mapComponentToWire(c, identity.id)
+      ),
+      hasDraft: identity.versions?.some(v => v.status === PageStatus.DRAFT),
+      createdAt: identity.createdAt,
+      updatedAt: version.updatedAt,
+    };
+  }
+
+  private mapComponentToWire(
+    component: PageComponent,
+    pageId: number
+  ): PageComponentWire {
+    return {
+      id: component.id,
+      pageId: pageId,
+      pluginName: component.pluginName,
+      componentName: component.componentName,
+      props: component.props,
+      displayOrder: component.displayOrder,
+    };
+  }
+
+  private async createDraftFromPublished(
+    pageId: number,
+    published: PageVersion
+  ): Promise<PageVersion> {
+    // 1. Create new draft version
+    const draft = this.versionRepository.create({
+      pageId,
+      versionNumber: (published.versionNumber || 0) + 1,
+      title: published.title,
+      slug: published.slug,
+      path: published.path,
+      status: PageStatus.DRAFT,
+      showInNavigation: published.showInNavigation,
+      parentId: published.parentId,
+    });
+    const savedDraft = await this.versionRepository.save(draft);
+
+    // 2. Clone components
+    const components = await this.componentRepository.find({
+      where: {pageVersionId: published.id},
+    });
+
+    const clonedComponents = components.map(c =>
+      this.componentRepository.create({
+        pluginName: c.pluginName,
+        componentName: c.componentName,
+        props: c.props,
+        displayOrder: c.displayOrder,
+        pageVersionId: savedDraft.id,
+      })
+    );
+    await this.componentRepository.save(clonedComponents);
+
+    return savedDraft;
+  }
+
+  private async updatePath(version: PageVersion): Promise<void> {
+    if (!version.parentId) {
+      version.path = `/${version.slug}`;
     } else {
-      const parent = await this.pageRepository.findById(page.parentId);
-      if (parent) {
-        page.path = `${parent.path}/${page.slug}`.replace(/\/+/g, '/');
+      // Find parent's current path (DRAFT if exists, else PUBLISHED)
+      const parentVersions = await this.versionRepository.find({
+        where: {pageId: version.parentId},
+      });
+      const parentVersion =
+        parentVersions.find(v => v.status === PageStatus.DRAFT) ||
+        parentVersions.find(v => v.status === PageStatus.PUBLISHED) ||
+        parentVersions[0];
+
+      if (parentVersion) {
+        version.path = `${parentVersion.path}/${version.slug}`.replace(
+          /\/+/g,
+          '/'
+        );
       } else {
-        page.path = `/${page.slug}`;
+        version.path = `/${version.slug}`;
       }
     }
   }
 
-  private async updateChildrenPaths(page: Page): Promise<void> {
-    const children = await this.pageRepository.find({
-      where: {parentId: page.id},
+  private async updateChildrenPaths(pageId: number): Promise<void> {
+    // Find all children versions (draft or published)
+    const childrenVersions = await this.versionRepository.find({
+      where: {parentId: pageId},
     });
-    for (const child of children) {
-      await this.updatePath(child);
-      const updatedChild = await this.pageRepository.save(child);
-      await this.updateChildrenPaths(updatedChild);
+
+    for (const childVersion of childrenVersions) {
+      await this.updatePath(childVersion);
+      await this.versionRepository.save(childVersion);
+      // Recursively update grandchildren
+      await this.updateChildrenPaths(childVersion.pageId);
     }
   }
 }

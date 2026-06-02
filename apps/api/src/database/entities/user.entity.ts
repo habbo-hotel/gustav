@@ -1,10 +1,9 @@
 import {Entity, Column} from 'typeorm';
-import {UserWire} from '@gustav/types';
 
 import {BaseEntity} from './base.entity';
 
 @Entity('gustav_users')
-export class User extends BaseEntity implements UserWire {
+export class User extends BaseEntity {
   @Column({unique: true})
   username!: string;
 

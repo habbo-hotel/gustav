@@ -1,3 +1,4 @@
+import {PluginSettingWire} from '@gustav/types';
 import {Controller, Get, Post, Body, Param} from '@nestjs/common';
 
 import {PluginService} from './plugin.service';
@@ -17,7 +18,7 @@ export class PluginController {
   async updateSettings(
     @Param('name') name: string,
     @Body() settings: Record<string, any>
-  ) {
+  ): Promise<PluginSettingWire> {
     return this.pluginService.updateSettings(name, settings);
   }
 }

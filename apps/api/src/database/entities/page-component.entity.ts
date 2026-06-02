@@ -1,17 +1,18 @@
-import {PageComponentWire} from '@gustav/types';
 import {Entity, Column, ManyToOne, JoinColumn} from 'typeorm';
 
-import {Page} from './page.entity';
 import {BaseEntity} from './base.entity';
+import {PageVersion} from './page-version.entity';
 
 @Entity('gustav_page_components')
-export class PageComponent extends BaseEntity implements PageComponentWire {
+export class PageComponent extends BaseEntity {
   @Column()
-  pageId!: number;
+  pageVersionId!: number;
 
-  @ManyToOne(() => Page, page => page.components, {onDelete: 'CASCADE'})
-  @JoinColumn({name: 'pageId'})
-  page?: Page;
+  @ManyToOne(() => PageVersion, version => version.components, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({name: 'pageVersionId'})
+  pageVersion?: PageVersion;
 
   @Column()
   pluginName!: string;
@@ -24,4 +25,9 @@ export class PageComponent extends BaseEntity implements PageComponentWire {
 
   @Column({default: 0})
   displayOrder!: number;
+
+  // Implementation requirement for PageComponentWire
+  get pageId(): number {
+    return this.pageVersion?.pageId || 0;
+  }
 }

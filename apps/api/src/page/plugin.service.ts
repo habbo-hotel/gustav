@@ -1,4 +1,5 @@
 import {Injectable} from '@nestjs/common';
+import {PluginSettingWire} from '@gustav/types';
 
 import {PluginSetting} from '../database/entities/plugin-setting.entity';
 import {PluginSettingRepository} from '../database/repositories/plugin-setting.repository';
@@ -17,7 +18,7 @@ export class PluginService {
   async updateSettings(
     pluginName: string,
     settings: Record<string, any>
-  ): Promise<PluginSetting> {
+  ): Promise<PluginSettingWire> {
     let setting = await this.pluginSettingRepository.findByName(pluginName);
     const settingsStr = JSON.stringify(settings);
 
@@ -30,6 +31,17 @@ export class PluginService {
       });
     }
 
-    return this.pluginSettingRepository.save(setting);
+    const saved = await this.pluginSettingRepository.save(setting);
+    return this.mapToWire(saved);
+  }
+
+  private mapToWire(setting: PluginSetting): PluginSettingWire {
+    return {
+      id: setting.id,
+      pluginName: setting.pluginName,
+      settings: setting.settings,
+      createdAt: setting.createdAt,
+      updatedAt: setting.updatedAt,
+    };
   }
 }

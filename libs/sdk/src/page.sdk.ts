@@ -51,6 +51,14 @@ export class PageSDK extends BaseSDK {
     return this.delete<void>(`/pages/${id}`);
   }
 
+  async findVersions(id: number): Promise<PageWire[]> {
+    return this.get<PageWire[]>(`/pages/${id}/versions`);
+  }
+
+  async revert(id: number, versionId: number): Promise<PageWire> {
+    return this.post<PageWire>(`/pages/${id}/revert/${versionId}`, {});
+  }
+
   async addComponent(
     pageId: number,
     data: Partial<PageComponentWire>

@@ -5,6 +5,7 @@ import {DataSource} from 'typeorm';
 
 import {User} from './entities/user.entity';
 import {Page} from './entities/page.entity';
+import {PageVersion} from './entities/page-version.entity';
 import {PageComponent} from './entities/page-component.entity';
 import {PluginSetting} from './entities/plugin-setting.entity';
 
@@ -18,7 +19,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || 'password',
   database: process.env.DB_NAME || 'gustav',
-  entities: [User, Page, PageComponent, PluginSetting],
+  entities: [User, Page, PageVersion, PageComponent, PluginSetting],
   migrations: [join(__dirname, 'migrations/*{.ts,.js}')],
   synchronize: false, // Disabled in favor of migrations
   charset: 'utf8mb4',

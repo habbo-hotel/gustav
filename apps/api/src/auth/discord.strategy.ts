@@ -1,9 +1,9 @@
+import {UserWire} from '@gustav/types';
 import {Injectable} from '@nestjs/common';
 import {Strategy} from 'passport-discord';
 import {PassportStrategy} from '@nestjs/passport';
 
 import {AuthService} from './auth.service';
-import {User} from '../database/entities/user.entity';
 
 @Injectable()
 export class DiscordStrategy extends PassportStrategy(Strategy) {
@@ -26,7 +26,7 @@ export class DiscordStrategy extends PassportStrategy(Strategy) {
       username: string;
       email: string;
     }
-  ): Promise<User> {
+  ): Promise<UserWire> {
     return this.authService.validateDiscordUser(profile);
   }
 }

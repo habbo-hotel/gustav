@@ -1,4 +1,5 @@
 import sgMail from '@sendgrid/mail';
+import {UserWire} from '@gustav/types';
 import {Injectable, NotFoundException} from '@nestjs/common';
 
 import {User} from '../database/entities/user.entity';
@@ -18,6 +19,23 @@ export class UserService {
 
   async findOne(id: number): Promise<User | null> {
     return this.userRepository.findById(id);
+  }
+
+  async findOneWire(id: number): Promise<UserWire | null> {
+    const user = await this.findOne(id);
+    return user ? this.mapToWire(user) : null;
+  }
+
+  mapToWire(user: User): UserWire {
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      isSuperAdmin: user.isSuperAdmin,
+      createdAt: user.createdAt,
+    };
   }
 
   async findAll(): Promise<User[]> {

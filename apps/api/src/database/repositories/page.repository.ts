@@ -9,28 +9,4 @@ export class PageRepository extends BaseRepository<Page> {
   constructor(dataSource: DataSource) {
     super(Page, dataSource);
   }
-
-  async findByPath(path: string): Promise<Page | null> {
-    return this.findOne({
-      where: {path},
-      relations: ['components'],
-      order: {
-        components: {
-          displayOrder: 'ASC',
-        },
-      },
-    });
-  }
-
-  async findWithComponents(id: number): Promise<Page | null> {
-    return this.findOne({
-      where: {id},
-      relations: ['components'],
-      order: {
-        components: {
-          displayOrder: 'ASC',
-        },
-      },
-    });
-  }
 }

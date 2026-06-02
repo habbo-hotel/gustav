@@ -41,18 +41,23 @@ export interface AdminStatsWire {
 export enum PageStatus {
   DRAFT = 'draft',
   PUBLISHED = 'published',
+  ARCHIVED = 'archived',
 }
 
 export interface PageWire {
-  id: number;
+  id: number; // Logical Identity ID
+  versionId?: number; // Specific version ID
+  versionNumber?: number;
   title: string;
   slug: string;
   path: string;
   status: PageStatus;
-  parentId?: number;
+  showInNavigation: boolean;
+  parentId?: number; // Maps to parent Identity ID
   parent?: PageWire;
   children?: PageWire[];
   components?: PageComponentWire[];
+  hasDraft?: boolean; // For admin UI
   createdAt: Date | string;
   updatedAt: Date | string;
 }

@@ -5,6 +5,7 @@ import {PluginService} from './plugin.service';
 import {PageController} from './page.controller';
 import {PluginController} from './plugin.controller';
 import {PageRepository} from '../database/repositories/page.repository';
+import {PageVersionRepository} from '../database/repositories/page-version.repository';
 import {PageComponentRepository} from '../database/repositories/page-component.repository';
 import {PluginSettingRepository} from '../database/repositories/plugin-setting.repository';
 
@@ -13,6 +14,7 @@ import {PluginSettingRepository} from '../database/repositories/plugin-setting.r
     PageService,
     PluginService,
     PageRepository,
+    PageVersionRepository,
     PageComponentRepository,
     PluginSettingRepository,
   ],
