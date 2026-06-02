@@ -9,7 +9,10 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragStartEvent,
   DragEndEvent,
+  DragOverlay,
+  useDraggable,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -23,6 +26,50 @@ import {restrictToVerticalAxis} from '@dnd-kit/modifiers';
 
 import {pageSdk} from '../sdk';
 
+// --- Draggable Library Item ---
+interface DraggableLibraryComponentProps {
+  component: any;
+  onAdd: () => void;
+}
+
+const DraggableLibraryComponent: React.FC<DraggableLibraryComponentProps> = ({
+  component,
+  onAdd,
+}) => {
+  const {attributes, listeners, setNodeRef, transform, isDragging} = useDraggable({
+    id: `library-${component.name}`,
+    data: {
+      type: 'library',
+      componentName: component.name,
+    },
+  });
+
+  const style = transform ? {
+    transform: CSS.Translate.toString(transform),
+  } : undefined;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={`w-full flex flex-col p-4 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all text-left group cursor-grab active:cursor-grabbing ${
+        isDragging ? 'opacity-50 ring-2 ring-indigo-500/50' : ''
+      }`}
+    >
+      <div className="overflow-hidden">
+        <h4 className="font-black text-gray-900 dark:text-white uppercase text-base tracking-tighter truncate">
+          {component.name}
+        </h4>
+        <p className="text-[10px] text-gray-400 mt-1 font-medium leading-tight line-clamp-2">
+          {component.description}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // --- Sortable Item Component ---
 interface SortableComponentProps {
   id: number;
@@ -30,6 +77,7 @@ interface SortableComponentProps {
   onEdit: () => void;
   onRemove: () => void;
   onInlinePropChange: (name: string, value: any) => void;
+  isPreview?: boolean;
 }
 
 const SortableComponent: React.FC<SortableComponentProps> = ({
@@ -38,6 +86,7 @@ const SortableComponent: React.FC<SortableComponentProps> = ({
   onEdit,
   onRemove,
   onInlinePropChange,
+  isPreview,
 }) => {
   const {
     attributes,
@@ -46,7 +95,7 @@ const SortableComponent: React.FC<SortableComponentProps> = ({
     transform,
     transition,
     isDragging,
-  } = useSortable({id});
+  } = useSortable({id, disabled: isPreview});
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -65,41 +114,45 @@ const SortableComponent: React.FC<SortableComponentProps> = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative group border-2 rounded-xl mb-4 transition-all ${
-        isDragging ? 'border-indigo-500 bg-indigo-50 shadow-xl opacity-50 scale-105' : 'border-transparent hover:border-indigo-300'
+      className={`relative group transition-all ${
+        isPreview ? '' : 'border-2 rounded-xl mb-4'
+      } ${
+        isDragging ? 'border-indigo-500 bg-indigo-50 shadow-xl opacity-50 scale-[1.02]' : (isPreview ? 'border-transparent' : 'border-transparent hover:border-indigo-300')
       }`}
     >
       {/* Overlay controls */}
-      <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-        <div 
-          {...attributes} 
-          {...listeners}
-          className="p-1.5 bg-white shadow-sm border border-gray-200 rounded-lg cursor-grab active:cursor-grabbing hover:bg-gray-50 text-gray-400"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9h8m-8 4h8" />
-          </svg>
+      {!isPreview && (
+        <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          <div 
+            {...attributes} 
+            {...listeners}
+            className="p-1.5 bg-white shadow-sm border border-gray-200 rounded-lg cursor-grab active:cursor-grabbing hover:bg-gray-50 text-gray-400"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9h8m-8 4h8" />
+            </svg>
+          </div>
+          <button
+            onClick={onEdit}
+            className="p-1.5 bg-white shadow-sm border border-gray-200 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 text-gray-400"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+          <button
+            onClick={onRemove}
+            className="p-1.5 bg-white shadow-sm border border-gray-200 rounded-lg hover:bg-rose-50 hover:text-rose-600 text-gray-400"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
         </div>
-        <button
-          onClick={onEdit}
-          className="p-1.5 bg-white shadow-sm border border-gray-200 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 text-gray-400"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
-        </button>
-        <button
-          onClick={onRemove}
-          className="p-1.5 bg-white shadow-sm border border-gray-200 rounded-lg hover:bg-rose-50 hover:text-rose-600 text-gray-400"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
-      </div>
+      )}
 
-      <div className="p-4 bg-white dark:bg-zinc-900 rounded-xl">
-        <Comp {...props} editable={true} onPropChange={onInlinePropChange} />
+      <div className={`transition-all ${isPreview ? '' : 'p-4 bg-white dark:bg-zinc-900 rounded-xl'}`}>
+        <Comp {...props} editable={!isPreview} onPropChange={onInlinePropChange} />
       </div>
     </div>
   );
@@ -112,10 +165,34 @@ interface DrawerProps {
   title: string;
   children: React.ReactNode;
   side?: 'left' | 'right';
+  isBlocking?: boolean;
 }
 
-const Drawer: React.FC<DrawerProps> = ({ isOpen, onClose, title, children, side = 'right' }) => {
+const Drawer: React.FC<DrawerProps> = ({ isOpen, onClose, title, children, side = 'right', isBlocking = true }) => {
   if (!isOpen) return null;
+
+  const content = (
+    <div className={`fixed inset-y-0 ${side === 'right' ? 'right-0' : 'left-0'} max-w-md w-full flex z-50`}>
+      <div className={`w-full bg-white dark:bg-zinc-900 shadow-2xl flex flex-col ${side === 'right' ? 'border-l' : 'border-r'} dark:border-zinc-800 animate-in ${side === 'right' ? 'slide-in-from-right' : 'slide-in-from-left'} duration-300`}>
+        <div className="p-6 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
+          <h2 className="text-xl font-black dark:text-white tracking-tight uppercase">{title}</h2>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl text-gray-400 transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!isBlocking) return content;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -123,24 +200,7 @@ const Drawer: React.FC<DrawerProps> = ({ isOpen, onClose, title, children, side 
         className="absolute inset-0 bg-zinc-950/20 backdrop-blur-sm transition-opacity" 
         onClick={onClose} 
       />
-      <div className={`absolute inset-y-0 ${side === 'right' ? 'right-0' : 'left-0'} max-w-md w-full flex`}>
-        <div className="w-full bg-white dark:bg-zinc-900 shadow-2xl flex flex-col border-l dark:border-zinc-800 animate-in slide-in-from-right duration-300">
-          <div className="p-6 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
-            <h2 className="text-xl font-black dark:text-white tracking-tight uppercase">{title}</h2>
-            <button 
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl text-gray-400 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-6">
-            {children}
-          </div>
-        </div>
-      </div>
+      {content}
     </div>
   );
 };
@@ -152,10 +212,15 @@ export function PageEditor() {
   const [page, setPage] = useState<PageWire | null>(null);
   const [loading, setLoading] = useState(true);
   
+  // Drag States
+  const [activeId, setActiveId] = useState<string | number | null>(null);
+  const [activeType, setActiveType] = useState<'library' | 'canvas' | null>(null);
+
   // Drawer States
-  const [activeDrawer, setActiveDrawer] = useState<'settings' | 'plugins' | 'properties' | null>(null);
+  const [activeDrawer, setActiveDrawer] = useState<'settings' | 'properties' | null>(null);
   const [selectedComponentId, setSelectedComponentId] = useState<number | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [isPreview, setIsPreview] = useState(false);
 
   // Form States
   const [pageSettings, setPageSettings] = useState<Partial<PageWire>>({});
@@ -190,31 +255,48 @@ export function PageEditor() {
     }
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id);
+    setActiveType(event.active.data.current?.type || 'canvas');
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const {active, over} = event;
+    setActiveId(null);
+    setActiveType(null);
 
-    if (over && active.id !== over.id && page?.components) {
-      const oldIndex = page.components.findIndex(c => c.id === active.id);
-      const newIndex = page.components.findIndex(c => c.id === over.id);
+    if (over && active.id !== over.id) {
+      // Logic for reordering OR adding
+      if (activeType === 'library') {
+        const componentName = active.data.current?.componentName;
+        const overId = over.id;
+        
+        // Find where to insert
+        const overIndex = page?.components?.findIndex(c => c.id === overId) ?? -1;
+        await handleAddComponent(componentName, overIndex);
+      } else if (page?.components) {
+        const oldIndex = page.components.findIndex(c => c.id === active.id);
+        const newIndex = page.components.findIndex(c => c.id === over.id);
 
-      const newComponents = arrayMove(page.components, oldIndex, newIndex);
-      setPage({...page, components: newComponents});
+        const newComponents = arrayMove(page.components, oldIndex, newIndex);
+        setPage({...page, components: newComponents});
 
-      try {
-        await pageSdk.reorderComponents(page.id, newComponents.map(c => c.id));
-        setIsDirty(true);
-        if (page.status === PageStatus.PUBLISHED) {
-          await pageSdk.update(page.id, {status: PageStatus.DRAFT});
-          setPage(prev => prev ? {...prev, status: PageStatus.DRAFT} : null);
+        try {
+          await pageSdk.reorderComponents(page.id, newComponents.map(c => c.id));
+          setIsDirty(true);
+          if (page.status === PageStatus.PUBLISHED) {
+            await pageSdk.update(page.id, {status: PageStatus.DRAFT});
+            setPage(prev => prev ? {...prev, status: PageStatus.DRAFT} : null);
+          }
+        } catch (err) {
+          alert('Failed to save order');
+          fetchPage(page.id);
         }
-      } catch (err) {
-        alert('Failed to save order');
-        fetchPage(page.id);
       }
     }
   };
 
-  const handleAddComponent = async (componentName: string) => {
+  const handleAddComponent = async (componentName: string, atIndex?: number) => {
     if (!page) return;
     const pluginComp = corePlugin.components.find(c => c.name === componentName);
     if (!pluginComp) return;
@@ -224,8 +306,9 @@ export function PageEditor() {
         pluginName: corePlugin.name,
         componentName,
         props: JSON.stringify(pluginComp.defaultProps),
-        displayOrder: page.components?.length || 0,
+        displayOrder: atIndex !== undefined ? atIndex : (page.components?.length || 0),
       });
+      
       setIsDirty(true);
       if (page.status === PageStatus.PUBLISHED) {
         await pageSdk.update(page.id, {status: PageStatus.DRAFT});
@@ -342,6 +425,30 @@ export function PageEditor() {
             ))}
           </select>
         )}
+        {field.type === 'number' && (
+          <input
+            type="number"
+            value={value || 0}
+            onChange={(e) => handlePropChange(field.name, parseFloat(e.target.value))}
+            className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none dark:text-white transition-all"
+          />
+        )}
+        {field.type === 'color' && (
+          <div className="flex items-center space-x-3">
+            <input
+              type="color"
+              value={value || '#000000'}
+              onChange={(e) => handlePropChange(field.name, e.target.value)}
+              className="w-12 h-12 rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 cursor-pointer p-1"
+            />
+            <input
+              type="text"
+              value={value || '#000000'}
+              onChange={(e) => handlePropChange(field.name, e.target.value)}
+              className="flex-1 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-mono focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none dark:text-white transition-all"
+            />
+          </div>
+        )}
         {field.type === 'checkbox' && (
           <div className="flex items-center space-x-3 py-1">
             <input
@@ -406,117 +513,182 @@ export function PageEditor() {
   if (loading || !page) return <div className="p-8 animate-pulse text-gray-400 font-bold uppercase tracking-widest text-sm">Initializing visual builder...</div>;
 
   return (
-    <div className="min-h-[calc(100vh-12rem)] flex flex-col">
+    <div className={`min-h-[calc(100vh-12rem)] flex flex-col ${isPreview ? 'bg-white dark:bg-zinc-950 -mx-6 -my-8' : ''}`}>
       {/* Page Toolbar */}
-      <div className="flex items-center justify-between mb-8 bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm">
-        <div className="flex items-center space-x-4">
-          <button 
-            onClick={() => navigate('/admin/pages')}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl text-gray-400 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </button>
-          <div 
-            className="cursor-pointer group"
-            onClick={() => setActiveDrawer('settings')}
-          >
-            <h1 className="text-xl font-black dark:text-white tracking-tight uppercase group-hover:text-indigo-500 transition-colors flex items-center">
-              {page.title}
-              {page.status === PageStatus.DRAFT && (
-                <div className="ml-3 flex items-center bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase px-2 py-0.5 rounded-md border border-amber-500/20">
-                  <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mr-1.5 animate-pulse" />
-                  Draft
-                </div>
-              )}
-              <svg className="w-4 h-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-              </svg>
-            </h1>
-            <p className="text-xs font-mono text-gray-400">{page.path}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <a
-            href={page.path}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center space-x-2 bg-white dark:bg-zinc-800 text-gray-600 dark:text-gray-300 text-xs font-black uppercase px-6 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all mr-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            <span>View Page</span>
-          </a>
-
-          {page.status === PageStatus.DRAFT && (
-            <button
-              onClick={handlePublish}
-              className="flex items-center space-x-2 bg-emerald-500 text-white text-xs font-black uppercase px-6 py-3 rounded-xl shadow-lg shadow-emerald-500/25 hover:scale-105 active:scale-95 transition-all"
+      {!isPreview && (
+        <div className="flex items-center justify-between mb-8 bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-sm">
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={() => navigate('/admin/pages')}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl text-gray-400 transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              <span>Publish Changes</span>
             </button>
-          )}
-          
-          <button
-            onClick={() => setActiveDrawer('plugins')}
-            className="flex items-center space-x-2 bg-indigo-500 text-white text-xs font-black uppercase px-6 py-3 rounded-xl shadow-lg shadow-indigo-500/25 hover:scale-105 active:scale-95 transition-all"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            <span>Add Plugin</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Main Canvas Area */}
-      <div className="flex-1 bg-gray-50/50 dark:bg-zinc-950 rounded-3xl border-2 border-dashed border-gray-200 dark:border-zinc-800 p-8 min-h-[500px]">
-        {(!page.components || page.components.length === 0) ? (
-          <div className="h-full flex flex-col items-center justify-center text-center py-20">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-3xl flex items-center justify-center text-gray-300 dark:text-zinc-600 mb-6">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
+            <div 
+              className="cursor-pointer group"
+              onClick={() => setActiveDrawer('settings')}
+            >
+              <h1 className="text-xl font-black dark:text-white tracking-tight uppercase group-hover:text-indigo-500 transition-colors flex items-center">
+                {page.title}
+                {page.status === PageStatus.DRAFT && (
+                  <div className="ml-3 flex items-center bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase px-2 py-0.5 rounded-md border border-amber-500/20">
+                    <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mr-1.5 animate-pulse" />
+                    Draft
+                  </div>
+                )}
+                <svg className="w-4 h-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </h1>
+              <p className="text-xs font-mono text-gray-400">{page.path}</p>
             </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2 uppercase tracking-tight">Empty Canvas</h2>
-            <p className="text-sm text-gray-400 max-w-xs mx-auto mb-8 font-medium">Your page has no components yet. Add some from the plugins library to start building.</p>
-            <button
-              onClick={() => setActiveDrawer('plugins')}
-              className="bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white text-xs font-black uppercase px-8 py-4 rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95"
-            >
-              Open Plugins Library
-            </button>
           </div>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-            modifiers={[restrictToVerticalAxis]}
-          >
-            <SortableContext
-              items={page.components.map(c => c.id)}
-              strategy={verticalListSortingStrategy}
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setIsPreview(true)}
+              className="p-3 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-all shadow-sm"
+              title="Live Preview"
             >
-              {page.components.map((component) => (
-                <SortableComponent
-                  key={component.id}
-                  id={component.id}
-                  component={component}
-                  onEdit={() => handleOpenProperties(component.id)}
-                  onRemove={() => handleRemoveComponent(component.id)}
-                  onInlinePropChange={(name, value) => handleInlinePropChange(component.id, name, value)}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+
+            <a
+              href={page.path}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3 bg-white dark:bg-zinc-800 text-gray-600 dark:text-gray-300 rounded-xl border border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all shadow-sm"
+              title="Public Link"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+
+            {page.status === PageStatus.DRAFT && (
+              <button
+                onClick={handlePublish}
+                className="p-3 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-500/25 hover:scale-110 active:scale-95 transition-all"
+                title="Publish Changes"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {isPreview && (
+        <button
+          onClick={() => setIsPreview(false)}
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-zinc-900 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center space-x-3 border border-zinc-700"
+        >
+          <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          <span>Exit Preview Mode</span>
+        </button>
+      )}
+
+      {/* Main Content Area */}
+      <div className={`flex-1 flex gap-8 transition-all ${isPreview ? 'p-0' : ''}`}>
+        {/* Main Canvas Area */}
+        <div className={`flex-1 transition-all ${isPreview ? 'p-0 border-none' : 'bg-gray-50/50 dark:bg-zinc-950 rounded-3xl border-2 border-dashed border-gray-200 dark:border-zinc-800 p-8 min-h-[500px]'}`}>
+          {(!page.components || page.components.length === 0) ? (
+            <div className="h-full flex flex-col items-center justify-center text-center py-20">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-3xl flex items-center justify-center text-gray-300 dark:text-zinc-600 mb-6">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2 uppercase tracking-tight">Empty Canvas</h2>
+              <p className="text-sm text-gray-400 max-w-xs mx-auto font-medium">Your page has no components yet. Select a component from the library on the right to start building.</p>
+            </div>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              modifiers={[restrictToVerticalAxis]}
+            >
+              <SortableContext
+                items={page.components.map(c => c.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {page.components.map((component) => (
+                  <SortableComponent
+                    key={component.id}
+                    id={component.id}
+                    component={component}
+                    onEdit={() => !isPreview && handleOpenProperties(component.id)}
+                    onRemove={() => !isPreview && handleRemoveComponent(component.id)}
+                    onInlinePropChange={(name, value) => !isPreview && handleInlinePropChange(component.id, name, value)}
+                    isPreview={isPreview}
+                  />
+                ))}
+              </SortableContext>
+
+              <DragOverlay>
+                {activeId && activeType === 'canvas' && page.components ? (
+                   (() => {
+                     const comp = page.components.find(c => c.id === activeId);
+                     if (!comp) return null;
+                     const pluginComp = corePlugin.components.find(c => c.name === comp.componentName);
+                     const Comp = pluginComp?.component || (() => null);
+                     const props = JSON.parse(comp.props || '{}');
+                     return (
+                       <div className="p-4 bg-white dark:bg-zinc-900 rounded-xl border-2 border-indigo-500 shadow-2xl opacity-90 scale-[1.02] w-full">
+                         <Comp {...props} />
+                       </div>
+                     );
+                   })()
+                ) : activeId && activeType === 'library' ? (
+                  (() => {
+                    const name = (activeId as string).replace('library-', '');
+                    return (
+                      <div className="w-80 p-6 bg-white dark:bg-zinc-900 rounded-2xl border-2 border-indigo-500 shadow-2xl flex flex-col items-start">
+                        <span className="font-black uppercase text-base tracking-tighter text-indigo-600 dark:text-indigo-400">{name}</span>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">Dropping Block...</p>
+                      </div>
+                    );
+                  })()
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          )}
+        </div>
+
+        {/* Permanent Components Sidebar (Right) */}
+        {!isPreview && (
+          <div className="w-80 bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 flex flex-col h-fit sticky top-24 shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-gray-100 dark:border-zinc-800">
+              <h2 className="text-sm font-black dark:text-white tracking-tight uppercase">Component Library</h2>
+              <p className="text-[10px] text-gray-400 font-bold uppercase mt-1">Available Blocks</p>
+            </div>
+            <div className="p-4 space-y-3 max-h-[calc(100vh-20rem)] overflow-y-auto">
+              <DndContext 
+                sensors={sensors} 
+                onDragStart={handleDragStart} 
+                onDragEnd={handleDragEnd}
+              >
+                {corePlugin.components.map(comp => (
+                  <DraggableLibraryComponent
+                    key={comp.name}
+                    component={comp}
+                    onAdd={() => handleAddComponent(comp.name)}
+                  />
+                ))}
+              </DndContext>
+            </div>
+          </div>
         )}
       </div>
 
@@ -581,36 +753,6 @@ export function PageEditor() {
             Save Page Metadata
           </button>
         </form>
-      </Drawer>
-
-      {/* Plugins Drawer */}
-      <Drawer
-        isOpen={activeDrawer === 'plugins'}
-        onClose={() => setActiveDrawer(null)}
-        title="Plugin Library"
-      >
-        <div className="space-y-4">
-          <p className="text-xs font-bold text-gray-400 uppercase mb-4 ml-1">Available Components</p>
-          <div className="grid grid-cols-1 gap-3">
-            {corePlugin.components.map(comp => (
-              <button
-                key={comp.name}
-                onClick={() => handleAddComponent(comp.name)}
-                className="flex items-start p-4 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all text-left group"
-              >
-                <div className="w-10 h-10 bg-white dark:bg-zinc-900 rounded-xl flex items-center justify-center text-gray-400 group-hover:text-indigo-500 shadow-sm border border-gray-100 dark:border-zinc-800 mr-4 shrink-0 transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="font-bold text-gray-900 dark:text-white uppercase text-xs tracking-tight">{comp.name}</h4>
-                  <p className="text-xs text-gray-400 mt-1 font-medium">{comp.description}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
       </Drawer>
 
       {/* Properties Drawer */}

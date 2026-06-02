@@ -68,6 +68,25 @@ export function AdminLayout() {
         </svg>
       ),
     },
+    {
+      label: 'Plugins',
+      path: '/admin/plugins',
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"
+          />
+        </svg>
+      ),
+    },
   ];
 
   return (
@@ -77,9 +96,7 @@ export function AdminLayout() {
         <div className="px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-12">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center text-white font-bold">
-                G
-              </div>
+              <img src="/gustav.png" alt="Gustav Logo" className="w-12 h-12 rounded-lg object-contain" />
               <span className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
                 Gustav Admin
               </span>

@@ -7,6 +7,8 @@ import {PageRenderer} from './PageRenderer';
 import {PublicLayout} from './PublicLayout';
 import {AdminUsers} from './admin/AdminUsers';
 import {AdminPages} from './admin/AdminPages';
+import {AdminPlugins} from './admin/AdminPlugins';
+import {PluginSettingsPage} from './admin/PluginSettingsPage';
 import {PageEditor} from './admin/PageEditor';
 import {AdminLayout} from './admin/AdminLayout';
 import {AdminDashboard} from './admin/AdminDashboard';
@@ -37,6 +39,8 @@ function App() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="pages" element={<AdminPages />} />
           <Route path="pages/:id" element={<PageEditor />} />
+          <Route path="plugins" element={<AdminPlugins />} />
+          <Route path="plugins/:name" element={<PluginSettingsPage />} />
         </Route>
 
         {/* Public Website Routes (Last to avoid shadowing static routes) */}
