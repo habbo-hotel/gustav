@@ -1,7 +1,7 @@
-import {PageWire} from '@gustav/types';
+import {PageWire, PageComponentWire} from '@gustav/types';
 import {useLocation} from 'react-router-dom';
-import {corePlugin} from '@gustav/core-plugin';
-import React, {useState, useEffect} from 'react';
+import {plugins} from 'virtual:gustav-plugins';
+import React, {useState, useEffect, useMemo} from 'react';
 
 import {pageSdk} from './sdk';
 
@@ -28,6 +28,47 @@ export function PageRenderer() {
       setLoading(false);
     }
   };
+
+  const renderComponent = (comp: PageComponentWire, allComponents: PageComponentWire[]) => {
+    // Resolve component from plugins
+    const plugin = plugins.find(p => p.name === comp.pluginName);
+    const pluginComp = plugin?.components.find(
+      c => c.name === comp.componentName
+    );
+
+    if (!pluginComp) {
+      return (
+        <div
+          key={comp.id}
+          className="p-4 bg-red-50 text-red-500 rounded-xl my-4 text-xs font-mono"
+        >
+          [Plugin Error] Component "{comp.componentName}" not found in
+          registry for plugin "{comp.pluginName}".
+        </div>
+      );
+    }
+
+    const Component = pluginComp.component;
+    const props = JSON.parse(comp.props || '{}');
+
+    // Find children for this component
+    const children = allComponents
+      .filter(c => c.parentId === comp.id)
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+
+    return (
+      <Component key={comp.id} {...props}>
+        {children.map(child => renderComponent(child, allComponents))}
+      </Component>
+    );
+  };
+
+  const rootComponents = useMemo(() => {
+    if (!page?.components) return [];
+    return page.components
+      .filter(c => !c.parentId)
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+  }, [page?.components]);
 
   if (loading) {
     return (
@@ -64,29 +105,7 @@ export function PageRenderer() {
   return (
     <div className="gustav-page min-h-screen bg-white dark:bg-zinc-950">
       <div className="max-w-5xl mx-auto px-6 py-12">
-        {page.components?.map(comp => {
-          // Resolve component from plugins
-          const pluginComp = corePlugin.components.find(
-            c => c.name === comp.componentName
-          );
-
-          if (!pluginComp) {
-            return (
-              <div
-                key={comp.id}
-                className="p-4 bg-red-50 text-red-500 rounded-xl my-4 text-xs font-mono"
-              >
-                [Plugin Error] Component "{comp.componentName}" not found in
-                registry.
-              </div>
-            );
-          }
-
-          const Component = pluginComp.component;
-          const props = JSON.parse(comp.props || '{}');
-
-          return <Component key={comp.id} {...props} />;
-        })}
+        {rootComponents.map(comp => renderComponent(comp, page.components || []))}
       </div>
     </div>
   );

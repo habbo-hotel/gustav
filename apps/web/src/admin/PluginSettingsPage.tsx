@@ -1,6 +1,8 @@
 import React, {useState, useEffect} from 'react';
 import {useParams, useNavigate, Link} from 'react-router-dom';
-import {corePlugin, ComponentSchemaField} from '@gustav/core-plugin';
+import {plugins} from 'virtual:gustav-plugins';
+import {ComponentSchemaField} from '@gustav/types';
+import toast from 'react-hot-toast';
 
 import {pageSdk} from '../sdk';
 
@@ -33,9 +35,9 @@ export function PluginSettingsPage() {
     try {
       setIsSaving(true);
       await pageSdk.updatePluginSettings(name, settings);
-      alert('Settings saved successfully');
+      toast.success('Settings saved successfully');
     } catch (err) {
-      alert('Failed to save settings');
+      toast.error('Failed to save settings');
     } finally {
       setIsSaving(false);
     }
@@ -65,7 +67,7 @@ export function PluginSettingsPage() {
               type="color"
               value={value || '#000000'}
               onChange={e => onChange(e.target.value)}
-              className="w-16 h-16 rounded-2xl cursor-pointer p-1 bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-800 shadow-sm"
+              className="w-16 h-16 rounded-2xl cursor-pointer p-1 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm"
             />
             <input
               type="text"
@@ -80,7 +82,8 @@ export function PluginSettingsPage() {
   };
 
   const getSettingsSchema = (pluginName: string) => {
-    if (pluginName === corePlugin.name) return corePlugin.settingsSchema;
+    const plugin = plugins.find(p => p.name === pluginName);
+    if (plugin) return plugin.settingsSchema;
     return undefined;
   };
 

@@ -1,6 +1,7 @@
 import {Link} from 'react-router-dom';
 import React, {useState, useEffect} from 'react';
 import {PageWire, PageStatus} from '@gustav/types';
+import toast from 'react-hot-toast';
 
 import {pageSdk} from '../sdk';
 
@@ -30,25 +31,20 @@ export function AdminPages() {
       setPageVersions(data);
       setShowVersionsModal(true);
     } catch {
-      alert('Failed to fetch versions');
+      toast.error('Failed to fetch versions');
     }
   };
 
   const handleRevert = async (version: PageWire) => {
     if (!selectedPageForVersions) return;
-    if (
-      !confirm(
-        `Are you sure you want to revert to Version ${version.versionNumber}? This will create a new draft from this version.`
-      )
-    )
-      return;
 
     try {
       await pageSdk.revert(selectedPageForVersions.id, version.versionId!);
       setShowVersionsModal(false);
       fetchPages();
+      toast.success(`Reverted to version ${version.versionNumber}`);
     } catch (err) {
-      alert('Failed to revert');
+      toast.error('Failed to revert');
     }
   };
 
@@ -94,28 +90,25 @@ export function AdminPages() {
     try {
       if (editingPage?.id) {
         await pageSdk.update(editingPage.id, formData);
+        toast.success('Page updated');
       } else {
         await pageSdk.create(formData);
+        toast.success('Page created');
       }
       setShowModal(false);
       fetchPages();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to save page');
+      toast.error(err instanceof Error ? err.message : 'Failed to save page');
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (
-      !confirm(
-        'Are you sure you want to delete this page? This will also delete all subpages and components.'
-      )
-    )
-      return;
     try {
       await pageSdk.removePage(id);
       fetchPages();
+      toast.success('Page deleted');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete page');
+      toast.error(err instanceof Error ? err.message : 'Failed to delete page');
     }
   };
 
@@ -242,8 +235,9 @@ export function AdminPages() {
                         status: PageStatus.PUBLISHED,
                       });
                       fetchPages();
+                      toast.success('Page published');
                     } catch {
-                      alert('Failed to publish');
+                      toast.error('Failed to publish');
                     }
                   }}
                   className="p-2 text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-all"

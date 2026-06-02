@@ -1,5 +1,6 @@
 import {UserWire} from '@gustav/types';
 import {useState, useEffect} from 'react';
+import toast from 'react-hot-toast';
 
 import {userSdk} from '../sdk';
 
@@ -25,28 +26,28 @@ export function AdminUsers() {
       const data = await userSdk.listUsers();
       setUsers(data);
     } catch {
-      // Error is silent here as it's the initial load
+      // Error handled by SDK
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteUser = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
     try {
       await userSdk.deleteUser(id);
       setUsers(users.filter(u => u.id !== id));
+      toast.success('User deleted');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete user');
+      toast.error(err instanceof Error ? err.message : 'Failed to delete user');
     }
   };
 
   const handleResetPassword = async (id: number) => {
     try {
       await userSdk.resetPassword(id);
-      alert('Password reset email sent!');
+      toast.success('Password reset email sent');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to reset password');
+      toast.error(err instanceof Error ? err.message : 'Failed to reset password');
     }
   };
 
@@ -63,8 +64,9 @@ export function AdminUsers() {
         isSuperAdmin: false,
       });
       fetchUsers();
+      toast.success('User created');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create user');
+      toast.error(err instanceof Error ? err.message : 'Failed to create user');
     }
   };
 

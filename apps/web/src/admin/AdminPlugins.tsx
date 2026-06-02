@@ -1,11 +1,11 @@
 import {Link} from 'react-router-dom';
-import {corePlugin} from '@gustav/core-plugin';
+import {plugins as registeredPlugins} from 'virtual:gustav-plugins';
 import React, {useState, useEffect} from 'react';
 
 import {pageSdk} from '../sdk';
 
 export function AdminPlugins() {
-  const [plugins, setPlugins] = useState<{name: string; usageCount: number}[]>(
+  const [usedPlugins, setUsedPlugins] = useState<{name: string; usageCount: number}[]>(
     []
   );
   const [loading, setLoading] = useState(true);
@@ -18,7 +18,7 @@ export function AdminPlugins() {
     try {
       setLoading(true);
       const data = await pageSdk.getUsedPlugins();
-      setPlugins(data);
+      setUsedPlugins(data);
     } catch (err) {
       console.error('Failed to fetch used plugins', err);
     } finally {
@@ -27,8 +27,8 @@ export function AdminPlugins() {
   };
 
   const getSettingsSchema = (name: string) => {
-    if (name === corePlugin.name) return corePlugin.settingsSchema;
-    return undefined;
+    const plugin = registeredPlugins.find(p => p.name === name);
+    return plugin ? plugin.settingsSchema : undefined;
   };
 
   if (loading) {
@@ -43,23 +43,26 @@ export function AdminPlugins() {
     <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
       <div className="p-8 border-b border-gray-100 dark:border-zinc-800">
         <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
-          Active Plugins
+          Installed Plugins
         </h2>
         <p className="text-sm text-gray-400 font-medium mt-1">
-          Overview of plugin integration across your CMS pages
+          Overview of plugins installed via gustav.plugins.json
         </p>
       </div>
 
       <div className="p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {plugins.length === 0 ? (
+          {registeredPlugins.length === 0 ? (
             <div className="col-span-full py-12 text-center bg-gray-50 dark:bg-zinc-800/50 rounded-3xl border-2 border-dashed border-gray-100 dark:border-zinc-800">
               <p className="text-gray-400 font-bold uppercase text-xs">
-                No plugins currently in use
+                No plugins installed
               </p>
             </div>
           ) : (
-            plugins.map(plugin => (
+            registeredPlugins.map(plugin => {
+              const usageCount = usedPlugins.find(up => up.name === plugin.name)?.usageCount || 0;
+              const isActive = usageCount > 0;
+              return (
               <div
                 key={plugin.name}
                 className="bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 p-6 rounded-3xl hover:border-indigo-500/50 transition-all group"
@@ -80,9 +83,15 @@ export function AdminPlugins() {
                       />
                     </svg>
                   </div>
-                  <span className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase px-2 py-1 rounded-md border border-indigo-500/20">
-                    Active
-                  </span>
+                  {isActive ? (
+                    <span className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase px-2 py-1 rounded-md border border-indigo-500/20">
+                      Active
+                    </span>
+                  ) : (
+                    <span className="bg-gray-500/10 text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase px-2 py-1 rounded-md border border-gray-500/20">
+                      Installed
+                    </span>
+                  )}
                 </div>
                 <h3
                   className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-tight mb-1 truncate"
@@ -97,8 +106,8 @@ export function AdminPlugins() {
                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                     Components Used
                   </span>
-                  <span className="text-lg font-black text-indigo-500">
-                    {plugin.usageCount}
+                  <span className={`text-lg font-black ${isActive ? 'text-indigo-500' : 'text-gray-400'}`}>
+                    {usageCount}
                   </span>
                 </div>
                 {getSettingsSchema(plugin.name) && (
@@ -110,7 +119,7 @@ export function AdminPlugins() {
                   </Link>
                 )}
               </div>
-            ))
+            )})
           )}
         </div>
       </div>

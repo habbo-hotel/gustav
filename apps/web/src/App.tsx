@@ -1,4 +1,5 @@
 import {BrowserRouter, Routes, Route, Navigate, Link} from 'react-router-dom';
+import {Toaster} from 'react-hot-toast';
 
 import {useAuth} from './AuthContext';
 import {LoginPage} from './LoginPage';
@@ -18,6 +19,13 @@ function App() {
 
   return (
     <BrowserRouter>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          className: 'dark:bg-zinc-800 dark:text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-2xl border border-gray-100 dark:border-zinc-700',
+          duration: 3000,
+        }}
+      />
       <Routes>
         <Route
           path="/login"
