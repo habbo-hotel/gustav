@@ -4,12 +4,14 @@ import {TypeOrmModule} from '@nestjs/typeorm';
 import {User} from './entities/user.entity';
 import {AppDataSource} from './data-source';
 import {UserRepository} from './repositories/user.repository';
+import {DynamicRecord} from './entities/dynamic-record.entity';
+import {DynamicSchema} from './entities/dynamic-schema.entity';
 
 @Global()
 @Module({
   imports: [
     TypeOrmModule.forRoot(AppDataSource.options),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, DynamicSchema, DynamicRecord]),
   ],
   providers: [UserRepository],
   exports: [TypeOrmModule, UserRepository],

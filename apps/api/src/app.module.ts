@@ -5,11 +5,19 @@ import {DynamicModule, Module} from '@nestjs/common';
 import {UserModule} from './user/user.module';
 import {AuthModule} from './auth/auth.module';
 import {PageModule} from './page/page.module';
+import {SchemaModule} from './schema/schema.module';
 import {HealthModule} from './health/health.module';
 import {DatabaseModule} from './database/database.module';
 
 @Module({
-  imports: [DatabaseModule, UserModule, AuthModule, PageModule, HealthModule],
+  imports: [
+    DatabaseModule,
+    UserModule,
+    AuthModule,
+    PageModule,
+    SchemaModule,
+    HealthModule,
+  ],
 })
 export class AppModule {
   static async registerPlugins(): Promise<DynamicModule> {

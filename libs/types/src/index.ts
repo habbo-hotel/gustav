@@ -103,3 +103,62 @@ export interface PluginDefinition {
   components: ComponentDefinition[];
   settingsSchema?: ComponentSchemaField[];
 }
+
+export type DynamicSchemaFieldType =
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'checkbox'
+  | 'date'
+  | 'select';
+
+export interface DynamicSchemaField {
+  name: string;
+  label: string;
+  type: DynamicSchemaFieldType;
+  required?: boolean;
+  options?: {label: string; value: string}[];
+}
+
+export interface DynamicSchemaInput {
+  name: string;
+  slug: string;
+  description?: string;
+  fields: DynamicSchemaField[];
+}
+
+export interface DynamicSchemaWire {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  fields: DynamicSchemaField[];
+  recordCount?: number;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface DynamicRecordInput {
+  data: Record<string, any>;
+}
+
+export interface DynamicRecordWire {
+  id: number;
+  schemaId: number;
+  data: Record<string, any>;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface DynamicSchemaDependencyWire {
+  type: 'record' | 'page-component' | 'template-hook';
+  label: string;
+  count: number;
+}
+
+export interface DynamicSchemaDeleteCheckWire {
+  schemaId: number;
+  dependencies: DynamicSchemaDependencyWire[];
+  dependencyCount: number;
+  canDelete: boolean;
+}
