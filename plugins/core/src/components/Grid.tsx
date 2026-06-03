@@ -13,7 +13,8 @@ export const Grid: React.FC<GridProps> = ({
   children,
   renderSlot,
 }) => {
-  const colCount = typeof columns === 'string' ? parseInt(columns, 10) : Number(columns);
+  const colCount =
+    typeof columns === 'string' ? parseInt(columns, 10) : Number(columns);
 
   const gapClasses = {
     none: 'gap-0',
@@ -23,19 +24,17 @@ export const Grid: React.FC<GridProps> = ({
   };
 
   return (
-    <div 
+    <div
       className={`gustav-grid ${gapClasses[gap]} w-full items-stretch`}
-      style={{ '--cols': colCount } as any}
+      style={{'--cols': colCount} as any}
     >
-      {renderSlot ? (
-        Array.from({length: colCount}).map((_, i) => (
-          <div key={i} className="min-w-0 min-h-[50px]">
-            {renderSlot(i)}
-          </div>
-        ))
-      ) : (
-        children
-      )}
+      {renderSlot
+        ? Array.from({length: colCount}).map((_, i) => (
+            <div key={i} className="min-w-0 min-h-[50px]">
+              {renderSlot(i)}
+            </div>
+          ))
+        : children}
     </div>
   );
 };

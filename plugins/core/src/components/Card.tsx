@@ -40,17 +40,14 @@ export const Card: React.FC<CardProps> = ({
       } ${border ? 'border border-slate-200' : ''} ${paddingClasses[padding]}`}
     >
       {title && (
-        <h3 
+        <h3
           className="text-xl font-semibold mb-4"
-          style={{ color: textColor || '#0f172a' }}
+          style={{color: textColor || '#0f172a'}}
         >
           {title}
         </h3>
       )}
-      <div 
-        className="flex-1"
-        style={{ color: textColor || '#475569' }}
-      >
+      <div className="flex-1" style={{color: textColor || '#475569'}}>
         {children}
       </div>
     </div>

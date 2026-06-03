@@ -72,7 +72,7 @@ export function PageRenderer() {
     // If it's a Grid, distribute children into slots
     if (comp.componentName === 'Grid') {
       const columns = props.columns || 3;
-      
+
       return (
         <Component key={comp.id} {...props}>
           {Array.from({length: columns}).map((_, i) => (
@@ -85,7 +85,7 @@ export function PageRenderer() {
         </Component>
       );
     }
-    
+
     return (
       <Component key={comp.id} {...props}>
         {children.map(child => renderComponent(child, allComponents))}
