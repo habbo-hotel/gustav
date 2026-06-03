@@ -70,6 +70,7 @@ export interface PageComponentWire {
   pluginName: string;
   componentName: string;
   props: string;
+  bindings?: string | null;
   displayOrder: number;
 }
 
@@ -161,4 +162,39 @@ export interface DynamicSchemaDeleteCheckWire {
   dependencies: DynamicSchemaDependencyWire[];
   dependencyCount: number;
   canDelete: boolean;
+}
+
+export interface DynamicRecordQueryInput {
+  limit?: number;
+  offset?: number;
+  sortField?: string;
+  sortDirection?: 'ASC' | 'DESC';
+  filters?: Record<string, any>;
+}
+
+export interface DynamicRecordQueryWire {
+  records: DynamicRecordWire[];
+  total: number;
+}
+
+export interface DynamicSchemaQueryWire {
+  name: string;
+  singleName: string;
+  schemaSlug: string;
+  schemaName: string;
+  fields: DynamicSchemaField[];
+}
+
+export interface DynamicPropBinding {
+  propName: string;
+  fieldName: string;
+  fallback?: any;
+}
+
+export interface DynamicComponentBindings {
+  enabled?: boolean;
+  query?: DynamicRecordQueryInput & {
+    schemaSlug: string;
+  };
+  propBindings?: DynamicPropBinding[];
 }

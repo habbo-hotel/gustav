@@ -1,8 +1,11 @@
 import {
   DynamicRecordInput,
+  DynamicRecordQueryInput,
+  DynamicRecordQueryWire,
   DynamicRecordWire,
   DynamicSchemaDeleteCheckWire,
   DynamicSchemaInput,
+  DynamicSchemaQueryWire,
   DynamicSchemaWire,
 } from '@gustav/types';
 
@@ -15,6 +18,10 @@ export class SchemaSDK extends BaseSDK {
 
   async findOne(slug: string): Promise<DynamicSchemaWire> {
     return this.get<DynamicSchemaWire>(`/schemas/${encodeURIComponent(slug)}`);
+  }
+
+  async findQueries(): Promise<DynamicSchemaQueryWire[]> {
+    return this.get<DynamicSchemaQueryWire[]>('/schemas/queries');
   }
 
   async create(data: DynamicSchemaInput): Promise<DynamicSchemaWire> {
@@ -45,6 +52,72 @@ export class SchemaSDK extends BaseSDK {
   async findRecords(slug: string): Promise<DynamicRecordWire[]> {
     return this.get<DynamicRecordWire[]>(
       `/schemas/${encodeURIComponent(slug)}/records`
+    );
+  }
+
+  async findRecord(slug: string, id: number): Promise<DynamicRecordWire> {
+    return this.get<DynamicRecordWire>(
+      `/schemas/${encodeURIComponent(slug)}/records/${id}`
+    );
+  }
+
+  async findRecordByField(
+    slug: string,
+    fieldName: string,
+    value: string
+  ): Promise<DynamicRecordWire> {
+    return this.get<DynamicRecordWire>(
+      `/schemas/${encodeURIComponent(slug)}/by/${encodeURIComponent(
+        fieldName
+      )}/${encodeURIComponent(value)}`
+    );
+  }
+
+  async queryRecords(
+    slug: string,
+    query: DynamicRecordQueryInput
+  ): Promise<DynamicRecordQueryWire> {
+    return this.post<DynamicRecordQueryWire>(
+      `/schemas/${encodeURIComponent(slug)}/query`,
+      query
+    );
+  }
+
+  async findPublicQueries(): Promise<DynamicSchemaQueryWire[]> {
+    return this.get<DynamicSchemaQueryWire[]>('/public/schemas/queries');
+  }
+
+  async findPublicRecords(slug: string): Promise<DynamicRecordWire[]> {
+    return this.get<DynamicRecordWire[]>(
+      `/public/schemas/${encodeURIComponent(slug)}/records`
+    );
+  }
+
+  async findPublicRecord(slug: string, id: number): Promise<DynamicRecordWire> {
+    return this.get<DynamicRecordWire>(
+      `/public/schemas/${encodeURIComponent(slug)}/records/${id}`
+    );
+  }
+
+  async findPublicRecordByField(
+    slug: string,
+    fieldName: string,
+    value: string
+  ): Promise<DynamicRecordWire> {
+    return this.get<DynamicRecordWire>(
+      `/public/schemas/${encodeURIComponent(slug)}/by/${encodeURIComponent(
+        fieldName
+      )}/${encodeURIComponent(value)}`
+    );
+  }
+
+  async queryPublicRecords(
+    slug: string,
+    query: DynamicRecordQueryInput
+  ): Promise<DynamicRecordQueryWire> {
+    return this.post<DynamicRecordQueryWire>(
+      `/public/schemas/${encodeURIComponent(slug)}/query`,
+      query
     );
   }
 

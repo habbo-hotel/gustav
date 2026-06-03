@@ -1,5 +1,11 @@
 import {Injectable, NotFoundException} from '@nestjs/common';
-import {PageComponentWire, PageStatus, PageWire} from '@gustav/types';
+import {
+  DynamicComponentBindings,
+  DynamicSchemaField,
+  PageComponentWire,
+  PageStatus,
+  PageWire,
+} from '@gustav/types';
 
 import {Page} from '../database/entities/page.entity';
 import {PageVersion} from '../database/entities/page-version.entity';
@@ -7,13 +13,17 @@ import {PageRepository} from '../database/repositories/page.repository';
 import {PageComponent} from '../database/entities/page-component.entity';
 import {PageVersionRepository} from '../database/repositories/page-version.repository';
 import {PageComponentRepository} from '../database/repositories/page-component.repository';
+import {DynamicRecordRepository} from '../database/repositories/dynamic-record.repository';
+import {DynamicSchemaRepository} from '../database/repositories/dynamic-schema.repository';
 
 @Injectable()
 export class PageService {
   constructor(
     private readonly pageRepository: PageRepository,
     private readonly versionRepository: PageVersionRepository,
-    private readonly componentRepository: PageComponentRepository
+    private readonly componentRepository: PageComponentRepository,
+    private readonly schemaRepository: DynamicSchemaRepository,
+    private readonly recordRepository: DynamicRecordRepository
   ) {}
 
   async findAll(): Promise<PageWire[]> {
@@ -71,7 +81,7 @@ export class PageService {
     }
 
     const identity = await this.pageRepository.findById(version.pageId);
-    return this.mapToWire(identity!, version);
+    return this.resolvePageBindings(this.mapToWire(identity!, version));
   }
 
   async create(data: Partial<PageWire>): Promise<PageWire> {
@@ -223,6 +233,7 @@ export class PageService {
         pluginName: c.pluginName,
         componentName: c.componentName,
         props: c.props,
+        bindings: c.bindings,
         displayOrder: c.displayOrder,
         pageVersionId: savedDraft.id,
       })
@@ -477,6 +488,7 @@ export class PageService {
       pluginName: component.pluginName,
       componentName: component.componentName,
       props: component.props,
+      bindings: component.bindings,
       displayOrder: component.displayOrder,
     };
   }
@@ -510,6 +522,7 @@ export class PageService {
         pluginName: c.pluginName,
         componentName: c.componentName,
         props: c.props,
+        bindings: c.bindings,
         slot: c.slot,
         displayOrder: c.displayOrder,
         pageVersionId: savedDraft.id,
@@ -569,6 +582,207 @@ export class PageService {
       await this.versionRepository.save(childVersion);
       // Recursively update grandchildren
       await this.updateChildrenPaths(childVersion.pageId);
+    }
+  }
+
+  private async resolvePageBindings(page: PageWire): Promise<PageWire> {
+    if (!page.components?.length) return page;
+
+    const resolved = await Promise.all(
+      page.components.map(component => this.resolveComponentBindings(component))
+    );
+
+    return {
+      ...page,
+      components: resolved.flat(),
+    };
+  }
+
+  private async resolveComponentBindings(
+    component: PageComponentWire
+  ): Promise<PageComponentWire[]> {
+    const bindings = this.parseBindings(component.bindings);
+    if (!bindings?.enabled || !bindings.query?.schemaSlug) {
+      return [component];
+    }
+
+    const schema = await this.schemaRepository.findOne({
+      where: {slug: bindings.query.schemaSlug},
+    });
+    if (!schema) return [component];
+
+    const fields = this.parseFields(schema.fields);
+    const records = await this.recordRepository.find({
+      where: {schemaId: schema.id},
+      order: {updatedAt: bindings.query.sortDirection || 'DESC'},
+    });
+    const filtered = records
+      .map(record => ({
+        ...record,
+        parsedData: this.parseRecordData(record.data),
+      }))
+      .filter(record => this.matchesFilters(record.parsedData, bindings));
+    const sorted = this.sortRecords(filtered, bindings);
+    const offset = Math.max(bindings.query.offset || 0, 0);
+    const limit = Math.max(bindings.query.limit || sorted.length, 0);
+    const selected = sorted.slice(offset, offset + limit);
+
+    if (selected.length > 1) {
+      return selected.map((record, index) => ({
+        ...component,
+        id: component.id * 100000 + index,
+        props: JSON.stringify(
+          this.applyPropBindings(
+            component.props,
+            record.parsedData,
+            fields,
+            bindings
+          )
+        ),
+      }));
+    }
+
+    const firstRecord = selected[0];
+    if (!firstRecord) return [component];
+
+    return [
+      {
+        ...component,
+        props: JSON.stringify(
+          this.applyPropBindings(
+            component.props,
+            firstRecord.parsedData,
+            fields,
+            bindings
+          )
+        ),
+      },
+    ];
+  }
+
+  private applyPropBindings(
+    props: string,
+    recordData: Record<string, unknown>,
+    fields: DynamicSchemaField[],
+    bindings: DynamicComponentBindings
+  ): Record<string, unknown> {
+    const currentProps = this.resolveTemplateTokens(
+      this.parseRecordData(props),
+      recordData
+    );
+
+    (bindings.propBindings || []).forEach(binding => {
+      const field = fields.find(
+        schemaField => schemaField.name === binding.fieldName
+      );
+      if (!field) return;
+      currentProps[binding.propName] =
+        recordData[binding.fieldName] ?? binding.fallback ?? '';
+    });
+
+    return currentProps;
+  }
+
+  private resolveTemplateTokens(
+    value: unknown,
+    recordData: Record<string, unknown>
+  ): Record<string, unknown> {
+    if (Array.isArray(value)) {
+      return value.map(item =>
+        this.resolveTemplateValue(item, recordData)
+      ) as unknown as Record<string, unknown>;
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.entries(value as Record<string, unknown>).reduce(
+        (resolved, [key, item]) => ({
+          ...resolved,
+          [key]: this.resolveTemplateValue(item, recordData),
+        }),
+        {} as Record<string, unknown>
+      );
+    }
+
+    return {};
+  }
+
+  private resolveTemplateValue(
+    value: unknown,
+    recordData: Record<string, unknown>
+  ): unknown {
+    if (typeof value === 'string') {
+      return value.replace(/\{\{\s*([a-zA-Z0-9_-]+)\s*\}\}/g, (_, fieldName) =>
+        String(recordData[fieldName] ?? '')
+      );
+    }
+
+    if (Array.isArray(value)) {
+      return value.map(item => this.resolveTemplateValue(item, recordData));
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.entries(value as Record<string, unknown>).reduce(
+        (resolved, [key, item]) => ({
+          ...resolved,
+          [key]: this.resolveTemplateValue(item, recordData),
+        }),
+        {} as Record<string, unknown>
+      );
+    }
+
+    return value;
+  }
+
+  private matchesFilters(
+    data: Record<string, unknown>,
+    bindings: DynamicComponentBindings
+  ): boolean {
+    const filters = bindings.query?.filters || {};
+    return Object.entries(filters).every(([key, value]) => {
+      if (value === undefined || value === null || value === '') return true;
+      return (
+        String(data[key] ?? '').toLowerCase() === String(value).toLowerCase()
+      );
+    });
+  }
+
+  private sortRecords<
+    T extends {parsedData: Record<string, unknown>; updatedAt: Date},
+  >(records: T[], bindings: DynamicComponentBindings): T[] {
+    const sortField = bindings.query?.sortField;
+    const sortDirection = bindings.query?.sortDirection || 'DESC';
+
+    return [...records].sort((a, b) => {
+      const left = sortField ? a.parsedData[sortField] : a.updatedAt;
+      const right = sortField ? b.parsedData[sortField] : b.updatedAt;
+      const result = String(left ?? '').localeCompare(String(right ?? ''));
+      return sortDirection === 'ASC' ? result : -result;
+    });
+  }
+
+  private parseBindings(
+    value?: string | null
+  ): DynamicComponentBindings | null {
+    try {
+      return JSON.parse(value || 'null') as DynamicComponentBindings | null;
+    } catch {
+      return null;
+    }
+  }
+
+  private parseFields(value: string): DynamicSchemaField[] {
+    try {
+      return JSON.parse(value || '[]') as DynamicSchemaField[];
+    } catch {
+      return [];
+    }
+  }
+
+  private parseRecordData(value: string): Record<string, unknown> {
+    try {
+      return JSON.parse(value || '{}') as Record<string, unknown>;
+    } catch {
+      return {};
     }
   }
 }

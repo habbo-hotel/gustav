@@ -38,6 +38,9 @@ export class PageComponent extends BaseEntity {
   @Column({type: 'text'})
   props!: string;
 
+  @Column({type: 'text', nullable: true})
+  bindings?: string | null;
+
   @Column({default: 0})
   displayOrder!: number;
 

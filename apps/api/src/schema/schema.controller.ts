@@ -12,9 +12,12 @@ import {
 } from '@nestjs/common';
 import {
   DynamicRecordInput,
+  DynamicRecordQueryInput,
+  DynamicRecordQueryWire,
   DynamicRecordWire,
   DynamicSchemaDeleteCheckWire,
   DynamicSchemaInput,
+  DynamicSchemaQueryWire,
   DynamicSchemaWire,
 } from '@gustav/types';
 
@@ -29,6 +32,11 @@ export class SchemaController {
   @Get()
   async findAll(): Promise<DynamicSchemaWire[]> {
     return this.schemaService.findAll();
+  }
+
+  @Get('queries')
+  async findQueries(): Promise<DynamicSchemaQueryWire[]> {
+    return this.schemaService.findQueries();
   }
 
   @Get(':slug')
@@ -68,6 +76,31 @@ export class SchemaController {
   @Get(':slug/records')
   async findRecords(@Param('slug') slug: string): Promise<DynamicRecordWire[]> {
     return this.schemaService.findRecords(slug);
+  }
+
+  @Get(':slug/records/:id')
+  async findRecord(
+    @Param('slug') slug: string,
+    @Param('id', ParseIntPipe) id: number
+  ): Promise<DynamicRecordWire> {
+    return this.schemaService.findRecord(slug, id);
+  }
+
+  @Get(':slug/by/:field/:value')
+  async findRecordByField(
+    @Param('slug') slug: string,
+    @Param('field') field: string,
+    @Param('value') value: string
+  ): Promise<DynamicRecordWire> {
+    return this.schemaService.findRecordByField(slug, field, value);
+  }
+
+  @Post(':slug/query')
+  async queryRecords(
+    @Param('slug') slug: string,
+    @Body() query: DynamicRecordQueryInput
+  ): Promise<DynamicRecordQueryWire> {
+    return this.schemaService.queryRecords(slug, query);
   }
 
   @Post(':slug/records')
