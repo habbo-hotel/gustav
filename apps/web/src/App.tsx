@@ -1,5 +1,5 @@
+import {useEffect} from 'react';
 import {Toaster} from 'react-hot-toast';
-import {useState, useEffect} from 'react';
 import {BrowserRouter, Routes, Route, Navigate, Link} from 'react-router-dom';
 
 import {useAuth} from './AuthContext';
@@ -11,6 +11,7 @@ import {AdminUsers} from './admin/AdminUsers';
 import {AdminPages} from './admin/AdminPages';
 import {PageEditor} from './admin/PageEditor';
 import {AdminLayout} from './admin/AdminLayout';
+import {AdminSchemas} from './admin/AdminSchemas';
 import {AdminPlugins} from './admin/AdminPlugins';
 import {AdminDashboard} from './admin/AdminDashboard';
 import {PluginSettingsPage} from './admin/PluginSettingsPage';
@@ -53,6 +54,8 @@ function App() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="pages" element={<AdminPages />} />
           <Route path="pages/:id" element={<PageEditor />} />
+          <Route path="schemas" element={<AdminSchemas />} />
+          <Route path="schemas/:slug" element={<AdminSchemas />} />
           <Route path="plugins" element={<AdminPlugins />} />
           <Route path="plugins/:name" element={<PluginSettingsPage />} />
         </Route>

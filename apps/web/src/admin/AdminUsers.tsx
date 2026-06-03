@@ -272,12 +272,12 @@ export function AdminUsers() {
                   }
                   className="w-5 h-5 rounded-lg border-gray-200 dark:border-zinc-700 text-indigo-500 focus:ring-indigo-500/20 transition-all cursor-pointer"
                 />
-                  <label
-                    htmlFor="isSuperAdmin"
-                    className="text-sm font-bold text-gray-600 dark:text-zinc-400 cursor-pointer"
-                  >
-                    Grant Administrator privileges
-                  </label>
+                <label
+                  htmlFor="isSuperAdmin"
+                  className="text-sm font-bold text-gray-600 dark:text-zinc-400 cursor-pointer"
+                >
+                  Grant Administrator privileges
+                </label>
               </div>
               <div className="flex space-x-3 pt-4">
                 <button

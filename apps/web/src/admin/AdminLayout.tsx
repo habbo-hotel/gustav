@@ -69,6 +69,25 @@ export function AdminLayout() {
       ),
     },
     {
+      label: 'Schemas',
+      path: '/admin/schemas',
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M4 7h16M4 12h16M4 17h10"
+          />
+        </svg>
+      ),
+    },
+    {
       label: 'Plugins',
       path: '/admin/plugins',
       icon: (
@@ -108,7 +127,9 @@ export function AdminLayout() {
 
             <nav className="hidden md:flex items-center space-x-1">
               {navItems.map(item => {
-                const isActive = location.pathname === item.path;
+                const isActive =
+                  location.pathname === item.path ||
+                  location.pathname.startsWith(`${item.path}/`);
                 return (
                   <Link
                     key={item.path}
