@@ -3,7 +3,6 @@ import {CSS} from '@dnd-kit/utilities';
 import {plugins} from 'virtual:gustav-plugins';
 import {restrictToVerticalAxis} from '@dnd-kit/modifiers';
 import {useParams, useNavigate, Link} from 'react-router-dom';
-import {PageWire, PageComponentWire, PageStatus} from '@gustav/types';
 import React, {
   useState,
   useEffect,
@@ -12,6 +11,13 @@ import React, {
   useRef,
   memo,
 } from 'react';
+import {
+  DynamicComponentBindings,
+  DynamicSchemaWire,
+  PageWire,
+  PageComponentWire,
+  PageStatus,
+} from '@gustav/types';
 import {
   arrayMove,
   SortableContext,
@@ -35,7 +41,7 @@ import {
   useDndContext,
 } from '@dnd-kit/core';
 
-import {pageSdk} from '../sdk';
+import {pageSdk, schemaSdk} from '../sdk';
 
 // --- Block Icons Mapping ---
 const BlockIcon = memo(
@@ -739,6 +745,8 @@ export function PageEditor() {
   // Form States
   const [pageSettings, setPageSettings] = useState<Partial<PageWire>>({});
   const [componentProps, setComponentProps] = useState<string>('');
+  const [componentBindings, setComponentBindings] = useState<string>('');
+  const [dynamicSchemas, setDynamicSchemas] = useState<DynamicSchemaWire[]>([]);
   const saveTimeoutRef = React.useRef<any>(null);
   const toolsSidebarRef = useRef<HTMLElement>(null);
 
@@ -761,6 +769,7 @@ export function PageEditor() {
 
   useEffect(() => {
     fetchPages();
+    fetchSchemas();
   }, []);
 
   const fetchPages = useCallback(async () => {
@@ -769,6 +778,15 @@ export function PageEditor() {
       setPages(data);
     } catch {
       // Ignored
+    }
+  }, []);
+
+  const fetchSchemas = useCallback(async () => {
+    try {
+      const data = await schemaSdk.findAll();
+      setDynamicSchemas(data);
+    } catch {
+      // Dynamic bindings are optional in the editor.
     }
   }, []);
 
@@ -1044,6 +1062,7 @@ export function PageEditor() {
       if (comp) {
         setSelectedComponentId(compId);
         setComponentProps(comp.props);
+        setComponentBindings(comp.bindings || '');
       }
     },
     [page?.components]
@@ -1114,6 +1133,38 @@ export function PageEditor() {
     [selectedComponentId, page]
   );
 
+  const handleBindingChange = useCallback(
+    (bindings: DynamicComponentBindings) => {
+      const serializedBindings = bindings.enabled
+        ? JSON.stringify(bindings, null, 2)
+        : '';
+      setComponentBindings(serializedBindings);
+
+      if (selectedComponentId && page) {
+        const updatedComponents = page.components?.map(c =>
+          c.id === selectedComponentId
+            ? {...c, bindings: serializedBindings}
+            : c
+        );
+        setPage({...page, components: updatedComponents});
+      }
+
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = setTimeout(async () => {
+        if (!selectedComponentId) return;
+        try {
+          await pageSdk.updateComponent(selectedComponentId, {
+            bindings: serializedBindings,
+          });
+          setIsDirty(true);
+        } catch (err) {
+          console.error('Binding auto-save failed', err);
+        }
+      }, 500);
+    },
+    [selectedComponentId, page]
+  );
+
   const handleRemoveComponent = useCallback(
     async (compId: number) => {
       try {
@@ -1175,6 +1226,20 @@ export function PageEditor() {
     )?.schema;
   }, [selectedComponent]);
 
+  const selectedBindings = useMemo<DynamicComponentBindings>(() => {
+    try {
+      return JSON.parse(componentBindings || '{}');
+    } catch {
+      return {};
+    }
+  }, [componentBindings]);
+
+  const selectedBindingSchema = useMemo(() => {
+    const schemaSlug = selectedBindings.query?.schemaSlug;
+    if (!schemaSlug) return null;
+    return dynamicSchemas.find(schema => schema.slug === schemaSlug) || null;
+  }, [dynamicSchemas, selectedBindings.query?.schemaSlug]);
+
   const handleDeselect = useCallback((e: React.MouseEvent) => {
     if (toolsSidebarRef.current?.contains(e.target as Node)) return;
     setSelectedComponentId(null);
@@ -1231,19 +1296,18 @@ export function PageEditor() {
           {field.label}
         </label>
         {field.type === 'text' && (
-          <input
-            type="text"
+          <TokenizedTextField
             value={value || ''}
-            onChange={e => handlePropChange(field.name, e.target.value)}
-            className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none dark:text-white transition-all"
+            fields={selectedBindingSchema?.fields || []}
+            onChange={nextValue => handlePropChange(field.name, nextValue)}
           />
         )}
         {field.type === 'textarea' && (
-          <textarea
+          <TokenizedTextField
             value={value || ''}
-            rows={4}
-            onChange={e => handlePropChange(field.name, e.target.value)}
-            className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none dark:text-white transition-all"
+            fields={selectedBindingSchema?.fields || []}
+            multiline
+            onChange={nextValue => handlePropChange(field.name, nextValue)}
           />
         )}
         {field.type === 'select' && (
@@ -1303,6 +1367,162 @@ export function PageEditor() {
           </div>
         )}
       </div>
+    );
+  };
+
+  const renderDynamicBindingsPanel = () => {
+    const bindings = selectedBindings;
+    const bindingSchema = selectedBindingSchema;
+
+    const updateBindings = (updates: Partial<DynamicComponentBindings>) => {
+      handleBindingChange({
+        ...bindings,
+        ...updates,
+      });
+    };
+
+    const updateQuery = (updates: Record<string, unknown>) => {
+      updateBindings({
+        enabled: true,
+        query: {
+          schemaSlug: bindings.query?.schemaSlug || '',
+          ...bindings.query,
+          ...updates,
+        },
+      });
+    };
+
+    return (
+      <details
+        open={Boolean(bindings.enabled)}
+        className="group border-t border-gray-100 dark:border-zinc-800 pt-6 mt-6"
+      >
+        <summary className="list-none cursor-pointer flex items-center justify-between text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-indigo-500 transition-colors">
+          <span>Dynamic Data</span>
+          <svg
+            className="w-3 h-3 group-open:rotate-180 transition-transform"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="3"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </summary>
+        <div className="mt-4 space-y-4">
+          <label className="flex items-center justify-between gap-3 text-xs font-bold text-gray-600 dark:text-zinc-400">
+            Enable binding
+            <input
+              type="checkbox"
+              checked={Boolean(bindings.enabled)}
+              onChange={e =>
+                handleBindingChange({
+                  ...bindings,
+                  enabled: e.target.checked,
+                })
+              }
+            />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              Schema Hook
+            </span>
+            <select
+              value={bindings.query?.schemaSlug || ''}
+              onChange={e =>
+                updateBindings({
+                  enabled: Boolean(e.target.value),
+                  query: {
+                    schemaSlug: e.target.value,
+                    limit: bindings.query?.limit || 3,
+                    sortDirection: bindings.query?.sortDirection || 'DESC',
+                  },
+                })
+              }
+              className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm dark:text-white"
+            >
+              <option value="">Static component</option>
+              {dynamicSchemas.map(schema => (
+                <option key={schema.slug} value={schema.slug}>
+                  load{toPascalCase(schema.slug)}s()
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {bindingSchema && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="space-y-2">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    Limit
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={bindings.query?.limit || 1}
+                    onChange={e =>
+                      updateQuery({limit: parseInt(e.target.value, 10) || 1})
+                    }
+                    className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm dark:text-white"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    Sort
+                  </span>
+                  <select
+                    value={bindings.query?.sortDirection || 'DESC'}
+                    onChange={e =>
+                      updateQuery({
+                        sortDirection: e.target.value as 'ASC' | 'DESC',
+                      })
+                    }
+                    className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm dark:text-white"
+                  >
+                    <option value="DESC">Newest</option>
+                    <option value="ASC">Oldest</option>
+                  </select>
+                </label>
+              </div>
+
+              <div className="space-y-3">
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                  Fields
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {bindingSchema.fields.map(schemaField => (
+                    <button
+                      key={schemaField.name}
+                      type="button"
+                      draggable
+                      onDragStart={e => {
+                        e.dataTransfer.setData(
+                          'application/x-gustav-field',
+                          schemaField.name
+                        );
+                        e.dataTransfer.setData(
+                          'text/plain',
+                          `{{${schemaField.name}}}`
+                        );
+                      }}
+                      className="cursor-grab active:cursor-grabbing rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-300"
+                      title={`Drag {{${schemaField.name}}} into a text field`}
+                    >
+                      {schemaField.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </details>
     );
   };
 
@@ -1561,6 +1781,8 @@ export function PageEditor() {
                     {pluginSchema?.map(field => renderPropertyField(field))}
                   </div>
 
+                  {renderDynamicBindingsPanel()}
+
                   <details className="group border-t border-gray-100 dark:border-zinc-800 pt-6 mt-6">
                     <summary className="list-none cursor-pointer flex items-center justify-between text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-indigo-500 transition-colors">
                       <span>Advanced JSON</span>
@@ -1587,14 +1809,6 @@ export function PageEditor() {
                       />
                     </div>
                   </details>
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedComponentId(null)}
-                    className="w-full mt-8 bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white font-black uppercase text-[10px] tracking-widest py-4 rounded-xl shadow-xl transition-all hover:scale-105 active:scale-95"
-                  >
-                    Close
-                  </button>
                 </form>
               </div>
             </div>
@@ -1733,4 +1947,158 @@ export function PageEditor() {
       )}
     </DndContext>
   );
+}
+
+function TokenizedTextField({
+  value,
+  fields,
+  multiline,
+  onChange,
+}: {
+  value: unknown;
+  fields: {name: string; label: string}[];
+  multiline?: boolean;
+  onChange: (value: string) => void;
+}) {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const stringValue =
+    value === undefined || value === null ? '' : String(value);
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const currentValue = serializeTokenizedElement(editor);
+    if (currentValue !== stringValue) {
+      editor.innerHTML = renderTokenizedHtml(stringValue, fields);
+    }
+  }, [stringValue, fields]);
+
+  const syncValue = () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    onChange(serializeTokenizedElement(editor));
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const fieldName =
+      event.dataTransfer.getData('application/x-gustav-field') ||
+      event.dataTransfer.getData('text/plain').replace(/[{}]/g, '').trim();
+    if (!fieldName) return;
+
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.focus();
+    insertTokenChip(editor, fieldName, fields);
+    onChange(serializeTokenizedElement(editor));
+  };
+
+  return (
+    <div
+      ref={editorRef}
+      contentEditable
+      suppressContentEditableWarning
+      onInput={syncValue}
+      onBlur={syncValue}
+      onDragOver={event => event.preventDefault()}
+      onDrop={handleDrop}
+      className={`w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none dark:text-white transition-all ${multiline ? 'min-h-28 whitespace-pre-wrap' : 'min-h-11 whitespace-pre-wrap'}`}
+    />
+  );
+}
+
+function renderTokenizedHtml(
+  value: string,
+  fields: {name: string; label: string}[]
+): string {
+  return escapeHtml(value).replace(
+    /\{\{\s*([a-zA-Z0-9_-]+)\s*\}\}/g,
+    (_, fieldName) => renderTokenChipHtml(fieldName, fields)
+  );
+}
+
+function renderTokenChipHtml(
+  fieldName: string,
+  fields: {name: string; label: string}[]
+): string {
+  const field = fields.find(item => item.name === fieldName);
+  const label = escapeHtml(field?.label || fieldName);
+  const token = escapeHtml(fieldName);
+  return `<span contenteditable="false" data-gustav-token="${token}" class="inline-flex items-center rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2 py-0.5 mx-0.5 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-300">${label}</span>`;
+}
+
+function serializeTokenizedElement(element: HTMLElement): string {
+  const serializeNode = (node: ChildNode): string => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent || '';
+    }
+
+    if (!(node instanceof HTMLElement)) {
+      return '';
+    }
+
+    const token = node.dataset.gustavToken;
+    if (token) {
+      return `{{${token}}}`;
+    }
+
+    if (node.tagName === 'BR') {
+      return '\n';
+    }
+
+    const children = Array.from(node.childNodes).map(serializeNode).join('');
+    if (node.tagName === 'DIV' || node.tagName === 'P') {
+      return `${children}\n`;
+    }
+    return children;
+  };
+
+  return Array.from(element.childNodes).map(serializeNode).join('');
+}
+
+function insertTokenChip(
+  editor: HTMLElement,
+  fieldName: string,
+  fields: {name: string; label: string}[]
+) {
+  const selection = window.getSelection();
+  const range =
+    selection && selection.rangeCount > 0
+      ? selection.getRangeAt(0)
+      : document.createRange();
+
+  if (!editor.contains(range.commonAncestorContainer)) {
+    range.selectNodeContents(editor);
+    range.collapse(false);
+  }
+
+  const wrapper = document.createElement('span');
+  wrapper.innerHTML = `${renderTokenChipHtml(fieldName, fields)} `;
+  const fragment = document.createDocumentFragment();
+  while (wrapper.firstChild) {
+    fragment.appendChild(wrapper.firstChild);
+  }
+
+  range.deleteContents();
+  range.insertNode(fragment);
+  range.collapse(false);
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function toPascalCase(value: string): string {
+  return value
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('');
 }
