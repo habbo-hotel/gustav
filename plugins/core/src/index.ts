@@ -181,7 +181,7 @@ const components: ComponentDefinition[] = [
     schema: [
       {
         name: 'columns',
-        label: 'Columns',
+        label: 'Columns / Slots',
         type: 'select',
         options: [
           {label: '1 Column', value: 1},
@@ -230,6 +230,8 @@ const components: ComponentDefinition[] = [
           {label: 'Large', value: 'lg'},
         ],
       },
+      {name: 'backgroundColor', label: 'Background Color', type: 'color'},
+      {name: 'textColor', label: 'Text Color', type: 'color'},
       {name: 'shadow', label: 'Show Shadow', type: 'checkbox'},
       {name: 'border', label: 'Show Border', type: 'checkbox'},
     ],

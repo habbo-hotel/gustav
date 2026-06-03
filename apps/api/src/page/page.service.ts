@@ -473,6 +473,7 @@ export class PageService {
       id: component.id,
       pageId: pageId,
       parentId: component.parentId,
+      slot: component.slot,
       pluginName: component.pluginName,
       componentName: component.componentName,
       props: component.props,
@@ -509,6 +510,7 @@ export class PageService {
         pluginName: c.pluginName,
         componentName: c.componentName,
         props: c.props,
+        slot: c.slot,
         displayOrder: c.displayOrder,
         pageVersionId: savedDraft.id,
       });

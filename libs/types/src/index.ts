@@ -66,6 +66,7 @@ export interface PageComponentWire {
   id: number;
   pageId: number;
   parentId?: number;
+  slot?: number;
   pluginName: string;
   componentName: string;
   props: string;

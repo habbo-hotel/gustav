@@ -26,6 +26,9 @@ export class PageComponent extends BaseEntity {
 
   children?: PageComponent[];
 
+  @Column({nullable: true})
+  slot?: number;
+
   @Column()
   pluginName!: string;
 

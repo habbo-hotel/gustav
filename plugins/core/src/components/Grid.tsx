@@ -1,24 +1,19 @@
 import React, {ReactNode} from 'react';
 
 export interface GridProps {
-  columns?: 1 | 2 | 3 | 4 | 5 | 6;
+  columns?: number | string;
   gap?: 'sm' | 'md' | 'lg' | 'none';
   children?: ReactNode;
+  renderSlot?: (index: number) => ReactNode;
 }
 
 export const Grid: React.FC<GridProps> = ({
   columns = 3,
   gap = 'md',
   children,
+  renderSlot,
 }) => {
-  const gridColumnsClasses = {
-    1: 'grid-cols-1',
-    2: 'grid-cols-1 md:grid-cols-2',
-    3: 'grid-cols-1 md:grid-cols-3',
-    4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
-    5: 'grid-cols-1 md:grid-cols-3 lg:grid-cols-5',
-    6: 'grid-cols-1 md:grid-cols-3 lg:grid-cols-6',
-  };
+  const colCount = typeof columns === 'string' ? parseInt(columns, 10) : Number(columns);
 
   const gapClasses = {
     none: 'gap-0',
@@ -28,10 +23,19 @@ export const Grid: React.FC<GridProps> = ({
   };
 
   return (
-    <div
-      className={`grid ${gridColumnsClasses[columns]} ${gapClasses[gap]} w-full`}
+    <div 
+      className={`gustav-grid ${gapClasses[gap]} w-full items-stretch`}
+      style={{ '--cols': colCount } as any}
     >
-      {children}
+      {renderSlot ? (
+        Array.from({length: colCount}).map((_, i) => (
+          <div key={i} className="min-w-0 min-h-[50px]">
+            {renderSlot(i)}
+          </div>
+        ))
+      ) : (
+        children
+      )}
     </div>
   );
 };
