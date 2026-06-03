@@ -69,6 +69,23 @@ export function PageRenderer() {
       .filter(c => c.parentId === comp.id)
       .sort((a, b) => a.displayOrder - b.displayOrder);
 
+    // If it's a Grid, distribute children into slots
+    if (comp.componentName === 'Grid') {
+      const columns = props.columns || 3;
+      
+      return (
+        <Component key={comp.id} {...props}>
+          {Array.from({length: columns}).map((_, i) => (
+            <div key={i} className="min-w-0">
+              {children
+                .filter(child => (child.slot || 0) === i)
+                .map(child => renderComponent(child, allComponents))}
+            </div>
+          ))}
+        </Component>
+      );
+    }
+    
     return (
       <Component key={comp.id} {...props}>
         {children.map(child => renderComponent(child, allComponents))}

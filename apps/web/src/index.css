@@ -31,3 +31,31 @@ body {
 #root {
   width: 100%;
 }
+
+/* Container Query Responsive Utilities */
+.gustav-grid {
+  display: grid !important;
+  grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+}
+
+@container (width >= 600px) {
+  .gustav-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@container (width >= 900px) {
+  .gustav-grid {
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr)) !important;
+  }
+}
+
+.gustav-hero {
+  padding: 2rem !important;
+}
+
+@container (width >= 768px) {
+  .gustav-hero {
+    padding: 6rem 4rem !important;
+  }
+}

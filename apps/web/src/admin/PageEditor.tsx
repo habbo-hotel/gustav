@@ -1,7 +1,7 @@
 import {CSS} from '@dnd-kit/utilities';
 import {plugins} from 'virtual:gustav-plugins';
 import {useParams, useNavigate, Link} from 'react-router-dom';
-import React, {useState, useEffect, useMemo, useCallback, useRef} from 'react';
+import React, {useState, useEffect, useMemo, useCallback, useRef, memo} from 'react';
 import {restrictToVerticalAxis} from '@dnd-kit/modifiers';
 import {PageWire, PageComponentWire, PageStatus} from '@gustav/types';
 import toast from 'react-hot-toast';
@@ -15,6 +15,7 @@ import {
 import {
   DndContext,
   closestCenter,
+  pointerWithin,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -30,7 +31,7 @@ import {
 import {pageSdk} from '../sdk';
 
 // --- Block Icons Mapping ---
-const BlockIcon = ({name, className = 'w-5 h-5'}: {name?: string; className?: string}) => {
+const BlockIcon = memo(({name, className = 'w-5 h-5'}: {name?: string; className?: string}) => {
   const icons: Record<string, React.ReactNode> = {
     heading: (
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" />
@@ -45,7 +46,7 @@ const BlockIcon = ({name, className = 'w-5 h-5'}: {name?: string; className?: st
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h14" />
     ),
     button: (
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H6a2 2 0 00-2 2v10a2 2 0 012 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-2M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M8 7h8" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-2M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M8 7h8" />
     ),
     image: (
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -65,7 +66,7 @@ const BlockIcon = ({name, className = 'w-5 h-5'}: {name?: string; className?: st
       )}
     </svg>
   );
-};
+});
 
 // --- Component ID Helper ---
 const getComponentDisplayId = (compId: number, allComponents: PageComponentWire[]) => {
@@ -86,7 +87,7 @@ interface DraggableLibraryComponentProps {
   component: any;
 }
 
-const DraggableLibraryComponent: React.FC<DraggableLibraryComponentProps> = ({
+const DraggableLibraryComponent: React.FC<DraggableLibraryComponentProps> = memo(({
   component,
 }) => {
   const {attributes, listeners, setNodeRef, transform, isDragging} =
@@ -122,7 +123,49 @@ const DraggableLibraryComponent: React.FC<DraggableLibraryComponentProps> = ({
       </h4>
     </div>
   );
-};
+});
+
+// --- Droppable Slot for Containers ---
+const DroppableSlot = memo(({parentId, slotIndex, children, isPreview}: any) => {
+  const {setNodeRef, isOver} = useDroppable({
+    id: `slot-${parentId}-${slotIndex}`,
+    data: {
+      type: 'slot',
+      parentId,
+      slotIndex,
+    },
+    disabled: isPreview,
+  });
+
+  const childrenCount = React.Children.toArray(children).reduce((acc: number, child: any) => {
+    // SortableContext might wrap children, we need to dig into its props
+    if (child && child.props && child.props.children) {
+      return acc + React.Children.count(child.props.children);
+    }
+    // Handle case where children might be an empty array inside SortableContext
+    if (Array.isArray(child) && child.length === 0) return acc;
+    return acc + (child ? 1 : 0);
+  }, 0);
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`min-h-[100px] h-full transition-all rounded-xl group relative ${
+        !isPreview && isOver ? 'bg-indigo-50/50 dark:bg-indigo-500/10 ring-2 ring-indigo-500' : ''
+      }`}
+    >
+      {children}
+      {!isPreview && childrenCount === 0 && (
+         <div className="absolute inset-0 flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-100 dark:border-zinc-800 rounded-xl text-gray-300 dark:text-zinc-600 transition-colors group-hover:border-indigo-200 group-hover:bg-indigo-50/10">
+            <svg className="w-5 h-5 mb-1 opacity-20 group-hover:opacity-40 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span className="text-[7px] font-black uppercase tracking-[0.2em] opacity-40 group-hover:opacity-100 transition-opacity">Column {slotIndex + 1}</span>
+         </div>
+      )}
+    </div>
+  );
+});
 
 // --- Sortable Item Component ---
 interface SortableComponentProps {
@@ -135,7 +178,7 @@ interface SortableComponentProps {
   isPreview?: boolean;
 }
 
-const SortableComponent: React.FC<SortableComponentProps> = ({
+const SortableComponent: React.FC<SortableComponentProps> = memo(({
   id,
   component,
   allComponents,
@@ -168,24 +211,58 @@ const SortableComponent: React.FC<SortableComponentProps> = ({
     ));
   const props = useMemo(() => JSON.parse(component.props || '{}'), [component.props]);
 
-  const children = allComponents
+  const children = useMemo(() => allComponents
     .filter(c => c.parentId === component.id)
-    .sort((a, b) => a.displayOrder - b.displayOrder);
+    .sort((a, b) => a.displayOrder - b.displayOrder), [allComponents, component.id]);
+
+  const renderSlot = useCallback((index: number) => {
+    const slotChildren = children.filter(c => (c.slot || 0) === index);
+    return (
+      <DroppableSlot key={index} parentId={component.id} slotIndex={index} isPreview={isPreview}>
+        <SortableContext items={slotChildren.map(c => c.id)} strategy={verticalListSortingStrategy}>
+          {slotChildren.map(child => (
+            <SortableComponent
+              key={child.id}
+              id={child.id}
+              component={child}
+              allComponents={allComponents}
+              onEdit={onEdit}
+              onRemove={onRemove}
+              onInlinePropChange={(name, value) => onInlinePropChange(name, value)}
+              isPreview={isPreview}
+            />
+          ))}
+        </SortableContext>
+      </DroppableSlot>
+    );
+  }, [children, component.id, isPreview, allComponents, onEdit, onRemove, onInlinePropChange]);
+
+  const onMouseEnter = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsHovered(true);
+  }, []);
+
+  const onMouseLeave = useCallback(() => setIsHovered(false), []);
+
+  const onClick = useCallback((e: React.MouseEvent) => {
+    if (isPreview) return;
+    e.stopPropagation();
+    onEdit(component.id);
+  }, [isPreview, onEdit, component.id]);
+
+  const handleRemove = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onRemove(component.id);
+  }, [onRemove, component.id]);
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      onMouseEnter={(e) => {
-        e.stopPropagation();
-        setIsHovered(true);
-      }}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={(e) => {
-        if (isPreview) return;
-        e.stopPropagation();
-        onEdit(component.id);
-      }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={onClick}
       className={`relative transition-all ${
         isPreview ? '' : 'border-2 rounded-xl mb-4'
       } ${
@@ -218,11 +295,7 @@ const SortableComponent: React.FC<SortableComponentProps> = ({
           className={`absolute top-2 right-2 flex items-center space-x-1 transition-opacity z-50 ${isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         >
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onRemove(component.id);
-            }}
+            onClick={handleRemove}
             className="p-2 bg-white shadow-sm border border-gray-200 rounded-lg hover:bg-rose-50 hover:text-rose-600 text-gray-400 transition-colors"
             title="Delete Component"
           >
@@ -250,43 +323,114 @@ const SortableComponent: React.FC<SortableComponentProps> = ({
           {...props}
           editable={!isPreview}
           onPropChange={(name: string, value: any) => onInlinePropChange(name, value)}
+          renderSlot={component.componentName === 'Grid' ? renderSlot : undefined}
         >
-          {children.length > 0 ? (
-            <SortableContext
-              items={children.map(c => c.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {children.map(child => (
-                <SortableComponent
-                  key={child.id}
-                  id={child.id}
-                  component={child}
-                  allComponents={allComponents}
-                  onEdit={onEdit}
-                  onRemove={onRemove}
-                  onInlinePropChange={(name, value) => onInlinePropChange(name, value)}
-                  isPreview={isPreview}
-                />
-              ))}
-            </SortableContext>
-          ) : (
-            pluginComponent?.canHaveChildren && !isPreview && (
-              <div className="p-8 border-2 border-dashed border-gray-100 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center text-gray-300 dark:text-zinc-600">
-                <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
-                </svg>
-                <p className="text-[10px] font-black uppercase tracking-widest text-center">Empty Container<br/>Drag items here</p>
-              </div>
-            )
+          {component.componentName !== 'Grid' && (
+             children.length > 0 ? (
+               <SortableContext
+                 items={children.map(c => c.id)}
+                 strategy={verticalListSortingStrategy}
+               >
+                 {children.map(child => (
+                   <SortableComponent
+                     key={child.id}
+                     id={child.id}
+                     component={child}
+                     allComponents={allComponents}
+                     onEdit={onEdit}
+                     onRemove={onRemove}
+                     onInlinePropChange={(name, value) => onInlinePropChange(name, value)}
+                     isPreview={isPreview}
+                   />
+                 ))}
+               </SortableContext>
+             ) : (
+               pluginComponent?.canHaveChildren && !isPreview && (
+                 <div className="p-8 border-2 border-dashed border-gray-100 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center text-gray-300 dark:text-zinc-600">
+                   <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
+                   </svg>
+                   <p className="text-[10px] font-black uppercase tracking-widest text-center">Empty Container<br/>Drag items here</p>
+                 </div>
+               )
+             )
           )}
         </Comp>
       </div>
     </div>
   );
-};
+});
+
+// --- Drawer Component ---
+interface DrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  side?: 'left' | 'right';
+  isBlocking?: boolean;
+}
+
+const Drawer: React.FC<DrawerProps> = memo(({
+  isOpen,
+  onClose,
+  title,
+  children,
+  side = 'right',
+  isBlocking = true,
+}) => {
+  if (!isOpen) return null;
+
+  const content = (
+    <div
+      className={`fixed inset-y-0 ${side === 'right' ? 'right-0' : 'left-0'} max-w-md w-full flex z-50`}
+    >
+      <div
+        className={`w-full bg-white dark:bg-zinc-900 shadow-2xl flex flex-col ${side === 'right' ? 'border-l' : 'border-r'} dark:border-zinc-800 animate-in ${side === 'right' ? 'slide-in-from-right' : 'slide-in-from-left'} duration-300`}
+      >
+        <div className="p-6 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
+          <h2 className="text-xl font-black dark:text-white tracking-tight uppercase">
+            {title}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl text-gray-400 transition-colors"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+      </div>
+    </div>
+  );
+
+  if (!isBlocking) return content;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      <div
+        className="absolute inset-0 bg-zinc-950/20 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+      />
+      {content}
+    </div>
+  );
+});
 
 // --- Droppable Empty State ---
-const EmptyCanvasPlaceholder: React.FC = () => {
+const EmptyCanvasPlaceholder: React.FC = memo(() => {
   const {setNodeRef, isOver} = useDroppable({
     id: 'empty-canvas',
     data: {
@@ -325,9 +469,9 @@ const EmptyCanvasPlaceholder: React.FC = () => {
       </p>
     </div>
   );
-};
+});
 
-const CanvasContainer: React.FC<{children: React.ReactNode; isPreview: boolean}> = ({children, isPreview}) => {
+const CanvasContainer: React.FC<{children: React.ReactNode; isPreview: boolean; deviceMode: 'desktop' | 'tablet' | 'mobile'}> = memo(({children, isPreview, deviceMode}) => {
   const {setNodeRef, isOver} = useDroppable({
     id: 'canvas-root',
     data: {
@@ -336,20 +480,33 @@ const CanvasContainer: React.FC<{children: React.ReactNode; isPreview: boolean}>
     disabled: isPreview,
   });
 
+  const widthStyle: Record<string, string> = {
+    desktop: '100%',
+    tablet: '768px',
+    mobile: '375px',
+  };
+
   return (
-    <div
-      ref={setNodeRef}
-      className={`flex-1 gustav-canvas transition-all ${isPreview ? 'p-0 border-none' : 'bg-gray-50/50 dark:bg-zinc-950 rounded-3xl border-2 border-dashed border-gray-200 dark:border-zinc-800 p-8 min-h-[500px]'} ${
-        !isPreview && isOver ? 'bg-indigo-50/50 dark:bg-indigo-500/10 border-indigo-500' : ''
-      }`}
-    >
-      {children}
+    <div className="flex justify-center flex-1 h-full w-full">
+      <div
+        ref={setNodeRef}
+        style={{ 
+          width: widthStyle[deviceMode],
+          maxWidth: '100%',
+          containerType: 'inline-size'
+        }}
+        className={`gustav-canvas transition-all duration-500 ease-in-out ${isPreview ? 'p-0 border-none' : 'bg-white dark:bg-zinc-900 shadow-2xl border-x border-gray-100 dark:border-zinc-800 min-h-full'}`}
+      >
+        <div className={`transition-all duration-500 ${isPreview ? 'p-0' : 'p-12'} ${!isPreview && isOver ? 'bg-indigo-50/20' : ''}`}>
+          {children}
+        </div>
+      </div>
     </div>
   );
-};
+});
 
 // --- Drag Preview Helper ---
-const DragPreviewContent = ({activeId, activeType, page, plugins}: any) => {
+const DragPreviewContent = memo(({activeId, activeType, page, plugins}: any) => {
   const {over} = useDndContext();
   
   const canvasEl = document.querySelector('.gustav-canvas');
@@ -358,11 +515,12 @@ const DragPreviewContent = ({activeId, activeType, page, plugins}: any) => {
   if (canvasEl) {
     const style = window.getComputedStyle(canvasEl);
     const padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-    baseWidth = canvasEl.getBoundingClientRect().width - padding;
+    baseWidth = Math.min(canvasEl.getBoundingClientRect().width - padding, 800); // Cap at 800px
   }
 
   // Use the 'over' element's width if available, otherwise the canvas content width
-  const targetWidth = over ? over.rect.width : baseWidth;
+  // Subtract padding for slots to better match inner content
+  const targetWidth = over ? (over.rect.width - 24) : baseWidth;
 
   let Comp: any = null;
   let props: any = {};
@@ -388,14 +546,14 @@ const DragPreviewContent = ({activeId, activeType, page, plugins}: any) => {
   return (
     <div 
       style={{ width: targetWidth }}
-      className="pointer-events-none opacity-50 ring-2 ring-indigo-500 rounded-xl bg-white dark:bg-zinc-900 transition-[width] duration-200 ease-out"
+      className="pointer-events-none opacity-50 ring-2 ring-indigo-500 rounded-xl bg-white/80 dark:bg-zinc-900/80 shadow-2xl transition-[width] duration-150 ease-in-out overflow-hidden"
     >
       <div className="p-4 rounded-xl">
         <Comp {...props} isPreview={true} />
       </div>
     </div>
   );
-};
+});
 
 // --- Main Page Editor Component ---
 export function PageEditor() {
@@ -417,6 +575,7 @@ export function PageEditor() {
   const [isDirty, setIsDirty] = useState(false);
   const [isPreview, setIsPreview] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [deviceMode, setDeviceMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
   // Form States
   const [pageSettings, setPageSettings] = useState<Partial<PageWire>>({});
@@ -480,7 +639,6 @@ export function PageEditor() {
   }, [page]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    console.log('Drag Start:', event.active.id);
     setActiveId(event.active.id);
     setActiveType(event.active.data.current?.type || 'canvas');
   }, []);
@@ -488,7 +646,8 @@ export function PageEditor() {
   const handleAddComponent = useCallback(async (
     componentName: string,
     atIndex?: number,
-    parentId?: number
+    parentId?: number,
+    slot?: number
   ) => {
     if (!page) return;
     const plugin = plugins.find(p => p.components.some((c: any) => c.name === componentName));
@@ -504,8 +663,9 @@ export function PageEditor() {
         componentName,
         props: JSON.stringify(pluginComp.defaultProps),
         parentId,
+        slot,
         displayOrder:
-          atIndex !== undefined ? atIndex : page.components?.filter(c => c.parentId === parentId).length || 0,
+          atIndex !== undefined ? atIndex : page.components?.filter(c => c.parentId === parentId && c.slot === slot).length || 0,
       });
 
       setIsDirty(true);
@@ -520,7 +680,6 @@ export function PageEditor() {
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const {active, over} = event;
     const type = active.data.current?.type || activeType;
-    console.log('Drag End:', active.id, 'over', over?.id, 'type', type);
     
     setActiveId(null);
     setActiveType(null);
@@ -531,9 +690,15 @@ export function PageEditor() {
       if (type === 'library') {
         const componentName = active.data.current?.componentName;
         const overId = over.id;
+        const overData = over.data.current;
 
         if (overId === 'empty-canvas' || overId === 'canvas-root') {
           await handleAddComponent(componentName, undefined, undefined);
+          return;
+        }
+
+        if (overData?.type === 'slot') {
+          await handleAddComponent(componentName, undefined, overData.parentId, overData.slotIndex);
           return;
         }
 
@@ -545,33 +710,42 @@ export function PageEditor() {
           );
           
           if (pluginComp?.canHaveChildren) {
-            await handleAddComponent(componentName, undefined, overComp.id);
+            await handleAddComponent(componentName, undefined, overComp.id, 0);
           } else {
-            const siblings = page?.components?.filter(c => c.parentId === overComp.parentId) || [];
+            const siblings = page?.components?.filter(c => c.parentId === overComp.parentId && c.slot === overComp.slot) || [];
             const overIndex = siblings.findIndex(c => c.id === overId);
-            await handleAddComponent(componentName, overIndex, overComp.parentId);
+            await handleAddComponent(componentName, overIndex, overComp.parentId, overComp.slot);
           }
         }
       } else if (page?.components) {
         const activeComp = page.components.find(c => c.id === active.id);
-        const overComp = page.components.find(c => c.id === over.id);
+        const overId = over.id;
+        const overData = over.data.current;
         
         if (!activeComp) return;
 
-        if (over.id === 'canvas-root' || over.id === 'empty-canvas') {
+        if (overId === 'canvas-root' || overId === 'empty-canvas') {
            if (activeComp.parentId !== undefined) {
-              await pageSdk.updateComponent(activeComp.id, { parentId: undefined as any });
+              await pageSdk.updateComponent(activeComp.id, { parentId: undefined as any, slot: undefined as any });
               toast.success('Moved to root');
               fetchPage(page.id, true);
            }
            return;
         }
 
+        if (overData?.type === 'slot') {
+           await pageSdk.updateComponent(activeComp.id, { parentId: overData.parentId, slot: overData.slotIndex });
+           toast.success(`Moved to column ${overData.slotIndex + 1}`);
+           fetchPage(page.id, true);
+           return;
+        }
+
+        const overComp = page.components.find(c => c.id === overId);
         if (!overComp) return;
 
-        if (activeComp.parentId === overComp.parentId) {
+        if (activeComp.parentId === overComp.parentId && activeComp.slot === overComp.slot) {
           const siblings = page.components
-            .filter(c => c.parentId === activeComp.parentId)
+            .filter(c => c.parentId === activeComp.parentId && c.slot === activeComp.slot)
             .sort((a, b) => a.displayOrder - b.displayOrder);
 
           const oldIndex = siblings.findIndex(c => c.id === active.id);
@@ -597,11 +771,11 @@ export function PageEditor() {
            const overPluginComp = overPlugin?.components.find((c: any) => c.name === overComp.componentName);
            
            if (overPluginComp?.canHaveChildren) {
-              await pageSdk.updateComponent(activeComp.id, { parentId: overComp.id });
+              await pageSdk.updateComponent(activeComp.id, { parentId: overComp.id, slot: 0 });
               toast.success(`Moved into ${overComp.componentName}`);
               fetchPage(page.id, true);
            } else {
-              await pageSdk.updateComponent(activeComp.id, { parentId: overComp.parentId });
+              await pageSdk.updateComponent(activeComp.id, { parentId: overComp.parentId, slot: overComp.slot });
               toast.success(`Moved near ${overComp.componentName}`);
               fetchPage(page.id, true);
            }
@@ -622,6 +796,17 @@ export function PageEditor() {
       toast.error('Failed to update page');
     }
   }, [page, pageSettings, fetchPage]);
+
+  const handleDeletePage = useCallback(async () => {
+    if (!page) return;
+    try {
+      await pageSdk.removePage(page.id);
+      toast.success('Page deleted successfully');
+      navigate('/admin/pages');
+    } catch (err) {
+      toast.error('Failed to delete page');
+    }
+  }, [page, navigate]);
 
   const handlePublish = useCallback(async () => {
     if (!page) return;
@@ -754,8 +939,6 @@ export function PageEditor() {
   }, [selectedComponent]);
 
   const handleDeselect = useCallback((e: React.MouseEvent) => {
-    // Only deselect if clicking exactly the background canvas areas, 
-    // but not if clicking tools sidebar or components.
     if (toolsSidebarRef.current?.contains(e.target as Node)) return;
     setSelectedComponentId(null);
   }, []);
@@ -888,7 +1071,7 @@ export function PageEditor() {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={pointerWithin}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
@@ -938,6 +1121,39 @@ export function PageEditor() {
                 </button>
              </div>
              <div className="flex items-center space-x-3">
+                {/* Device Switcher */}
+                <div className="hidden md:flex items-center bg-gray-50 dark:bg-zinc-800 rounded-xl p-1 border border-gray-100 dark:border-zinc-700">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeviceMode('mobile'); }}
+                    className={`p-1.5 rounded-lg transition-all ${deviceMode === 'mobile' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-500' : 'text-gray-400 hover:text-gray-600'}`}
+                    title="Mobile View"
+                  >
+                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                     </svg>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeviceMode('tablet'); }}
+                    className={`p-1.5 rounded-lg transition-all ${deviceMode === 'tablet' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-500' : 'text-gray-400 hover:text-gray-600'}`}
+                    title="Tablet View"
+                  >
+                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                     </svg>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setDeviceMode('desktop'); }}
+                    className={`p-1.5 rounded-lg transition-all ${deviceMode === 'desktop' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-500' : 'text-gray-400 hover:text-gray-600'}`}
+                    title="Desktop View"
+                  >
+                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                     </svg>
+                  </button>
+                </div>
+
+                <div className="h-4 w-px bg-gray-200 dark:bg-zinc-700 mx-1" />
+
                 <button
                   onClick={(e) => { e.stopPropagation(); setIsPreview(!isPreview); }}
                   className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${isPreview ? 'bg-indigo-500 text-white shadow-lg' : 'bg-gray-100 dark:bg-zinc-800 text-gray-500'}`}
@@ -955,8 +1171,8 @@ export function PageEditor() {
           </div>
 
           {/* Actual Canvas */}
-          <div className="flex-1 overflow-y-auto p-12">
-            <CanvasContainer isPreview={isPreview}>
+          <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-zinc-950/50">
+            <CanvasContainer isPreview={isPreview} deviceMode={deviceMode}>
               {rootComponents.length === 0 ? (
                 <EmptyCanvasPlaceholder />
               ) : (
@@ -1109,6 +1325,13 @@ export function PageEditor() {
                 <label htmlFor="showInNavigation" className="text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer uppercase tracking-tight">Show in navigation</label>
               </div>
               <button type="submit" className="w-full bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white font-black py-4 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 uppercase text-xs tracking-widest">Save Settings</button>
+              <button 
+                type="button" 
+                onClick={handleDeletePage}
+                className="w-full mt-4 bg-rose-500 hover:bg-rose-600 text-white font-black py-4 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 uppercase text-xs tracking-widest"
+              >
+                Delete Page
+              </button>
             </form>
           </div>
         </div>
