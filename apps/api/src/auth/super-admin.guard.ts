@@ -13,6 +13,6 @@ export class SuperAdminGuard implements CanActivate {
     if (user && user.isSuperAdmin) {
       return true;
     }
-    throw new UnauthorizedException('SuperAdmin access required');
+    throw new UnauthorizedException('Administrator access required');
   }
 }

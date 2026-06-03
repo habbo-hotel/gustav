@@ -133,7 +133,7 @@ export function AdminLayout() {
                 {user.username}
               </span>
               <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">
-                Super Admin
+                Administrator
               </span>
             </div>
             <Link

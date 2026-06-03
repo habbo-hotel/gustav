@@ -38,7 +38,7 @@ export function ProfilePage() {
                   : 'text-indigo-500 font-bold'
               }
             >
-              {user.isSuperAdmin ? 'Super Admin' : 'Standard User'}
+              {user.isSuperAdmin ? 'Administrator' : 'Standard User'}
             </span>
           </p>
         </div>

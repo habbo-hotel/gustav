@@ -138,7 +138,7 @@ export function AdminUsers() {
                 <td className="py-5 px-8">
                   {user.isSuperAdmin ? (
                     <span className="inline-flex items-center bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase px-2 py-1 rounded-md border border-amber-500/20">
-                      Super Admin
+                      Administrator
                     </span>
                   ) : (
                     <span className="inline-flex items-center bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase px-2 py-1 rounded-md border border-indigo-500/20">
@@ -272,12 +272,12 @@ export function AdminUsers() {
                   }
                   className="w-5 h-5 rounded-lg border-gray-200 dark:border-zinc-700 text-indigo-500 focus:ring-indigo-500/20 transition-all cursor-pointer"
                 />
-                <label
-                  htmlFor="isSuperAdmin"
-                  className="text-sm font-bold text-gray-600 dark:text-zinc-400 cursor-pointer"
-                >
-                  Grant Super Admin privileges
-                </label>
+                  <label
+                    htmlFor="isSuperAdmin"
+                    className="text-sm font-bold text-gray-600 dark:text-zinc-400 cursor-pointer"
+                  >
+                    Grant Administrator privileges
+                  </label>
               </div>
               <div className="flex space-x-3 pt-4">
                 <button

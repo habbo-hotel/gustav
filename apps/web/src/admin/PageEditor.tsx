@@ -760,6 +760,33 @@ export function PageEditor() {
     setSelectedComponentId(null);
   }, []);
 
+  const renderPageLinks = (parentId: number | null | undefined = null, level = 0) => {
+    const levelPages = pages.filter(p => {
+      if (parentId === null || parentId === undefined) {
+        return p.parentId === null || p.parentId === undefined;
+      }
+      return p.parentId === parentId;
+    });
+
+    return levelPages.map(p => (
+      <React.Fragment key={p.id}>
+        <Link
+          to={`/admin/pages/${p.id}`}
+          onClick={(e) => e.stopPropagation()}
+          style={{ paddingLeft: `${level * 1.5 + 0.75}rem` }}
+          className={`flex items-center space-x-3 p-2 rounded-xl transition-all relative ${p.id === page?.id ? 'bg-indigo-500 text-white shadow-lg' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}
+        >
+          {level > 0 && (
+            <div className="absolute left-2 w-px h-full bg-gray-100 dark:bg-zinc-800" style={{ left: `${(level - 0.5) * 1.5 + 0.5}rem` }} />
+          )}
+          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.status === 'published' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+          <span className="text-xs font-bold truncate">{p.title}</span>
+        </Link>
+        {renderPageLinks(p.id, level + 1)}
+      </React.Fragment>
+    ));
+  };
+
   const renderPropertyField = (field: any) => {
     let currentProps = {};
     try {
@@ -874,28 +901,10 @@ export function PageEditor() {
           className="w-72 bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800 flex flex-col shadow-sm"
         >
           <div className="p-6 border-b border-gray-100 dark:border-zinc-800">
-             <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Structure</h2>
+             <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Pages</h2>
              <div className="space-y-1 overflow-y-auto max-h-[calc(100vh-20rem)]">
-                {pages.map(p => (
-                  <Link
-                    key={p.id}
-                    to={`/admin/pages/${p.id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className={`flex items-center space-x-3 p-2 rounded-xl transition-all ${p.id === page.id ? 'bg-indigo-500 text-white shadow-lg' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}
-                  >
-                    <div className={`w-2 h-2 rounded-full ${p.status === 'published' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                    <span className="text-xs font-bold truncate">{p.title}</span>
-                  </Link>
-                ))}
+                {renderPageLinks()}
              </div>
-          </div>
-          <div className="p-6" onClick={(e) => e.stopPropagation()}>
-             <Link to="/admin/pages" className="text-[10px] font-black text-indigo-500 uppercase tracking-widest hover:underline flex items-center">
-                <svg className="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                All Pages
-             </Link>
           </div>
         </aside>
 
@@ -907,6 +916,14 @@ export function PageEditor() {
             className="p-4 bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 flex items-center justify-between sticky top-0 z-10"
           >
              <div className="flex items-center space-x-4">
+                <Link 
+                  to="/admin/pages"
+                  className="p-1.5 text-gray-400 hover:text-indigo-500 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </Link>
                 <h1 className="text-sm font-black uppercase tracking-tighter text-gray-900 dark:text-white truncate max-w-[200px]">
                    {page.title}
                 </h1>
