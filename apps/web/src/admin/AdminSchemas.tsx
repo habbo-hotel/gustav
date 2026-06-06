@@ -299,7 +299,11 @@ export function AdminSchemas() {
           >
             <div className="p-6 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
               <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
-                {editingSchema ? 'Edit Schema' : 'New Schema'}
+                {editingSchema
+                  ? editingSchema.source === 'plugin'
+                    ? 'View Schema'
+                    : 'Edit Schema'
+                  : 'New Schema'}
               </h2>
               <button
                 type="button"
@@ -311,6 +315,36 @@ export function AdminSchemas() {
             </div>
 
             <div className="p-6 space-y-6">
+              {editingSchema?.source === 'plugin' && (
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-center gap-3">
+                  <div className="p-2 bg-amber-500 text-white rounded-lg">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-xs font-black uppercase text-amber-700">
+                      Read-only Schema
+                    </div>
+                    <div className="text-sm text-amber-600">
+                      This schema is provided by the{' '}
+                      <strong>{editingSchema.pluginName}</strong> plugin and
+                      cannot be modified here.
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="grid md:grid-cols-2 gap-4">
                 <label className="space-y-2">
                   <span className="text-xs font-black uppercase text-gray-500">
@@ -325,7 +359,8 @@ export function AdminSchemas() {
                         slug: form.slug || sanitizeSlugInput(e.target.value),
                       }))
                     }
-                    className="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 dark:text-white"
+                    readOnly={editingSchema?.source === 'plugin'}
+                    className="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 dark:text-white disabled:opacity-50"
                     required
                   />
                 </label>
@@ -341,7 +376,8 @@ export function AdminSchemas() {
                         slug: sanitizeSlugInput(e.target.value),
                       }))
                     }
-                    className="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 font-mono dark:text-white"
+                    readOnly={editingSchema?.source === 'plugin'}
+                    className="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 font-mono dark:text-white disabled:opacity-50"
                     required
                   />
                 </label>
@@ -359,7 +395,8 @@ export function AdminSchemas() {
                       description: e.target.value,
                     }))
                   }
-                  className="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 min-h-24 dark:text-white"
+                  readOnly={editingSchema?.source === 'plugin'}
+                  className="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 min-h-24 dark:text-white disabled:opacity-50"
                 />
               </label>
 
@@ -368,18 +405,20 @@ export function AdminSchemas() {
                   <h3 className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">
                     Fields
                   </h3>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSchemaForm(form => ({
-                        ...form,
-                        fields: [...form.fields, emptyField()],
-                      }))
-                    }
-                    className="text-indigo-600 dark:text-indigo-400 text-xs font-black uppercase"
-                  >
-                    Add Field
-                  </button>
+                  {editingSchema?.source !== 'plugin' && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSchemaForm(form => ({
+                          ...form,
+                          fields: [...form.fields, emptyField()],
+                        }))
+                      }
+                      className="text-indigo-600 dark:text-indigo-400 text-xs font-black uppercase"
+                    >
+                      Add Field
+                    </button>
+                  )}
                 </div>
 
                 {schemaForm.fields.map((field, index) => (
@@ -397,7 +436,8 @@ export function AdminSchemas() {
                             field.name || sanitizeFieldInput(e.target.value),
                         })
                       }
-                      className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 dark:text-white"
+                      readOnly={editingSchema?.source === 'plugin'}
+                      className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 dark:text-white disabled:opacity-50"
                       required
                     />
                     <input
@@ -408,7 +448,8 @@ export function AdminSchemas() {
                           name: sanitizeFieldInput(e.target.value),
                         })
                       }
-                      className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 font-mono dark:text-white"
+                      readOnly={editingSchema?.source === 'plugin'}
+                      className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 font-mono dark:text-white disabled:opacity-50"
                       required
                     />
                     <select
@@ -418,7 +459,8 @@ export function AdminSchemas() {
                           type: e.target.value as DynamicSchemaFieldType,
                         })
                       }
-                      className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 dark:text-white"
+                      disabled={editingSchema?.source === 'plugin'}
+                      className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 dark:text-white disabled:opacity-50"
                     >
                       {fieldTypes.map(type => (
                         <option key={type} value={type}>
@@ -433,6 +475,7 @@ export function AdminSchemas() {
                         onChange={e =>
                           updateField(index, {required: e.target.checked})
                         }
+                        disabled={editingSchema?.source === 'plugin'}
                       />
                       Required
                     </label>
@@ -447,7 +490,10 @@ export function AdminSchemas() {
                         }))
                       }
                       className="text-red-500 hover:bg-red-500/10 rounded-lg"
-                      disabled={schemaForm.fields.length === 1}
+                      disabled={
+                        schemaForm.fields.length === 1 ||
+                        editingSchema?.source === 'plugin'
+                      }
                     >
                       X
                     </button>
@@ -469,7 +515,8 @@ export function AdminSchemas() {
                               })),
                           })
                         }
-                        className="lg:col-span-5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 dark:text-white"
+                        readOnly={editingSchema?.source === 'plugin'}
+                        className="lg:col-span-5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg px-3 py-2 dark:text-white disabled:opacity-50"
                       />
                     )}
                   </div>
@@ -483,14 +530,16 @@ export function AdminSchemas() {
                 onClick={() => setShowSchemaModal(false)}
                 className="px-5 py-3 rounded-xl font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800"
               >
-                Cancel
+                {editingSchema?.source === 'plugin' ? 'Close' : 'Cancel'}
               </button>
-              <button
-                type="submit"
-                className="px-5 py-3 rounded-xl font-black uppercase text-xs bg-indigo-600 text-white"
-              >
-                Save Schema
-              </button>
+              {editingSchema?.source !== 'plugin' && (
+                <button
+                  type="submit"
+                  className="px-5 py-3 rounded-xl font-black uppercase text-xs bg-indigo-600 text-white"
+                >
+                  Save Schema
+                </button>
+              )}
             </div>
           </form>
         </div>
@@ -604,6 +653,7 @@ function SchemaDefinitionsPanel({
           <thead className="bg-gray-50 dark:bg-zinc-950 text-[10px] font-black uppercase tracking-widest text-gray-400">
             <tr>
               <th className="px-6 py-4">Schema</th>
+              <th className="px-6 py-4">Source</th>
               <th className="px-6 py-4">Fields</th>
               <th className="px-6 py-4">Records</th>
               <th className="px-6 py-4 text-right">Actions</th>
@@ -623,6 +673,19 @@ function SchemaDefinitionsPanel({
                     {schema.slug}
                   </div>
                 </td>
+                <td className="px-6 py-5">
+                  <span
+                    className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest ${
+                      schema.source === 'plugin'
+                        ? 'bg-amber-500/10 text-amber-600'
+                        : 'bg-indigo-500/10 text-indigo-600'
+                    }`}
+                  >
+                    {schema.source === 'plugin'
+                      ? schema.pluginName || 'Plugin'
+                      : 'Internal'}
+                  </span>
+                </td>
                 <td className="px-6 py-5 text-sm text-gray-500">
                   {schema.fields.map(field => field.label).join(', ')}
                 </td>
@@ -635,14 +698,16 @@ function SchemaDefinitionsPanel({
                       onClick={() => onEdit(schema)}
                       className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-zinc-800 text-xs font-bold"
                     >
-                      Edit
+                      {schema.source === 'plugin' ? 'View' : 'Edit'}
                     </button>
-                    <button
-                      onClick={() => onDelete(schema)}
-                      className="px-3 py-2 rounded-lg bg-red-500/10 text-red-600 text-xs font-bold"
-                    >
-                      Delete
-                    </button>
+                    {schema.source !== 'plugin' && (
+                      <button
+                        onClick={() => onDelete(schema)}
+                        className="px-3 py-2 rounded-lg bg-red-500/10 text-red-600 text-xs font-bold"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
