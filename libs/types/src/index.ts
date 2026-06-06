@@ -103,6 +103,7 @@ export interface PluginDefinition {
   name: string;
   components: ComponentDefinition[];
   settingsSchema?: ComponentSchemaField[];
+  schemas?: DynamicSchemaInput[];
 }
 
 export type DynamicSchemaFieldType =
@@ -129,12 +130,15 @@ export interface DynamicSchemaInput {
 }
 
 export interface DynamicSchemaWire {
-  id: number;
+  id: number | string;
   name: string;
   slug: string;
   description?: string;
   fields: DynamicSchemaField[];
   recordCount?: number;
+  source?: 'internal' | 'plugin';
+  pluginName?: string;
+  readOnly?: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -144,8 +148,8 @@ export interface DynamicRecordInput {
 }
 
 export interface DynamicRecordWire {
-  id: number;
-  schemaId: number;
+  id: number | string;
+  schemaId: number | string;
   data: Record<string, any>;
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -158,7 +162,7 @@ export interface DynamicSchemaDependencyWire {
 }
 
 export interface DynamicSchemaDeleteCheckWire {
-  schemaId: number;
+  schemaId: number | string;
   dependencies: DynamicSchemaDependencyWire[];
   dependencyCount: number;
   canDelete: boolean;
@@ -197,4 +201,47 @@ export interface DynamicComponentBindings {
     schemaSlug: string;
   };
   propBindings?: DynamicPropBinding[];
+}
+
+export const GUSTAV_PLUGIN_SCHEMA_REGISTRY = 'GUSTAV_PLUGIN_SCHEMA_REGISTRY';
+
+export interface PluginDynamicSchemaDefinition extends DynamicSchemaInput {
+  pluginName: string;
+  recordCount?: number;
+  readOnly?: boolean;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+export interface PluginSchemaProvider {
+  pluginName: string;
+  findSchemas(): Promise<PluginDynamicSchemaDefinition[]>;
+  queryRecords(
+    schemaSlug: string,
+    query: DynamicRecordQueryInput
+  ): Promise<DynamicRecordQueryWire>;
+  findRecord?(
+    schemaSlug: string,
+    id: number | string
+  ): Promise<DynamicRecordWire>;
+  findRecordByField?(
+    schemaSlug: string,
+    fieldName: string,
+    value: string
+  ): Promise<DynamicRecordWire>;
+  createRecord?(
+    schemaSlug: string,
+    input: DynamicRecordInput
+  ): Promise<DynamicRecordWire>;
+  updateRecord?(
+    schemaSlug: string,
+    id: number | string,
+    input: DynamicRecordInput
+  ): Promise<DynamicRecordWire>;
+  deleteRecord?(schemaSlug: string, id: number | string): Promise<void>;
+}
+
+export interface PluginSchemaRegistry {
+  registerProvider(provider: PluginSchemaProvider): void;
+  getProviders(): PluginSchemaProvider[];
 }

@@ -1,6 +1,8 @@
 import {MigrationInterface, QueryRunner} from 'typeorm';
 
-export class AddPageShowInNavigation1780416403032 implements MigrationInterface {
+export class AddPageShowInNavigation1780416403032
+  implements MigrationInterface
+{
   name = 'AddPageShowInNavigation1780416403032';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

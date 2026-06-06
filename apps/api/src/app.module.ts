@@ -8,6 +8,7 @@ import {PageModule} from './page/page.module';
 import {SchemaModule} from './schema/schema.module';
 import {HealthModule} from './health/health.module';
 import {DatabaseModule} from './database/database.module';
+import {PluginSchemaModule} from './schema/plugin-schema.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import {DatabaseModule} from './database/database.module';
     UserModule,
     AuthModule,
     PageModule,
+    PluginSchemaModule,
     SchemaModule,
     HealthModule,
   ],
@@ -38,7 +40,12 @@ export class AppModule {
 
     for (const pkg of pluginPackages) {
       try {
-        const pluginModule = await import(pkg);
+        let pluginModule: any;
+        try {
+          pluginModule = await import(`${pkg}/backend`);
+        } catch {
+          pluginModule = await import(pkg);
+        }
         if (pluginModule.PluginBackendModule) {
           dynamicImports.push(pluginModule.PluginBackendModule);
           console.log(`[Plugin System] Loaded backend module for ${pkg}`);

@@ -2,6 +2,7 @@ import {IsNull, Not} from 'typeorm';
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -16,6 +17,10 @@ import {
   DynamicSchemaInput,
   DynamicSchemaQueryWire,
   DynamicSchemaWire,
+  GUSTAV_PLUGIN_SCHEMA_REGISTRY,
+  PluginDynamicSchemaDefinition,
+  PluginSchemaProvider,
+  PluginSchemaRegistry,
 } from '@gustav/types';
 
 import {PageComponent} from '../database/entities/page-component.entity';
@@ -30,7 +35,9 @@ export class SchemaService {
   constructor(
     private readonly schemaRepository: DynamicSchemaRepository,
     private readonly recordRepository: DynamicRecordRepository,
-    private readonly componentRepository: PageComponentRepository
+    private readonly componentRepository: PageComponentRepository,
+    @Inject(GUSTAV_PLUGIN_SCHEMA_REGISTRY)
+    private readonly pluginSchemaRegistry: PluginSchemaRegistry
   ) {}
 
   async findAll(): Promise<DynamicSchemaWire[]> {
@@ -38,7 +45,7 @@ export class SchemaService {
       order: {name: 'ASC'},
     });
 
-    return Promise.all(
+    const internalSchemas = await Promise.all(
       schemas.map(async schema => {
         const recordCount = await this.recordRepository.count({
           where: {schemaId: schema.id},
@@ -46,9 +53,22 @@ export class SchemaService {
         return this.mapSchemaToWire(schema, recordCount);
       })
     );
+    const pluginSchemas = await this.findAllPluginSchemas();
+
+    return [...internalSchemas, ...pluginSchemas].sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
   }
 
   async findOne(slug: string): Promise<DynamicSchemaWire> {
+    const pluginSchema = await this.findPluginSchemaBySlug(slug);
+    if (pluginSchema) {
+      return this.mapPluginSchemaToWire(
+        pluginSchema.schema,
+        pluginSchema.provider
+      );
+    }
+
     const schema = await this.findSchemaBySlug(slug);
     const recordCount = await this.recordRepository.count({
       where: {schemaId: schema.id},
@@ -58,6 +78,12 @@ export class SchemaService {
 
   async create(input: DynamicSchemaInput): Promise<DynamicSchemaWire> {
     const normalized = this.normalizeSchemaInput(input);
+    const pluginSchema = await this.findPluginSchemaBySlug(normalized.slug);
+    if (pluginSchema) {
+      throw new ConflictException(
+        `Schema "${normalized.slug}" is provided by ${pluginSchema.provider.pluginName}`
+      );
+    }
     const existing = await this.schemaRepository.findOne({
       where: {slug: normalized.slug},
     });
@@ -80,6 +106,7 @@ export class SchemaService {
     slug: string,
     input: DynamicSchemaInput
   ): Promise<DynamicSchemaWire> {
+    await this.assertNotPluginSchema(slug, 'update');
     const schema = await this.findSchemaBySlug(slug);
     const normalized = this.normalizeSchemaInput(input);
 
@@ -110,6 +137,22 @@ export class SchemaService {
   }
 
   async checkDelete(slug: string): Promise<DynamicSchemaDeleteCheckWire> {
+    const pluginSchema = await this.findPluginSchemaBySlug(slug);
+    if (pluginSchema) {
+      return {
+        schemaId: this.getPluginSchemaId(pluginSchema.schema),
+        dependencies: [
+          {
+            type: 'template-hook',
+            label: `${pluginSchema.provider.pluginName} plugin schema`,
+            count: 1,
+          },
+        ],
+        dependencyCount: 1,
+        canDelete: false,
+      };
+    }
+
     const schema = await this.findSchemaBySlug(slug);
     const recordCount = await this.recordRepository.count({
       where: {schemaId: schema.id},
@@ -149,6 +192,7 @@ export class SchemaService {
   }
 
   async delete(slug: string, deleteDependencies = false): Promise<void> {
+    await this.assertNotPluginSchema(slug, 'delete');
     const schema = await this.findSchemaBySlug(slug);
     const deleteCheck = await this.checkDelete(slug);
 
@@ -169,7 +213,11 @@ export class SchemaService {
     const schemas = await this.schemaRepository.find({
       order: {name: 'ASC'},
     });
-    return schemas.map(schema => this.mapSchemaToQueryWire(schema));
+    const pluginSchemas = await this.findAllPluginSchemas();
+    return [
+      ...schemas.map(schema => this.mapSchemaToQueryWire(schema)),
+      ...pluginSchemas.map(schema => this.mapSchemaWireToQueryWire(schema)),
+    ];
   }
 
   async findRecords(slug: string): Promise<DynamicRecordWire[]> {
@@ -177,10 +225,29 @@ export class SchemaService {
     return result.records;
   }
 
-  async findRecord(slug: string, id: number): Promise<DynamicRecordWire> {
+  async findRecord(
+    slug: string,
+    id: number | string
+  ): Promise<DynamicRecordWire> {
+    const pluginSchema = await this.findPluginSchemaBySlug(slug);
+    if (pluginSchema) {
+      if (pluginSchema.provider.findRecord) {
+        return pluginSchema.provider.findRecord(slug, id);
+      }
+      const result = await pluginSchema.provider.queryRecords(slug, {
+        limit: 1,
+        filters: {id},
+      });
+      const record = result.records[0];
+      if (!record) {
+        throw new NotFoundException(`Record ${id} not found`);
+      }
+      return record;
+    }
+
     const schema = await this.findSchemaBySlug(slug);
     const record = await this.recordRepository.findOne({
-      where: {id, schemaId: schema.id},
+      where: {id: this.parseInternalRecordId(id), schemaId: schema.id},
     });
 
     if (!record) {
@@ -195,6 +262,11 @@ export class SchemaService {
     fieldName: string,
     value: string
   ): Promise<DynamicRecordWire> {
+    const pluginSchema = await this.findPluginSchemaBySlug(slug);
+    if (pluginSchema?.provider.findRecordByField) {
+      return pluginSchema.provider.findRecordByField(slug, fieldName, value);
+    }
+
     const result = await this.queryRecords(slug, {
       limit: 1,
       filters: {[fieldName]: value},
@@ -212,6 +284,11 @@ export class SchemaService {
     slug: string,
     query: DynamicRecordQueryInput
   ): Promise<DynamicRecordQueryWire> {
+    const pluginSchema = await this.findPluginSchemaBySlug(slug);
+    if (pluginSchema) {
+      return pluginSchema.provider.queryRecords(slug, query);
+    }
+
     const schema = await this.findSchemaBySlug(slug);
     const records = await this.recordRepository.find({
       where: {schemaId: schema.id},
@@ -239,6 +316,16 @@ export class SchemaService {
     slug: string,
     input: DynamicRecordInput
   ): Promise<DynamicRecordWire> {
+    const pluginSchema = await this.findPluginSchemaBySlug(slug);
+    if (pluginSchema) {
+      if (!pluginSchema.provider.createRecord) {
+        throw new BadRequestException(
+          `Schema "${slug}" does not support record creation`
+        );
+      }
+      return pluginSchema.provider.createRecord(slug, input);
+    }
+
     const schema = await this.findSchemaBySlug(slug);
     const data = this.normalizeRecordData(schema, input.data);
 
@@ -252,12 +339,22 @@ export class SchemaService {
 
   async updateRecord(
     slug: string,
-    id: number,
+    id: number | string,
     input: DynamicRecordInput
   ): Promise<DynamicRecordWire> {
+    const pluginSchema = await this.findPluginSchemaBySlug(slug);
+    if (pluginSchema) {
+      if (!pluginSchema.provider.updateRecord) {
+        throw new BadRequestException(
+          `Schema "${slug}" does not support record updates`
+        );
+      }
+      return pluginSchema.provider.updateRecord(slug, id, input);
+    }
+
     const schema = await this.findSchemaBySlug(slug);
     const record = await this.recordRepository.findOne({
-      where: {id, schemaId: schema.id},
+      where: {id: this.parseInternalRecordId(id), schemaId: schema.id},
     });
 
     if (!record) {
@@ -269,17 +366,67 @@ export class SchemaService {
     return this.mapRecordToWire(saved);
   }
 
-  async deleteRecord(slug: string, id: number): Promise<void> {
+  async deleteRecord(slug: string, id: number | string): Promise<void> {
+    const pluginSchema = await this.findPluginSchemaBySlug(slug);
+    if (pluginSchema) {
+      if (!pluginSchema.provider.deleteRecord) {
+        throw new BadRequestException(
+          `Schema "${slug}" does not support record deletion`
+        );
+      }
+      return pluginSchema.provider.deleteRecord(slug, id);
+    }
+
     const schema = await this.findSchemaBySlug(slug);
     const record = await this.recordRepository.findOne({
-      where: {id, schemaId: schema.id},
+      where: {id: this.parseInternalRecordId(id), schemaId: schema.id},
     });
 
     if (!record) {
       throw new NotFoundException(`Record ${id} not found`);
     }
 
-    await this.recordRepository.deleteOne(id);
+    await this.recordRepository.deleteOne(this.parseInternalRecordId(id));
+  }
+
+  private async findAllPluginSchemas(): Promise<DynamicSchemaWire[]> {
+    const providers = this.pluginSchemaRegistry.getProviders();
+    const schemas = await Promise.all(
+      providers.map(async provider => {
+        const definitions = await provider.findSchemas();
+        return definitions.map(schema =>
+          this.mapPluginSchemaToWire(schema, provider)
+        );
+      })
+    );
+
+    return schemas.flat();
+  }
+
+  private async findPluginSchemaBySlug(slug: string): Promise<{
+    provider: PluginSchemaProvider;
+    schema: PluginDynamicSchemaDefinition;
+  } | null> {
+    for (const provider of this.pluginSchemaRegistry.getProviders()) {
+      const schemas = await provider.findSchemas();
+      const schema = schemas.find(candidate => candidate.slug === slug);
+      if (schema) {
+        return {provider, schema};
+      }
+    }
+    return null;
+  }
+
+  private async assertNotPluginSchema(
+    slug: string,
+    action: string
+  ): Promise<void> {
+    const pluginSchema = await this.findPluginSchemaBySlug(slug);
+    if (pluginSchema) {
+      throw new BadRequestException(
+        `Cannot ${action} schema "${slug}" because it is provided by ${pluginSchema.provider.pluginName}`
+      );
+    }
   }
 
   private async findSchemaBySlug(slug: string): Promise<DynamicSchema> {
@@ -404,8 +551,29 @@ export class SchemaService {
       description: schema.description,
       fields: this.parseFields(schema.fields),
       recordCount,
+      source: 'internal',
       createdAt: schema.createdAt,
       updatedAt: schema.updatedAt,
+    };
+  }
+
+  private mapPluginSchemaToWire(
+    schema: PluginDynamicSchemaDefinition,
+    provider: PluginSchemaProvider
+  ): DynamicSchemaWire {
+    const timestamp = new Date(0).toISOString();
+    return {
+      id: this.getPluginSchemaId(schema),
+      name: schema.name,
+      slug: schema.slug,
+      description: schema.description,
+      fields: schema.fields,
+      recordCount: schema.recordCount,
+      source: 'plugin',
+      pluginName: schema.pluginName || provider.pluginName,
+      readOnly: schema.readOnly,
+      createdAt: schema.createdAt || timestamp,
+      updatedAt: schema.updatedAt || timestamp,
     };
   }
 
@@ -416,6 +584,18 @@ export class SchemaService {
       schemaSlug: schema.slug,
       schemaName: schema.name,
       fields: this.parseFields(schema.fields),
+    };
+  }
+
+  private mapSchemaWireToQueryWire(
+    schema: DynamicSchemaWire
+  ): DynamicSchemaQueryWire {
+    return {
+      name: `load${this.toPascalCase(schema.slug)}s`,
+      singleName: `load${this.toPascalCase(schema.slug)}`,
+      schemaSlug: schema.slug,
+      schemaName: schema.name,
+      fields: schema.fields,
     };
   }
 
@@ -443,6 +623,18 @@ export class SchemaService {
     } catch {
       return {};
     }
+  }
+
+  private parseInternalRecordId(id: number | string): number {
+    const parsed = Number(id);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      throw new BadRequestException(`Invalid internal record id "${id}"`);
+    }
+    return parsed;
+  }
+
+  private getPluginSchemaId(schema: PluginDynamicSchemaDefinition): string {
+    return `plugin:${schema.pluginName}:${schema.slug}`;
   }
 
   private matchesFilters(

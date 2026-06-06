@@ -55,7 +55,10 @@ export class SchemaSDK extends BaseSDK {
     );
   }
 
-  async findRecord(slug: string, id: number): Promise<DynamicRecordWire> {
+  async findRecord(
+    slug: string,
+    id: number | string
+  ): Promise<DynamicRecordWire> {
     return this.get<DynamicRecordWire>(
       `/schemas/${encodeURIComponent(slug)}/records/${id}`
     );
@@ -93,7 +96,10 @@ export class SchemaSDK extends BaseSDK {
     );
   }
 
-  async findPublicRecord(slug: string, id: number): Promise<DynamicRecordWire> {
+  async findPublicRecord(
+    slug: string,
+    id: number | string
+  ): Promise<DynamicRecordWire> {
     return this.get<DynamicRecordWire>(
       `/public/schemas/${encodeURIComponent(slug)}/records/${id}`
     );
@@ -133,7 +139,7 @@ export class SchemaSDK extends BaseSDK {
 
   async updateRecord(
     slug: string,
-    id: number,
+    id: number | string,
     data: DynamicRecordInput
   ): Promise<DynamicRecordWire> {
     return this.put<DynamicRecordWire>(
@@ -142,7 +148,7 @@ export class SchemaSDK extends BaseSDK {
     );
   }
 
-  async removeRecord(slug: string, id: number): Promise<void> {
+  async removeRecord(slug: string, id: number | string): Promise<void> {
     return this.delete<void>(
       `/schemas/${encodeURIComponent(slug)}/records/${id}`
     );

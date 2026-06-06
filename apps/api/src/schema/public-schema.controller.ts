@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Param, ParseIntPipe, Post} from '@nestjs/common';
+import {Body, Controller, Get, Param, Post} from '@nestjs/common';
 import {
   DynamicRecordQueryInput,
   DynamicRecordQueryWire,
@@ -25,7 +25,7 @@ export class PublicSchemaController {
   @Get(':slug/records/:id')
   async findRecord(
     @Param('slug') slug: string,
-    @Param('id', ParseIntPipe) id: number
+    @Param('id') id: string
   ): Promise<DynamicRecordWire> {
     return this.schemaService.findRecord(slug, id);
   }

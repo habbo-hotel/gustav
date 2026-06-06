@@ -5,7 +5,6 @@ import {
   Get,
   Param,
   ParseBoolPipe,
-  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -81,7 +80,7 @@ export class SchemaController {
   @Get(':slug/records/:id')
   async findRecord(
     @Param('slug') slug: string,
-    @Param('id', ParseIntPipe) id: number
+    @Param('id') id: string
   ): Promise<DynamicRecordWire> {
     return this.schemaService.findRecord(slug, id);
   }
@@ -114,7 +113,7 @@ export class SchemaController {
   @Put(':slug/records/:id')
   async updateRecord(
     @Param('slug') slug: string,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() input: DynamicRecordInput
   ): Promise<DynamicRecordWire> {
     return this.schemaService.updateRecord(slug, id, input);
@@ -123,7 +122,7 @@ export class SchemaController {
   @Delete(':slug/records/:id')
   async deleteRecord(
     @Param('slug') slug: string,
-    @Param('id', ParseIntPipe) id: number
+    @Param('id') id: string
   ): Promise<void> {
     return this.schemaService.deleteRecord(slug, id);
   }
