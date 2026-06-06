@@ -1,0 +1,37 @@
+{
+  "name": "@gustav/ms3-database-plugin",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./backend": {
+      "types": "./dist/backend.d.ts",
+      "import": "./dist/backend.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "pnpm exec eslint src/**/*.ts --fix --no-error-on-unmatched-pattern && pnpm exec prettier src/**/*.ts --write"
+  },
+  "dependencies": {
+    "@gustav/types": "workspace:*",
+    "@nestjs/common": "^11.0.1",
+    "mysql2": "^3.22.4"
+  },
+  "devDependencies": {
+    "@gustav/config-eslint": "workspace:*",
+    "@gustav/config-typescript": "workspace:*",
+    "@types/node": "^24.0.0",
+    "eslint": "8.57.1",
+    "prettier": "^3.8.3",
+    "typescript": "^5.4.5"
+  }
+}

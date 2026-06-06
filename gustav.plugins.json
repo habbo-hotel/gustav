@@ -1,5 +1,6 @@
 {
   "plugins": [
-    "@gustav/core-plugin"
+    "@gustav/core-plugin",
+    "@gustav/ms3-database-plugin"
   ]
 }
