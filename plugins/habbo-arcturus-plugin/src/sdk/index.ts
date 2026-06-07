@@ -5,4 +5,4 @@ export const MS3_SLUGS = {
   GUILDS: 'ms3-guilds',
 } as const;
 
-export * from '../types/index.js';
+export * from '../types/index';
