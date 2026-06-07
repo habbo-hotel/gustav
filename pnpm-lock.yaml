@@ -17,9 +17,9 @@ importers:
 
   apps/api:
     dependencies:
-      '@gustav/ms3-database-plugin':
+      '@gustav/habbo-arcturus-plugin':
         specifier: workspace:*
-        version: link:../../plugins/ms3-database
+        version: link:../../plugins/habbo-arcturus-plugin
       '@gustav/types':
         specifier: workspace:*
         version: link:../../libs/types
@@ -168,12 +168,12 @@ importers:
       '@gustav/core-plugin':
         specifier: workspace:*
         version: link:../../plugins/core
+      '@gustav/habbo-arcturus-plugin':
+        specifier: workspace:*
+        version: link:../../plugins/habbo-arcturus-plugin
       '@gustav/habbo-plugin':
         specifier: workspace:*
         version: link:../../plugins/habbo
-      '@gustav/ms3-database-plugin':
-        specifier: workspace:*
-        version: link:../../plugins/ms3-database
       '@gustav/sdk':
         specifier: workspace:*
         version: link:../../libs/sdk
@@ -382,7 +382,7 @@ importers:
         specifier: ^5.4.5
         version: 5.9.3
 
-  plugins/ms3-database:
+  plugins/habbo-arcturus-plugin:
     dependencies:
       '@gustav/habbo-plugin':
         specifier: workspace:*

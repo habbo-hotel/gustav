@@ -17,7 +17,7 @@ import {
 import {HabboService} from '@gustav/habbo-plugin/backend';
 import {MS3_SLUGS} from '../sdk/index';
 
-const PLUGIN_NAME = '@gustav/ms3-database-plugin';
+const PLUGIN_NAME = '@gustav/habbo-arcturus-plugin';
 const MS3_DATABASE = process.env.MS3_DB_NAME || 'ms3';
 
 interface TableColumn {
@@ -131,7 +131,7 @@ const EXPLICIT_TABLES: TableMetadata[] = [
 ];
 
 @Injectable()
-export class Ms3HabboService implements HabboService, PluginSchemaProvider {
+export class ArcturusHabboService implements HabboService, PluginSchemaProvider {
   pluginName = PLUGIN_NAME;
 
   private readonly pool: any;
@@ -151,27 +151,112 @@ export class Ms3HabboService implements HabboService, PluginSchemaProvider {
 
   // HabboService Implementation
   async queryUsers(query: DynamicRecordQueryInput): Promise<DynamicRecordQueryWire> {
-    return this.queryRecords(MS3_SLUGS.USERS, query);
+    const result = await this.queryRecords(MS3_SLUGS.USERS, query);
+    return {
+      ...result,
+      records: result.records.map(r => ({
+        ...r,
+        data: this.mapToHabboUser(r.data as any),
+      })),
+    };
   }
 
   async getUser(id: number | string): Promise<DynamicRecordWire> {
-    return this.findRecord(MS3_SLUGS.USERS, id);
+    const record = await this.findRecord(MS3_SLUGS.USERS, id);
+    return {
+      ...record,
+      data: this.mapToHabboUser(record.data as any),
+    };
   }
 
   async queryRooms(query: DynamicRecordQueryInput): Promise<DynamicRecordQueryWire> {
-    return this.queryRecords(MS3_SLUGS.ROOMS, query);
+    const result = await this.queryRecords(MS3_SLUGS.ROOMS, query);
+    return {
+      ...result,
+      records: result.records.map(r => ({
+        ...r,
+        data: this.mapToHabboRoom(r.data as any),
+      })),
+    };
   }
 
   async getRoom(id: number | string): Promise<DynamicRecordWire> {
-    return this.findRecord(MS3_SLUGS.ROOMS, id);
+    const record = await this.findRecord(MS3_SLUGS.ROOMS, id);
+    return {
+      ...record,
+      data: this.mapToHabboRoom(record.data as any),
+    };
   }
 
   async queryCatalogPages(query: DynamicRecordQueryInput): Promise<DynamicRecordQueryWire> {
-    return this.queryRecords(MS3_SLUGS.CATALOG_PAGES, query);
+    const result = await this.queryRecords(MS3_SLUGS.CATALOG_PAGES, query);
+    return {
+      ...result,
+      records: result.records.map(r => ({
+        ...r,
+        data: this.mapToHabboCatalogPage(r.data as any),
+      })),
+    };
   }
 
   async queryGuilds(query: DynamicRecordQueryInput): Promise<DynamicRecordQueryWire> {
-    return this.queryRecords(MS3_SLUGS.GUILDS, query);
+    const result = await this.queryRecords(MS3_SLUGS.GUILDS, query);
+    return {
+      ...result,
+      records: result.records.map(r => ({
+        ...r,
+        data: this.mapToHabboGuild(r.data as any),
+      })),
+    };
+  }
+
+  // Mapper helpers
+  private mapToHabboUser(data: any): any {
+    return {
+      id: data.id,
+      username: data.username,
+      motto: data.motto,
+      look: data.look,
+      rank: data.rank,
+      credits: data.credits,
+      online: data.online !== '0',
+      createdAt: data.account_created,
+      lastLogin: data.last_login,
+    };
+  }
+
+  private mapToHabboRoom(data: any): any {
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      ownerName: data.owner_name,
+      ownerId: data.owner_id,
+      usersNow: data.users,
+      usersMax: data.users_max,
+      state: data.state,
+    };
+  }
+
+  private mapToHabboCatalogPage(data: any): any {
+    return {
+      id: data.id,
+      parentId: data.parent_id,
+      caption: data.caption,
+      pageLayout: data.page_layout,
+      visible: data.visible === '1',
+      enabled: data.enabled === '1',
+    };
+  }
+
+  private mapToHabboGuild(data: any): any {
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      ownerId: data.user_id,
+      badge: data.badge,
+    };
   }
 
   // PluginSchemaProvider Implementation

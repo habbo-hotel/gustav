@@ -18,7 +18,7 @@
     "test:e2e": "jest --config ./src/jest-e2e.json"
   },
   "dependencies": {
-    "@gustav/ms3-database-plugin": "workspace:*",
+    "@gustav/habbo-arcturus-plugin": "workspace:*",
     "@gustav/types": "workspace:*",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",

@@ -1,22 +1,46 @@
-export interface HabboWebHook {
-  name: string;
-  handler: (data: any) => any;
+export interface HabboWebHooks {
+  /**
+   * Generates a URL for a user's avatar image.
+   * @param look The user's look string (figure data).
+   * @param options Optional rendering parameters (size, direction, etc).
+   */
+  getAvatarUrl?: (look: string, options?: any) => string;
+
+  /**
+   * Generates a URL for a room's thumbnail image.
+   * @param roomId The room ID.
+   */
+  getRoomThumbnailUrl?: (roomId: string | number) => string;
+
+  /**
+   * Formats a Habbo timestamp (often unix seconds) into a readable string or Date.
+   */
+  formatTimestamp?: (timestamp: number | string) => string | Date;
 }
 
 export class HabboWebRegistry {
-  private hooks = new Map<string, HabboWebHook>();
+  private _hooks: Partial<HabboWebHooks> = {};
 
-  registerHook(hook: HabboWebHook) {
-    this.hooks.set(hook.name, hook);
+  registerHooks(hooks: Partial<HabboWebHooks>) {
+    this._hooks = {...this._hooks, ...hooks};
   }
 
-  getHook(name: string) {
-    return this.hooks.get(name);
+  get hooks() {
+    return this._hooks;
   }
 
-  executeHook(name: string, data: any) {
-    const hook = this.getHook(name);
-    return hook ? hook.handler(data) : data;
+  /**
+   * Helper to execute a hook if it exists, otherwise return a default value.
+   */
+  execute<K extends keyof HabboWebHooks>(
+    hook: K,
+    ...args: Parameters<NonNullable<HabboWebHooks[K]>>
+  ): ReturnType<NonNullable<HabboWebHooks[K]>> | undefined {
+    const handler = this._hooks[hook] as any;
+    if (handler) {
+      return handler(...args);
+    }
+    return undefined;
   }
 }
 
