@@ -347,6 +347,9 @@ importers:
 
   plugins/ms3-database:
     dependencies:
+      '@gustav/sdk':
+        specifier: workspace:*
+        version: link:../../libs/sdk
       '@gustav/types':
         specifier: workspace:*
         version: link:../../libs/types

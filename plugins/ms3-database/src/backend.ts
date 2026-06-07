@@ -19,15 +19,14 @@ import {
   PluginSchemaRegistry,
 } from '@gustav/types';
 
+import {MS3_SLUGS} from './sdk';
+
 const PLUGIN_NAME = '@gustav/ms3-database-plugin';
 const MS3_DATABASE = process.env.MS3_DB_NAME || 'ms3';
-const CACHE_MS = 30_000;
 
 interface TableColumn {
   tableName: string;
   columnName: string;
-  ordinalPosition: number;
-  columnDefault: string | null;
   isNullable: 'YES' | 'NO';
   dataType: string;
   columnType: string;
@@ -42,20 +41,104 @@ interface TableMetadata {
   primaryKey?: string;
   columns: TableColumn[];
   fields: DynamicSchemaField[];
-  recordCount: number;
 }
 
-interface MetadataCache {
-  expiresAt: number;
-  tables: TableMetadata[];
-}
+const EXPLICIT_TABLES: TableMetadata[] = [
+  {
+    tableName: 'users',
+    slug: MS3_SLUGS.USERS,
+    name: 'MS3 Users',
+    primaryKey: 'id',
+    columns: [
+      { tableName: 'users', columnName: 'id', isNullable: 'NO', dataType: 'int', columnType: 'int(11)', columnKey: 'PRI', extra: 'auto_increment' },
+      { tableName: 'users', columnName: 'username', isNullable: 'NO', dataType: 'varchar', columnType: 'varchar(25)', columnKey: 'UNI', extra: '' },
+      { tableName: 'users', columnName: 'real_name', isNullable: 'NO', dataType: 'varchar', columnType: 'varchar(25)', columnKey: '', extra: '' },
+      { tableName: 'users', columnName: 'mail', isNullable: 'YES', dataType: 'varchar', columnType: 'varchar(500)', columnKey: '', extra: '' },
+      { tableName: 'users', columnName: 'motto', isNullable: 'NO', dataType: 'varchar', columnType: 'varchar(127)', columnKey: '', extra: '' },
+      { tableName: 'users', columnName: 'rank', isNullable: 'NO', dataType: 'int', columnType: 'int(11)', columnKey: '', extra: '' },
+      { tableName: 'users', columnName: 'credits', isNullable: 'NO', dataType: 'int', columnType: 'int(11)', columnKey: '', extra: '' },
+      { tableName: 'users', columnName: 'online', isNullable: 'NO', dataType: 'enum', columnType: "enum('0','1','2')", columnKey: '', extra: '' },
+    ],
+    fields: [
+      { name: 'id', label: 'ID', type: 'number', required: false },
+      { name: 'username', label: 'Username', type: 'text', required: true },
+      { name: 'real_name', label: 'Real Name', type: 'text', required: true },
+      { name: 'mail', label: 'Mail', type: 'text', required: false },
+      { name: 'motto', label: 'Motto', type: 'text', required: true },
+      { name: 'rank', label: 'Rank', type: 'number', required: true },
+      { name: 'credits', label: 'Credits', type: 'number', required: true },
+      { name: 'online', label: 'Online Status', type: 'select', required: true, options: [{label: 'Offline', value: '0'}, {label: 'Online', value: '1'}, {label: 'Hidden', value: '2'}] },
+    ]
+  },
+  {
+    tableName: 'rooms',
+    slug: MS3_SLUGS.ROOMS,
+    name: 'MS3 Rooms',
+    primaryKey: 'id',
+    columns: [
+      { tableName: 'rooms', columnName: 'id', isNullable: 'NO', dataType: 'int', columnType: 'int(11)', columnKey: 'PRI', extra: 'auto_increment' },
+      { tableName: 'rooms', columnName: 'owner_name', isNullable: 'NO', dataType: 'varchar', columnType: 'varchar(25)', columnKey: '', extra: '' },
+      { tableName: 'rooms', columnName: 'name', isNullable: 'NO', dataType: 'varchar', columnType: 'varchar(50)', columnKey: '', extra: '' },
+      { tableName: 'rooms', columnName: 'description', isNullable: 'NO', dataType: 'varchar', columnType: 'varchar(512)', columnKey: '', extra: '' },
+      { tableName: 'rooms', columnName: 'users', isNullable: 'NO', dataType: 'int', columnType: 'int(11)', columnKey: '', extra: '' },
+      { tableName: 'rooms', columnName: 'users_max', isNullable: 'NO', dataType: 'int', columnType: 'int(11)', columnKey: '', extra: '' },
+      { tableName: 'rooms', columnName: 'state', isNullable: 'NO', dataType: 'enum', columnType: "enum('open','locked','password','invisible')", columnKey: '', extra: '' },
+    ],
+    fields: [
+      { name: 'id', label: 'ID', type: 'number', required: false },
+      { name: 'owner_name', label: 'Owner', type: 'text', required: true },
+      { name: 'name', label: 'Room Name', type: 'text', required: true },
+      { name: 'description', label: 'Description', type: 'textarea', required: true },
+      { name: 'users', label: 'Current Users', type: 'number', required: true },
+      { name: 'users_max', label: 'Max Users', type: 'number', required: true },
+      { name: 'state', label: 'State', type: 'select', required: true, options: [{label: 'Open', value: 'open'}, {label: 'Locked', value: 'locked'}, {label: 'Password', value: 'password'}, {label: 'Invisible', value: 'invisible'}] },
+    ]
+  },
+  {
+    tableName: 'catalog_pages',
+    slug: MS3_SLUGS.CATALOG_PAGES,
+    name: 'MS3 Catalog Pages',
+    primaryKey: 'id',
+    columns: [
+      { tableName: 'catalog_pages', columnName: 'id', isNullable: 'NO', dataType: 'int', columnType: 'int(11)', columnKey: 'PRI', extra: 'auto_increment' },
+      { tableName: 'catalog_pages', columnName: 'caption', isNullable: 'NO', dataType: 'varchar', columnType: 'varchar(128)', columnKey: '', extra: '' },
+      { tableName: 'catalog_pages', columnName: 'page_layout', isNullable: 'NO', dataType: 'enum', columnType: "enum('default_3x3','frontpage','guilds','bots','pets')", columnKey: '', extra: '' },
+      { tableName: 'catalog_pages', columnName: 'visible', isNullable: 'NO', dataType: 'enum', columnType: "enum('0','1')", columnKey: '', extra: '' },
+      { tableName: 'catalog_pages', columnName: 'enabled', isNullable: 'NO', dataType: 'enum', columnType: "enum('0','1')", columnKey: '', extra: '' },
+    ],
+    fields: [
+      { name: 'id', label: 'ID', type: 'number', required: false },
+      { name: 'caption', label: 'Caption', type: 'text', required: true },
+      { name: 'page_layout', label: 'Layout', type: 'select', required: true, options: [{label: 'Default 3x3', value: 'default_3x3'}, {label: 'Frontpage', value: 'frontpage'}, {label: 'Guilds', value: 'guilds'}, {label: 'Bots', value: 'bots'}, {label: 'Pets', value: 'pets'}] },
+      { name: 'visible', label: 'Visible', type: 'checkbox', required: true },
+      { name: 'enabled', label: 'Enabled', type: 'checkbox', required: true },
+    ]
+  },
+  {
+    tableName: 'guilds',
+    slug: MS3_SLUGS.GUILDS,
+    name: 'MS3 Guilds',
+    primaryKey: 'id',
+    columns: [
+      { tableName: 'guilds', columnName: 'id', isNullable: 'NO', dataType: 'int', columnType: 'int(11)', columnKey: 'PRI', extra: 'auto_increment' },
+      { tableName: 'guilds', columnName: 'name', isNullable: 'NO', dataType: 'varchar', columnType: 'varchar(50)', columnKey: '', extra: '' },
+      { tableName: 'guilds', columnName: 'description', isNullable: 'NO', dataType: 'varchar', columnType: 'varchar(250)', columnKey: '', extra: '' },
+      { tableName: 'guilds', columnName: 'badge', isNullable: 'NO', dataType: 'varchar', columnType: 'varchar(256)', columnKey: '', extra: '' },
+    ],
+    fields: [
+      { name: 'id', label: 'ID', type: 'number', required: false },
+      { name: 'name', label: 'Guild Name', type: 'text', required: true },
+      { name: 'description', label: 'Description', type: 'textarea', required: true },
+      { name: 'badge', label: 'Badge Code', type: 'text', required: true },
+    ]
+  }
+];
 
 @Injectable()
 class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
   pluginName = PLUGIN_NAME;
 
   private readonly pool: any;
-  private metadataCache?: MetadataCache;
 
   constructor() {
     this.pool = createPool({
@@ -71,27 +154,26 @@ class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
   }
 
   async findSchemas(): Promise<PluginDynamicSchemaDefinition[]> {
-    const tables = await this.getMetadata();
     const now = new Date().toISOString();
 
-    return tables.map(table => ({
+    return Promise.all(EXPLICIT_TABLES.map(async table => ({
       pluginName: PLUGIN_NAME,
       name: table.name,
       slug: table.slug,
       description: `MS3 table: ${table.tableName}`,
       fields: table.fields,
-      recordCount: table.recordCount,
+      recordCount: await this.countRows(table.tableName),
       readOnly: !table.primaryKey,
       createdAt: now,
       updatedAt: now,
-    }));
+    })));
   }
 
   async queryRecords(
     schemaSlug: string,
     query: DynamicRecordQueryInput
   ): Promise<DynamicRecordQueryWire> {
-    const table = await this.findTable(schemaSlug);
+    const table = this.findTable(schemaSlug);
     const rows = await this.selectRows(table);
     const filtered = rows.filter(row => this.matchesFilters(row, query.filters));
     const sorted = this.sortRows(filtered, query);
@@ -110,7 +192,7 @@ class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
     schemaSlug: string,
     id: number | string
   ): Promise<DynamicRecordWire> {
-    const table = await this.findTable(schemaSlug);
+    const table = this.findTable(schemaSlug);
     const primaryKey = this.requirePrimaryKey(table);
     const [rows] = await this.pool.execute(
       `SELECT * FROM ${this.escapeIdentifier(table.tableName)} WHERE ${this.escapeIdentifier(primaryKey)} = ? LIMIT 1`,
@@ -130,7 +212,7 @@ class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
     fieldName: string,
     value: string
   ): Promise<DynamicRecordWire> {
-    const table = await this.findTable(schemaSlug);
+    const table = this.findTable(schemaSlug);
     this.requireColumn(table, fieldName);
     const [rows] = await this.pool.execute(
       `SELECT * FROM ${this.escapeIdentifier(table.tableName)} WHERE ${this.escapeIdentifier(fieldName)} = ? LIMIT 1`,
@@ -149,7 +231,7 @@ class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
     schemaSlug: string,
     input: DynamicRecordInput
   ): Promise<DynamicRecordWire> {
-    const table = await this.findTable(schemaSlug);
+    const table = this.findTable(schemaSlug);
     const writableColumns = this.getWritableColumns(table, input.data);
     const values = writableColumns.map(column => input.data[column.columnName]);
     const sql =
@@ -170,7 +252,7 @@ class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
     id: number | string,
     input: DynamicRecordInput
   ): Promise<DynamicRecordWire> {
-    const table = await this.findTable(schemaSlug);
+    const table = this.findTable(schemaSlug);
     const primaryKey = this.requirePrimaryKey(table);
     const writableColumns = this.getWritableColumns(table, input.data).filter(
       column => column.columnName !== primaryKey
@@ -189,91 +271,12 @@ class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
   }
 
   async deleteRecord(schemaSlug: string, id: number | string): Promise<void> {
-    const table = await this.findTable(schemaSlug);
+    const table = this.findTable(schemaSlug);
     const primaryKey = this.requirePrimaryKey(table);
     await this.pool.execute(
       `DELETE FROM ${this.escapeIdentifier(table.tableName)} WHERE ${this.escapeIdentifier(primaryKey)} = ?`,
       [id]
     );
-  }
-
-  private async getMetadata(): Promise<TableMetadata[]> {
-    const now = Date.now();
-    if (this.metadataCache && this.metadataCache.expiresAt > now) {
-      return this.metadataCache.tables;
-    }
-
-    const [tableRows] = await this.pool.execute(
-      `SELECT TABLE_NAME AS tableName
-       FROM information_schema.TABLES
-       WHERE TABLE_SCHEMA = ? AND TABLE_TYPE = 'BASE TABLE'
-       ORDER BY TABLE_NAME`,
-      [MS3_DATABASE]
-    );
-    const tableNames = (tableRows as RowDataPacket[]).map((row: RowDataPacket) =>
-      String(row.tableName)
-    );
-    const columns = await this.getColumns(tableNames);
-    const slugCounts = new Map<string, number>();
-    const tables = await Promise.all(
-      tableNames.map(async (tableName: string) => {
-        const tableColumns = columns.filter(
-          column => column.tableName === tableName
-        );
-        const baseSlug = `ms3-${this.toSlug(tableName)}`;
-        const slugCount = slugCounts.get(baseSlug) || 0;
-        slugCounts.set(baseSlug, slugCount + 1);
-        const slug = slugCount ? `${baseSlug}-${slugCount + 1}` : baseSlug;
-
-        return {
-          tableName,
-          slug,
-          name: `MS3 ${this.toTitle(tableName)}`,
-          primaryKey: this.findPrimaryKey(tableColumns),
-          columns: tableColumns,
-          fields: tableColumns.map(column => this.mapColumnToField(column)),
-          recordCount: await this.countRows(tableName),
-        };
-      })
-    );
-
-    this.metadataCache = {expiresAt: now + CACHE_MS, tables};
-    return tables;
-  }
-
-  private async getColumns(tableNames: string[]): Promise<TableColumn[]> {
-    if (!tableNames.length) {
-      return [];
-    }
-
-    const [rows] = await this.pool.execute(
-      `SELECT
-         TABLE_NAME AS tableName,
-         COLUMN_NAME AS columnName,
-         ORDINAL_POSITION AS ordinalPosition,
-         COLUMN_DEFAULT AS columnDefault,
-         IS_NULLABLE AS isNullable,
-         DATA_TYPE AS dataType,
-         COLUMN_TYPE AS columnType,
-         COLUMN_KEY AS columnKey,
-         EXTRA AS extra
-       FROM information_schema.COLUMNS
-       WHERE TABLE_SCHEMA = ?
-       ORDER BY TABLE_NAME, ORDINAL_POSITION`,
-      [MS3_DATABASE]
-    );
-
-    return (rows as RowDataPacket[]).map((row: RowDataPacket) => ({
-      tableName: String(row.tableName),
-      columnName: String(row.columnName),
-      ordinalPosition: Number(row.ordinalPosition),
-      columnDefault: row.columnDefault == null ? null : String(row.columnDefault),
-      isNullable: row.isNullable === 'YES' ? 'YES' : 'NO',
-      dataType: String(row.dataType),
-      columnType: String(row.columnType),
-      columnKey: String(row.columnKey),
-      extra: String(row.extra || ''),
-    }));
   }
 
   private async countRows(tableName: string): Promise<number> {
@@ -283,9 +286,8 @@ class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
     return Number((rows as RowDataPacket[])[0]?.total || 0);
   }
 
-  private async findTable(schemaSlug: string): Promise<TableMetadata> {
-    const tables = await this.getMetadata();
-    const table = tables.find(candidate => candidate.slug === schemaSlug);
+  private findTable(schemaSlug: string): TableMetadata {
+    const table = EXPLICIT_TABLES.find(candidate => candidate.slug === schemaSlug);
     if (!table) {
       throw new NotFoundException(`MS3 schema "${schemaSlug}" not found`);
     }
@@ -320,54 +322,6 @@ class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
     );
   }
 
-  private mapColumnToField(column: TableColumn): DynamicSchemaField {
-    const options = this.parseEnumOptions(column.columnType);
-
-    return {
-      name: column.columnName,
-      label: this.toTitle(column.columnName),
-      type: options.length ? 'select' : this.mapColumnType(column),
-      required:
-        column.isNullable === 'NO' &&
-        column.columnDefault === null &&
-        !column.extra.includes('auto_increment'),
-      options: options.length ? options : undefined,
-    };
-  }
-
-  private mapColumnType(column: TableColumn): DynamicSchemaField['type'] {
-    const type = column.dataType.toLowerCase();
-    if (
-      ['int', 'bigint', 'smallint', 'mediumint', 'tinyint', 'decimal', 'double', 'float'].includes(type)
-    ) {
-      if (type === 'tinyint' && column.columnType === 'tinyint(1)') {
-        return 'checkbox';
-      }
-      return 'number';
-    }
-    if (['date', 'datetime', 'timestamp', 'time', 'year'].includes(type)) {
-      return 'date';
-    }
-    if (['text', 'mediumtext', 'longtext', 'json'].includes(type)) {
-      return 'textarea';
-    }
-    return 'text';
-  }
-
-  private parseEnumOptions(
-    columnType: string
-  ): {label: string; value: string}[] {
-    const match = columnType.match(/^enum\((.*)\)$/i);
-    if (!match) {
-      return [];
-    }
-
-    return match[1]
-      .split(/,(?=(?:[^']*'[^']*')*[^']*$)/)
-      .map(value => value.trim().replace(/^'|'$/g, '').replace(/\\'/g, "'"))
-      .map(value => ({label: value, value}));
-  }
-
   private getWritableColumns(
     table: TableMetadata,
     data: Record<string, unknown>
@@ -395,11 +349,6 @@ class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
         `MS3 table "${table.tableName}" has no column "${columnName}"`
       );
     }
-  }
-
-  private findPrimaryKey(columns: TableColumn[]): string | undefined {
-    const primaryKeys = columns.filter(column => column.columnKey === 'PRI');
-    return primaryKeys.length === 1 ? primaryKeys[0].columnName : undefined;
   }
 
   private matchesFilters(
@@ -457,24 +406,6 @@ class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
   private serializeDateCandidate(value: unknown): string | undefined {
     const serialized = this.serializeValue(value);
     return typeof serialized === 'string' ? serialized : undefined;
-  }
-
-  private toSlug(value: string): string {
-    return value
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/_/g, '-')
-      .replace(/[^a-z0-9-]+/g, '')
-      .replace(/^-+|-+$/g, '');
-  }
-
-  private toTitle(value: string): string {
-    return value
-      .replace(/[_-]+/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .replace(/\b\w/g, match => match.toUpperCase());
   }
 }
 
