@@ -31,6 +31,15 @@ const MS3_SLUGS = {
 const PLUGIN_NAME = '@gustav/habbo-arcturus-plugin';
 const MS3_DATABASE = process.env.MS3_DB_NAME || 'ms3';
 
+const SENSITIVE_COLUMNS = [
+  'password',
+  'mail',
+  'real_name',
+  'ip_register',
+  'ip_current',
+  'machine_id',
+];
+
 interface TableColumn {
   tableName: string;
   columnName: string;
@@ -69,8 +78,7 @@ const EXPLICIT_TABLES: TableMetadata[] = [
     fields: [
       { name: 'id', label: 'ID', type: 'number', required: false },
       { name: 'username', label: 'Username', type: 'text', required: true },
-      { name: 'real_name', label: 'Real Name', type: 'text', required: true },
-      { name: 'mail', label: 'Mail', type: 'text', required: false },
+
       { name: 'motto', label: 'Motto', type: 'text', required: true },
       { name: 'rank', label: 'Rank', type: 'number', required: true },
       { name: 'credits', label: 'Credits', type: 'number', required: true },
@@ -314,7 +322,7 @@ export class ArcturusHabboService implements HabboService, PluginSchemaProvider 
     const table = this.findTable(schemaSlug);
     const primaryKey = this.requirePrimaryKey(table);
     const [rows] = await this.pool.execute(
-      `SELECT * FROM ${this.escapeIdentifier(table.tableName)} WHERE ${this.escapeIdentifier(primaryKey)} = ? LIMIT 1`,
+      `SELECT ${this.buildSafeSelect(table)} FROM ${this.escapeIdentifier(table.tableName)} WHERE ${this.escapeIdentifier(primaryKey)} = ? LIMIT 1`,
       [id]
     );
     const row = (rows as RowDataPacket[])[0];
@@ -334,7 +342,7 @@ export class ArcturusHabboService implements HabboService, PluginSchemaProvider 
     const table = this.findTable(schemaSlug);
     this.requireColumn(table, fieldName);
     const [rows] = await this.pool.execute(
-      `SELECT * FROM ${this.escapeIdentifier(table.tableName)} WHERE ${this.escapeIdentifier(fieldName)} = ? LIMIT 1`,
+      `SELECT ${this.buildSafeSelect(table)} FROM ${this.escapeIdentifier(table.tableName)} WHERE ${this.escapeIdentifier(fieldName)} = ? LIMIT 1`,
       [value]
     );
     const row = (rows as RowDataPacket[])[0];
@@ -415,7 +423,7 @@ export class ArcturusHabboService implements HabboService, PluginSchemaProvider 
 
   private async selectRows(table: TableMetadata): Promise<RowDataPacket[]> {
     const [rows] = await this.pool.execute(
-      `SELECT * FROM ${this.escapeIdentifier(table.tableName)}`
+      `SELECT ${this.buildSafeSelect(table)} FROM ${this.escapeIdentifier(table.tableName)}`
     );
     return rows as RowDataPacket[];
   }
@@ -498,6 +506,13 @@ export class ArcturusHabboService implements HabboService, PluginSchemaProvider 
       );
       return sortDirection === 'ASC' ? result : -result;
     });
+  }
+
+  private buildSafeSelect(table: TableMetadata): string {
+    return table.columns
+      .filter(c => !SENSITIVE_COLUMNS.includes(c.columnName))
+      .map(c => this.escapeIdentifier(c.columnName))
+      .join(', ');
   }
 
   private escapeIdentifier(identifier: string): string {
