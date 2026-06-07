@@ -1,0 +1,38 @@
+{
+  "name": "@gustav/habbo-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./backend": {
+      "types": "./dist/api/index.d.ts",
+      "import": "./dist/api/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "pnpm exec eslint src/**/*.ts --fix --no-error-on-unmatched-pattern && pnpm exec prettier src/**/*.ts --write"
+  },
+  "dependencies": {
+    "@gustav/sdk": "workspace:*",
+    "@gustav/types": "workspace:*",
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/core": "^11.0.1"
+  },
+  "devDependencies": {
+    "@gustav/config-eslint": "workspace:*",
+    "@gustav/config-typescript": "workspace:*",
+    "@types/node": "^24.0.0",
+    "eslint": "8.57.1",
+    "prettier": "^3.8.3",
+    "typescript": "^5.4.5"
+  }
+}
