@@ -1,7 +1,6 @@
 import toast from 'react-hot-toast';
 import {CSS} from '@dnd-kit/utilities';
 import {plugins} from 'virtual:gustav-plugins';
-import {restrictToVerticalAxis} from '@dnd-kit/modifiers';
 import {useParams, useNavigate, Link} from 'react-router-dom';
 import React, {
   useState,
@@ -12,7 +11,7 @@ import React, {
   memo,
 } from 'react';
 import {
-  DynamicComponentBindings,
+  DynamicSchemaField,
   DynamicSchemaWire,
   PageWire,
   PageComponentWire,
@@ -27,7 +26,6 @@ import {
 } from '@dnd-kit/sortable';
 import {
   DndContext,
-  closestCenter,
   pointerWithin,
   KeyboardSensor,
   PointerSensor,
@@ -39,6 +37,7 @@ import {
   useDraggable,
   useDroppable,
   useDndContext,
+  CollisionDetection,
 } from '@dnd-kit/core';
 
 import {pageSdk, schemaSdk} from '../sdk';
@@ -111,6 +110,12 @@ const BlockIcon = memo(
           d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
         />
       ),
+      data: (
+        <React.Fragment>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 3v4m8-4v4M3 11h18" />
+        </React.Fragment>
+      ),
     };
 
     return (
@@ -162,7 +167,9 @@ const DraggableLibraryComponent: React.FC<DraggableLibraryComponentProps> =
         id: `library-${component.name}`,
         data: {
           type: 'library',
-          componentName: component.name,
+          componentName: component.plugin ? 'DataSource' : component.name,
+          pluginName: component.plugin || '@gustav/core-plugin',
+          defaultProps: component.defaultProps,
         },
       });
 
@@ -745,8 +752,8 @@ export function PageEditor() {
   // Form States
   const [pageSettings, setPageSettings] = useState<Partial<PageWire>>({});
   const [componentProps, setComponentProps] = useState<string>('');
-  const [componentBindings, setComponentBindings] = useState<string>('');
   const [dynamicSchemas, setDynamicSchemas] = useState<DynamicSchemaWire[]>([]);
+  const [sidebarTab, setSidebarTab] = useState<'design' | 'data'>('design');
   const saveTimeoutRef = React.useRef<any>(null);
   const toolsSidebarRef = useRef<HTMLElement>(null);
 
@@ -828,7 +835,8 @@ export function PageEditor() {
       componentName: string,
       atIndex?: number,
       parentId?: number,
-      slot?: number
+      slot?: number,
+      propsOverride?: Record<string, any>
     ) => {
       if (!page) return;
       const plugin = plugins.find(p =>
@@ -840,11 +848,19 @@ export function PageEditor() {
       );
       if (!pluginComp) return;
 
+      let propsToUse = propsOverride || pluginComp.defaultProps;
+      if (componentName === 'DataSource' && propsToUse.schemaSlug && !propsToUse.schemaName) {
+        const schema = dynamicSchemas.find((s: any) => s.slug === propsToUse.schemaSlug);
+        if (schema) {
+          propsToUse.schemaName = schema.name;
+        }
+      }
+
       try {
         await pageSdk.addComponent(page.id, {
           pluginName: plugin.name,
           componentName,
-          props: JSON.stringify(pluginComp.defaultProps),
+          props: JSON.stringify(propsToUse),
           parentId,
           slot,
           displayOrder:
@@ -863,7 +879,7 @@ export function PageEditor() {
         toast.error('Failed to add component');
       }
     },
-    [page, fetchPage]
+    [page, fetchPage, dynamicSchemas]
   );
 
   const handleDragEnd = useCallback(
@@ -879,11 +895,12 @@ export function PageEditor() {
       if (active.id !== over.id) {
         if (type === 'library') {
           const componentName = active.data.current?.componentName;
+          const propsOverride = active.data.current?.defaultProps;
           const overId = over.id;
           const overData = over.data.current;
 
           if (overId === 'empty-canvas' || overId === 'canvas-root') {
-            await handleAddComponent(componentName, undefined, undefined);
+            await handleAddComponent(componentName, undefined, undefined, undefined, propsOverride);
             return;
           }
 
@@ -892,12 +909,14 @@ export function PageEditor() {
               componentName,
               undefined,
               overData.parentId,
-              overData.slotIndex
+              overData.slotIndex,
+              propsOverride
             );
             return;
           }
 
           const overComp = page?.components?.find(c => c.id === overId);
+
           if (overComp) {
             const plugin = plugins.find(p => p.name === overComp.pluginName);
             const pluginComp = plugin?.components.find(
@@ -909,7 +928,8 @@ export function PageEditor() {
                 componentName,
                 undefined,
                 overComp.id,
-                0
+                0,
+                propsOverride
               );
             } else {
               const siblings =
@@ -922,7 +942,8 @@ export function PageEditor() {
                 componentName,
                 overIndex,
                 overComp.parentId,
-                overComp.slot
+                overComp.slot,
+                propsOverride
               );
             }
           }
@@ -1062,7 +1083,6 @@ export function PageEditor() {
       if (comp) {
         setSelectedComponentId(compId);
         setComponentProps(comp.props);
-        setComponentBindings(comp.bindings || '');
       }
     },
     [page?.components]
@@ -1076,6 +1096,20 @@ export function PageEditor() {
             ? JSON.parse(componentProps)
             : componentProps;
         const newProps = {...currentProps, [name]: value};
+
+        const selectedComp = page?.components?.find(c => c.id === selectedComponentId);
+        if (
+          selectedComp &&
+          selectedComp.componentName === 'DataSource' &&
+          selectedComp.pluginName === '@gustav/core-plugin' &&
+          name === 'schemaSlug'
+        ) {
+          const schema = dynamicSchemas.find(s => s.slug === value);
+          if (schema) {
+            newProps.schemaName = schema.name;
+          }
+        }
+
         const serializedProps = JSON.stringify(newProps, null, 2);
 
         setComponentProps(serializedProps);
@@ -1104,7 +1138,7 @@ export function PageEditor() {
         // Ignore invalid JSON while the user is still typing.
       }
     },
-    [componentProps, selectedComponentId, page]
+    [componentProps, selectedComponentId, page, dynamicSchemas]
   );
 
   const handleJsonChange = useCallback(
@@ -1127,38 +1161,6 @@ export function PageEditor() {
           }
         } catch {
           // Ignore invalid JSON while the user is still typing.
-        }
-      }, 500);
-    },
-    [selectedComponentId, page]
-  );
-
-  const handleBindingChange = useCallback(
-    (bindings: DynamicComponentBindings) => {
-      const serializedBindings = bindings.enabled
-        ? JSON.stringify(bindings, null, 2)
-        : '';
-      setComponentBindings(serializedBindings);
-
-      if (selectedComponentId && page) {
-        const updatedComponents = page.components?.map(c =>
-          c.id === selectedComponentId
-            ? {...c, bindings: serializedBindings}
-            : c
-        );
-        setPage({...page, components: updatedComponents});
-      }
-
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-      saveTimeoutRef.current = setTimeout(async () => {
-        if (!selectedComponentId) return;
-        try {
-          await pageSdk.updateComponent(selectedComponentId, {
-            bindings: serializedBindings,
-          });
-          setIsDirty(true);
-        } catch (err) {
-          console.error('Binding auto-save failed', err);
         }
       }, 500);
     },
@@ -1226,19 +1228,29 @@ export function PageEditor() {
     )?.schema;
   }, [selectedComponent]);
 
-  const selectedBindings = useMemo<DynamicComponentBindings>(() => {
-    try {
-      return JSON.parse(componentBindings || '{}');
-    } catch {
-      return {};
-    }
-  }, [componentBindings]);
-
-  const selectedBindingSchema = useMemo(() => {
-    const schemaSlug = selectedBindings.query?.schemaSlug;
-    if (!schemaSlug) return null;
-    return dynamicSchemas.find(schema => schema.slug === schemaSlug) || null;
-  }, [dynamicSchemas, selectedBindings.query?.schemaSlug]);
+  const getDataSourceFields = useCallback(
+    (componentId: number): DynamicSchemaField[] => {
+      if (!page?.components) return [];
+      let current = page.components.find(c => c.id === componentId);
+      while (current) {
+        if (
+          current.componentName === 'DataSource' &&
+          current.pluginName === '@gustav/core-plugin'
+        ) {
+          const props = JSON.parse(current.props || '{}');
+          const slug = props.schemaSlug;
+          if (slug) {
+            const schema = dynamicSchemas.find(s => s.slug === slug);
+            if (schema) return schema.fields || [];
+          }
+          return [];
+        }
+        current = page.components.find(c => c.id === current?.parentId);
+      }
+      return [];
+    },
+    [page?.components, dynamicSchemas]
+  );
 
   const handleDeselect = useCallback((e: React.MouseEvent) => {
     if (toolsSidebarRef.current?.contains(e.target as Node)) return;
@@ -1298,14 +1310,14 @@ export function PageEditor() {
         {field.type === 'text' && (
           <TokenizedTextField
             value={value || ''}
-            fields={selectedBindingSchema?.fields || []}
+            fields={getDataSourceFields(selectedComponentId!)}
             onChange={nextValue => handlePropChange(field.name, nextValue)}
           />
         )}
         {field.type === 'textarea' && (
           <TokenizedTextField
             value={value || ''}
-            fields={selectedBindingSchema?.fields || []}
+            fields={getDataSourceFields(selectedComponentId!)}
             multiline
             onChange={nextValue => handlePropChange(field.name, nextValue)}
           />
@@ -1316,11 +1328,22 @@ export function PageEditor() {
             onChange={e => handlePropChange(field.name, e.target.value)}
             className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none dark:text-white transition-all appearance-none"
           >
-            {field.options.map((opt: any) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
+            {field.name === 'schemaSlug' ? (
+              <>
+                <option value="">Select a schema...</option>
+                {dynamicSchemas.map(schema => (
+                  <option key={schema.slug} value={schema.slug}>
+                    load{toPascalCase(schema.slug)}s()
+                  </option>
+                ))}
+              </>
+            ) : (
+              field.options.map((opt: any) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))
+            )}
           </select>
         )}
         {field.type === 'number' && (
@@ -1370,161 +1393,16 @@ export function PageEditor() {
     );
   };
 
-  const renderDynamicBindingsPanel = () => {
-    const bindings = selectedBindings;
-    const bindingSchema = selectedBindingSchema;
-
-    const updateBindings = (updates: Partial<DynamicComponentBindings>) => {
-      handleBindingChange({
-        ...bindings,
-        ...updates,
-      });
-    };
-
-    const updateQuery = (updates: Record<string, unknown>) => {
-      updateBindings({
-        enabled: true,
-        query: {
-          schemaSlug: bindings.query?.schemaSlug || '',
-          ...bindings.query,
-          ...updates,
-        },
-      });
-    };
-
-    return (
-      <details
-        open={Boolean(bindings.enabled)}
-        className="group border-t border-gray-100 dark:border-zinc-800 pt-6 mt-6"
-      >
-        <summary className="list-none cursor-pointer flex items-center justify-between text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-indigo-500 transition-colors">
-          <span>Dynamic Data</span>
-          <svg
-            className="w-3 h-3 group-open:rotate-180 transition-transform"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="3"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </summary>
-        <div className="mt-4 space-y-4">
-          <label className="flex items-center justify-between gap-3 text-xs font-bold text-gray-600 dark:text-zinc-400">
-            Enable binding
-            <input
-              type="checkbox"
-              checked={Boolean(bindings.enabled)}
-              onChange={e =>
-                handleBindingChange({
-                  ...bindings,
-                  enabled: e.target.checked,
-                })
-              }
-            />
-          </label>
-
-          <label className="block space-y-2">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              Schema Hook
-            </span>
-            <select
-              value={bindings.query?.schemaSlug || ''}
-              onChange={e =>
-                updateBindings({
-                  enabled: Boolean(e.target.value),
-                  query: {
-                    schemaSlug: e.target.value,
-                    limit: bindings.query?.limit || 3,
-                    sortDirection: bindings.query?.sortDirection || 'DESC',
-                  },
-                })
-              }
-              className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm dark:text-white"
-            >
-              <option value="">Static component</option>
-              {dynamicSchemas.map(schema => (
-                <option key={schema.slug} value={schema.slug}>
-                  load{toPascalCase(schema.slug)}s()
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {bindingSchema && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="space-y-2">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                    Limit
-                  </span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={bindings.query?.limit || 1}
-                    onChange={e =>
-                      updateQuery({limit: parseInt(e.target.value, 10) || 1})
-                    }
-                    className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm dark:text-white"
-                  />
-                </label>
-                <label className="space-y-2">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                    Sort
-                  </span>
-                  <select
-                    value={bindings.query?.sortDirection || 'DESC'}
-                    onChange={e =>
-                      updateQuery({
-                        sortDirection: e.target.value as 'ASC' | 'DESC',
-                      })
-                    }
-                    className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm dark:text-white"
-                  >
-                    <option value="DESC">Newest</option>
-                    <option value="ASC">Oldest</option>
-                  </select>
-                </label>
-              </div>
-
-              <div className="space-y-3">
-                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                  Fields
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {bindingSchema.fields.map(schemaField => (
-                    <button
-                      key={schemaField.name}
-                      type="button"
-                      draggable
-                      onDragStart={e => {
-                        e.dataTransfer.setData(
-                          'application/x-gustav-field',
-                          schemaField.name
-                        );
-                        e.dataTransfer.setData(
-                          'text/plain',
-                          `{{${schemaField.name}}}`
-                        );
-                      }}
-                      className="cursor-grab active:cursor-grabbing rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-300"
-                      title={`Drag {{${schemaField.name}}} into a text field`}
-                    >
-                      {schemaField.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </details>
-    );
-  };
+  const customCollisionDetection: CollisionDetection = useCallback((args) => {
+    const pointerCollisions = pointerWithin(args);
+    if (pointerCollisions.length > 1) {
+      const specific = pointerCollisions.filter(
+        c => c.id !== 'canvas-root' && c.id !== 'empty-canvas'
+      );
+      if (specific.length > 0) return specific;
+    }
+    return pointerCollisions;
+  }, []);
 
   if (loading || !page)
     return (
@@ -1536,7 +1414,7 @@ export function PageEditor() {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={pointerWithin}
+      collisionDetection={customCollisionDetection}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
@@ -1614,77 +1492,74 @@ export function PageEditor() {
               </button>
             </div>
             <div className="flex items-center space-x-3">
-              {/* Device Switcher */}
               <div className="hidden md:flex items-center bg-gray-50 dark:bg-zinc-800 rounded-xl p-1 border border-gray-100 dark:border-zinc-700">
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    setDeviceMode('mobile');
-                  }}
-                  className={`p-1.5 rounded-lg transition-all ${deviceMode === 'mobile' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-500' : 'text-gray-400 hover:text-gray-600'}`}
-                  title="Mobile View"
-                >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      setDeviceMode('mobile');
+                    }}
+                    className={`p-1.5 rounded-lg transition-all ${deviceMode === 'mobile' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-500' : 'text-gray-400 hover:text-gray-600'}`}
+                    title="Mobile View"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2.5"
-                      d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    setDeviceMode('tablet');
-                  }}
-                  className={`p-1.5 rounded-lg transition-all ${deviceMode === 'tablet' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-500' : 'text-gray-400 hover:text-gray-600'}`}
-                  title="Tablet View"
-                >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2.5"
+                        d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      setDeviceMode('tablet');
+                    }}
+                    className={`p-1.5 rounded-lg transition-all ${deviceMode === 'tablet' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-500' : 'text-gray-400 hover:text-gray-600'}`}
+                    title="Tablet View"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2.5"
-                      d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    setDeviceMode('desktop');
-                  }}
-                  className={`p-1.5 rounded-lg transition-all ${deviceMode === 'desktop' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-500' : 'text-gray-400 hover:text-gray-600'}`}
-                  title="Desktop View"
-                >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2.5"
+                        d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      setDeviceMode('desktop');
+                    }}
+                    className={`p-1.5 rounded-lg transition-all ${deviceMode === 'desktop' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-500' : 'text-gray-400 hover:text-gray-600'}`}
+                    title="Desktop View"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2.5"
-                      d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <div className="h-4 w-px bg-gray-200 dark:bg-zinc-700 mx-1" />
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2.5"
+                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </button>
+                </div>
 
               <button
                 onClick={e => {
@@ -1695,6 +1570,9 @@ export function PageEditor() {
               >
                 {isPreview ? 'Editor' : 'Preview'}
               </button>
+
+              <div className="h-4 w-px bg-gray-200 dark:bg-zinc-700 mx-1" />
+
               <button
                 onClick={e => {
                   e.stopPropagation();
@@ -1744,6 +1622,37 @@ export function PageEditor() {
           onClick={e => e.stopPropagation()}
           className="w-80 bg-white dark:bg-zinc-900 border-l border-gray-200 dark:border-zinc-800 flex flex-col shadow-sm"
         >
+          {!selectedComponentId && (
+            <div className="flex mx-3 my-2 bg-gray-100 dark:bg-zinc-800 rounded-lg p-0.5">
+              <button
+                onClick={e => { e.stopPropagation(); setSidebarTab('design'); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${
+                  sidebarTab === 'design'
+                    ? 'bg-white dark:bg-zinc-700 text-indigo-500 shadow-sm'
+                    : 'text-gray-500 dark:text-zinc-400 hover:text-gray-700'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                Design
+              </button>
+              <button
+                onClick={e => { e.stopPropagation(); setSidebarTab('data'); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${
+                  sidebarTab === 'data'
+                    ? 'bg-white dark:bg-zinc-700 text-indigo-500 shadow-sm'
+                    : 'text-gray-500 dark:text-zinc-400 hover:text-gray-700'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 3v4m8-4v4M3 11h18" />
+                </svg>
+                Data
+              </button>
+            </div>
+          )}
           {selectedComponentId ? (
             /* Property Editor View */
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300">
@@ -1781,8 +1690,6 @@ export function PageEditor() {
                     {pluginSchema?.map(field => renderPropertyField(field))}
                   </div>
 
-                  {renderDynamicBindingsPanel()}
-
                   <details className="group border-t border-gray-100 dark:border-zinc-800 pt-6 mt-6">
                     <summary className="list-none cursor-pointer flex items-center justify-between text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-indigo-500 transition-colors">
                       <span>Advanced JSON</span>
@@ -1809,10 +1716,37 @@ export function PageEditor() {
                       />
                     </div>
                   </details>
+
+                  {getDataSourceFields(selectedComponentId!).length > 0 && (
+                    <div className="border-t border-gray-100 dark:border-zinc-800 pt-4 mt-6">
+                      <label className="block text-[10px] font-black text-gray-400 uppercase mb-3 tracking-widest">
+                        Data Fields
+                      </label>
+                      <p className="text-[9px] text-gray-400 mb-3 font-medium">
+                        Drag fields into text areas above
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {getDataSourceFields(selectedComponentId!).map(field => (
+                          <button
+                            key={field.name}
+                            type="button"
+                            draggable
+                            onDragStart={e => {
+                              e.dataTransfer.setData('application/x-gustav-field', field.name);
+                              e.dataTransfer.setData('text/plain', `{{${field.name}}}`);
+                            }}
+                            className="cursor-grab active:cursor-grabbing rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-300"
+                          >
+                            {field.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </form>
               </div>
             </div>
-          ) : (
+          ) : sidebarTab === 'design' ? (
             /* Component Library View */
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-left-4 duration-300">
               <div className="p-6 border-b border-gray-100 dark:border-zinc-800">
@@ -1826,12 +1760,40 @@ export function PageEditor() {
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {plugins
                   .flatMap((p: any) => p.components)
+                  .filter((comp: any) => comp.name !== 'DataSource')
                   .map((comp: any) => (
                     <DraggableLibraryComponent
                       key={comp.name}
                       component={comp}
                     />
                   ))}
+              </div>
+            </div>
+          ) : (
+            /* Data Sources View */
+            <div className="flex flex-col h-full animate-in fade-in slide-in-from-left-4 duration-300">
+              <div className="p-6 border-b border-gray-100 dark:border-zinc-800">
+                <h2 className="text-sm font-black dark:text-white tracking-tight uppercase">Data Sources</h2>
+                <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">Schema Queries</p>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {dynamicSchemas.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-[10px] text-gray-400 font-medium">No schemas defined yet.</p>
+                  </div>
+                ) : (
+                  dynamicSchemas.map(schema => (
+                    <DraggableLibraryComponent
+                      key={schema.slug}
+                      component={{
+                        name: schema.name,
+                        icon: 'data',
+                        plugin: '@gustav/core-plugin',
+                        defaultProps: { schemaSlug: schema.slug, schemaName: schema.name, limit: 10, sortDirection: 'DESC' },
+                      }}
+                    />
+                  ))
+                )}
               </div>
             </div>
           )}
