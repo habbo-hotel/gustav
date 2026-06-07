@@ -6,6 +6,7 @@ import {Button} from './components/Button';
 import {Heading} from './components/Heading';
 import {Divider} from './components/Divider';
 import {RichText} from './components/RichText';
+import {DataSource} from './components/DataSource';
 import {ComponentDefinition, PluginDefinition} from './types';
 
 export * from './types';
@@ -234,6 +235,22 @@ const components: ComponentDefinition[] = [
       {name: 'textColor', label: 'Text Color', type: 'color'},
       {name: 'shadow', label: 'Show Shadow', type: 'checkbox'},
       {name: 'border', label: 'Show Border', type: 'checkbox'},
+    ],
+  },
+  {
+    name: 'DataSource',
+    component: DataSource,
+    description: 'A data loop container that fetches schema records and renders children for each record',
+    icon: 'grid',
+    canHaveChildren: true,
+    defaultProps: {schemaSlug: '', limit: 10, sortDirection: 'DESC'},
+    schema: [
+      {name: 'schemaSlug', label: 'Schema', type: 'select', options: []},
+      {name: 'limit', label: 'Records', type: 'number'},
+      {name: 'sortDirection', label: 'Sort Order', type: 'select', options: [
+        {label: 'Newest First', value: 'DESC'},
+        {label: 'Oldest First', value: 'ASC'},
+      ]},
     ],
   },
 ];
