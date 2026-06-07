@@ -11,8 +11,8 @@
       "import": "./dist/index.js"
     },
     "./backend": {
-      "types": "./dist/api/index.d.ts",
-      "import": "./dist/api/index.js"
+      "types": "./dist/backend.d.ts",
+      "import": "./dist/backend.js"
     }
   },
   "scripts": {

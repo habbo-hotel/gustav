@@ -1,4 +1,8 @@
 import {
+  Module,
+  Global,
+  OnModuleInit,
+  Inject,
   BadRequestException,
   Injectable,
   NotFoundException,
@@ -12,10 +16,17 @@ import {
   DynamicSchemaField,
   PluginDynamicSchemaDefinition,
   PluginSchemaProvider,
+  GUSTAV_PLUGIN_SCHEMA_REGISTRY,
+  PluginSchemaRegistry,
 } from '@gustav/types';
+import {HabboService, HabboRegistry} from '@gustav/habbo-plugin/backend';
 
-import {HabboService} from '@gustav/habbo-plugin/backend';
-import {MS3_SLUGS} from '../sdk/index.js';
+const MS3_SLUGS = {
+  USERS: 'ms3-users',
+  ROOMS: 'ms3-rooms',
+  CATALOG_PAGES: 'ms3-catalog-pages',
+  GUILDS: 'ms3-guilds',
+} as const;
 
 const PLUGIN_NAME = '@gustav/habbo-arcturus-plugin';
 const MS3_DATABASE = process.env.MS3_DB_NAME || 'ms3';
@@ -513,5 +524,24 @@ export class ArcturusHabboService implements HabboService, PluginSchemaProvider 
   private serializeDateCandidate(value: unknown): string | undefined {
     const serialized = this.serializeValue(value);
     return typeof serialized === 'string' ? serialized : undefined;
+  }
+}
+
+@Global()
+@Module({
+  providers: [ArcturusHabboService],
+  exports: [ArcturusHabboService],
+})
+export class PluginBackendModule implements OnModuleInit {
+  constructor(
+    @Inject(GUSTAV_PLUGIN_SCHEMA_REGISTRY)
+    private readonly schemaRegistry: PluginSchemaRegistry,
+    private readonly habboRegistry: HabboRegistry,
+    private readonly arcturusService: ArcturusHabboService
+  ) {}
+
+  onModuleInit() {
+    this.habboRegistry.registerImplementation(this.arcturusService);
+    this.schemaRegistry.registerProvider(this.arcturusService);
   }
 }
