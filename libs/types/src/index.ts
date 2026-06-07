@@ -58,6 +58,7 @@ export interface PageWire {
   children?: PageWire[];
   components?: PageComponentWire[];
   hasDraft?: boolean;
+  dataViewModel?: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -203,6 +204,37 @@ export interface DynamicComponentBindings {
     schemaSlug: string;
   };
   propBindings?: DynamicPropBinding[];
+  loop?: LoopDefinition;
+}
+
+// Data view layout node for a schema query placed on the Data view canvas
+export interface DataViewNode {
+  id: string;
+  schemaSlug: string;
+  query?: DynamicRecordQueryInput;
+  position: { x: number; y: number };
+  color: string;
+}
+
+// Edge connecting a data view node to a page component
+export interface DataViewEdge {
+  id: string;
+  sourceNodeId: string;
+  targetComponentId: number;
+  propBindings: DynamicPropBinding[];
+}
+
+// Loop definition owned by a component
+export interface LoopDefinition {
+  enabled: boolean;
+  sourceNodeId: string;
+  arrayField: string;
+}
+
+// Persisted on PageVersion for Data view layout
+export interface DataViewModel {
+  nodes: DataViewNode[];
+  edges: DataViewEdge[];
 }
 
 export const GUSTAV_PLUGIN_SCHEMA_REGISTRY = 'GUSTAV_PLUGIN_SCHEMA_REGISTRY';

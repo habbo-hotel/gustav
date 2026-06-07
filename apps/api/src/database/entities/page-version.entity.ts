@@ -7,14 +7,14 @@ import {PageComponent} from './page-component.entity';
 
 @Entity('gustav_page_versions')
 export class PageVersion extends BaseEntity {
-  @Column()
+  @Column({name: 'page_id'})
   pageId!: number;
 
   @ManyToOne(() => Page, page => page.versions, {onDelete: 'CASCADE'})
-  @JoinColumn({name: 'pageId'})
+  @JoinColumn({name: 'page_id'})
   page!: Page;
 
-  @Column({default: 1})
+  @Column({default: 1, name: 'version_number'})
   versionNumber!: number;
 
   @Column()
@@ -33,15 +33,18 @@ export class PageVersion extends BaseEntity {
   })
   status!: PageStatus;
 
-  @Column({default: true})
+  @Column({default: true, name: 'show_in_navigation'})
   showInNavigation!: boolean;
 
-  @Column({nullable: true})
+  @Column({nullable: true, name: 'parent_id'})
   parentId?: number;
 
   @ManyToOne(() => Page, {onDelete: 'SET NULL'})
-  @JoinColumn({name: 'parentId'})
+  @JoinColumn({name: 'parent_id'})
   parent?: Page;
+
+  @Column({type: 'text', nullable: true, name: 'data_view_model'})
+  dataViewModel?: string | null;
 
   @OneToMany(() => PageComponent, component => component.pageVersion, {
     cascade: true,

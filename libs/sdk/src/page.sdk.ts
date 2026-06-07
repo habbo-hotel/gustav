@@ -83,4 +83,11 @@ export class PageSDK extends BaseSDK {
   ): Promise<void> {
     return this.post(`/pages/${pageId}/reorder-components`, {componentIds});
   }
+
+  async saveDataViewModel(
+    pageId: number,
+    dataViewModel: string
+  ): Promise<void> {
+    return this.put(`/pages/${pageId}/data-view`, {dataViewModel});
+  }
 }

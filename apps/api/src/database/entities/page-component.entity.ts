@@ -5,23 +5,23 @@ import {PageVersion} from './page-version.entity';
 
 @Entity('gustav_page_components')
 export class PageComponent extends BaseEntity {
-  @Column()
+  @Column({name: 'page_version_id'})
   pageVersionId!: number;
 
   @ManyToOne(() => PageVersion, version => version.components, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({name: 'pageVersionId'})
+  @JoinColumn({name: 'page_version_id'})
   pageVersion?: PageVersion;
 
-  @Column({nullable: true})
+  @Column({nullable: true, name: 'parent_id'})
   parentId?: number;
 
   @ManyToOne(() => PageComponent, component => component.children, {
     onDelete: 'CASCADE',
     nullable: true,
   })
-  @JoinColumn({name: 'parentId'})
+  @JoinColumn({name: 'parent_id'})
   parent?: PageComponent;
 
   children?: PageComponent[];
@@ -29,10 +29,10 @@ export class PageComponent extends BaseEntity {
   @Column({nullable: true})
   slot?: number;
 
-  @Column()
+  @Column({name: 'plugin_name'})
   pluginName!: string;
 
-  @Column()
+  @Column({name: 'component_name'})
   componentName!: string;
 
   @Column({type: 'text'})
@@ -41,7 +41,7 @@ export class PageComponent extends BaseEntity {
   @Column({type: 'text', nullable: true})
   bindings?: string | null;
 
-  @Column({default: 0})
+  @Column({default: 0, name: 'display_order'})
   displayOrder!: number;
 
   // Implementation requirement for PageComponentWire

@@ -440,6 +440,32 @@ export class PageService {
     );
   }
 
+  async saveDataViewModel(
+    pageId: number,
+    dataViewModel: string
+  ): Promise<void> {
+    const identity = await this.pageRepository.findOne({
+      where: {id: pageId},
+      relations: ['versions'],
+    });
+    if (!identity) throw new NotFoundException(`Page ${pageId} not found`);
+
+    let draft = identity.versions.find(v => v.status === PageStatus.DRAFT);
+    if (!draft) {
+      const published = identity.versions.find(
+        v => v.status === PageStatus.PUBLISHED
+      );
+      if (published) {
+        draft = await this.createDraftFromPublished(pageId, published);
+      } else {
+        draft = identity.versions[0];
+      }
+    }
+
+    draft.dataViewModel = dataViewModel;
+    await this.versionRepository.save(draft);
+  }
+
   async findUsedPlugins(): Promise<{name: string; usageCount: number}[]> {
     const result = await this.componentRepository
       .createQueryBuilder('comp')
@@ -468,6 +494,7 @@ export class PageService {
       components: version.components?.map(c =>
         this.mapComponentToWire(c, identity.id)
       ),
+      dataViewModel: version.dataViewModel || null,
       hasDraft: identity.versions?.some(v => v.status === PageStatus.DRAFT),
       createdAt: identity.createdAt,
       updatedAt: version.updatedAt,

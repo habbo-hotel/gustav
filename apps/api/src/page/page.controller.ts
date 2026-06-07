@@ -110,4 +110,13 @@ export class PageController {
   ) {
     return this.pageService.reorderComponents(id, componentIds);
   }
+
+  @Put(':id/data-view')
+  @IsSuperAdmin()
+  async saveDataViewModel(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('dataViewModel') dataViewModel: string
+  ): Promise<void> {
+    return this.pageService.saveDataViewModel(id, dataViewModel);
+  }
 }

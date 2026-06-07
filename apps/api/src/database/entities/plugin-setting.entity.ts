@@ -4,7 +4,7 @@ import {BaseEntity} from './base.entity';
 
 @Entity('gustav_plugin_settings')
 export class PluginSetting extends BaseEntity {
-  @Column()
+  @Column({name: 'plugin_name'})
   @Index({unique: true})
   pluginName!: string;
 
