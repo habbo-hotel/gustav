@@ -8,13 +8,12 @@ import {
 } from '@gustav/types';
 
 import {Page} from '../database/entities/page.entity';
+import {SchemaService} from '../schema/schema.service';
 import {PageVersion} from '../database/entities/page-version.entity';
 import {PageRepository} from '../database/repositories/page.repository';
 import {PageComponent} from '../database/entities/page-component.entity';
 import {PageVersionRepository} from '../database/repositories/page-version.repository';
 import {PageComponentRepository} from '../database/repositories/page-component.repository';
-import {DynamicRecordRepository} from '../database/repositories/dynamic-record.repository';
-import {DynamicSchemaRepository} from '../database/repositories/dynamic-schema.repository';
 
 @Injectable()
 export class PageService {
@@ -22,8 +21,7 @@ export class PageService {
     private readonly pageRepository: PageRepository,
     private readonly versionRepository: PageVersionRepository,
     private readonly componentRepository: PageComponentRepository,
-    private readonly schemaRepository: DynamicSchemaRepository,
-    private readonly recordRepository: DynamicRecordRepository
+    private readonly schemaService: SchemaService
   ) {}
 
   async findAll(): Promise<PageWire[]> {
@@ -606,43 +604,31 @@ export class PageService {
       return [component];
     }
 
-    const schema = await this.schemaRepository.findOne({
-      where: {slug: bindings.query.schemaSlug},
-    });
+    const schema = await this.schemaService.findOne(bindings.query.schemaSlug);
     if (!schema) return [component];
 
-    const fields = this.parseFields(schema.fields);
-    const records = await this.recordRepository.find({
-      where: {schemaId: schema.id},
-      order: {updatedAt: bindings.query.sortDirection || 'DESC'},
-    });
-    const filtered = records
-      .map(record => ({
-        ...record,
-        parsedData: this.parseRecordData(record.data),
-      }))
-      .filter(record => this.matchesFilters(record.parsedData, bindings));
-    const sorted = this.sortRecords(filtered, bindings);
-    const offset = Math.max(bindings.query.offset || 0, 0);
-    const limit = Math.max(bindings.query.limit || sorted.length, 0);
-    const selected = sorted.slice(offset, offset + limit);
+    const result = await this.schemaService.queryRecords(
+      schema.slug,
+      bindings.query
+    );
+    const records = result.records;
 
-    if (selected.length > 1) {
-      return selected.map((record, index) => ({
+    if (records.length > 1) {
+      return records.map((record, index) => ({
         ...component,
-        id: component.id * 100000 + index,
+        id: (Number(component.id) || 0) * 100000 + index,
         props: JSON.stringify(
           this.applyPropBindings(
             component.props,
-            record.parsedData,
-            fields,
+            record.data,
+            schema.fields,
             bindings
           )
         ),
       }));
     }
 
-    const firstRecord = selected[0];
+    const firstRecord = records[0];
     if (!firstRecord) return [component];
 
     return [
@@ -651,8 +637,8 @@ export class PageService {
         props: JSON.stringify(
           this.applyPropBindings(
             component.props,
-            firstRecord.parsedData,
-            fields,
+            firstRecord.data,
+            schema.fields,
             bindings
           )
         ),
@@ -733,33 +719,6 @@ export class PageService {
     return value;
   }
 
-  private matchesFilters(
-    data: Record<string, unknown>,
-    bindings: DynamicComponentBindings
-  ): boolean {
-    const filters = bindings.query?.filters || {};
-    return Object.entries(filters).every(([key, value]) => {
-      if (value === undefined || value === null || value === '') return true;
-      return (
-        String(data[key] ?? '').toLowerCase() === String(value).toLowerCase()
-      );
-    });
-  }
-
-  private sortRecords<
-    T extends {parsedData: Record<string, unknown>; updatedAt: Date},
-  >(records: T[], bindings: DynamicComponentBindings): T[] {
-    const sortField = bindings.query?.sortField;
-    const sortDirection = bindings.query?.sortDirection || 'DESC';
-
-    return [...records].sort((a, b) => {
-      const left = sortField ? a.parsedData[sortField] : a.updatedAt;
-      const right = sortField ? b.parsedData[sortField] : b.updatedAt;
-      const result = String(left ?? '').localeCompare(String(right ?? ''));
-      return sortDirection === 'ASC' ? result : -result;
-    });
-  }
-
   private parseBindings(
     value?: string | null
   ): DynamicComponentBindings | null {
@@ -767,14 +726,6 @@ export class PageService {
       return JSON.parse(value || 'null') as DynamicComponentBindings | null;
     } catch {
       return null;
-    }
-  }
-
-  private parseFields(value: string): DynamicSchemaField[] {
-    try {
-      return JSON.parse(value || '[]') as DynamicSchemaField[];
-    } catch {
-      return [];
     }
   }
 

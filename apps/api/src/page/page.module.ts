@@ -1,6 +1,7 @@
 import {Module} from '@nestjs/common';
 
 import {PageService} from './page.service';
+import {SchemaModule} from '../schema/schema.module';
 import {PluginService} from './plugin.service';
 import {PageController} from './page.controller';
 import {PluginController} from './plugin.controller';
@@ -12,6 +13,7 @@ import {PageComponentRepository} from '../database/repositories/page-component.r
 import {PluginSettingRepository} from '../database/repositories/plugin-setting.repository';
 
 @Module({
+  imports: [SchemaModule],
   providers: [
     PageService,
     PluginService,
