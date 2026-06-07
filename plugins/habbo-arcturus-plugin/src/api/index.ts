@@ -4,7 +4,7 @@ import {
   PluginSchemaRegistry,
 } from '@gustav/types';
 import {HabboRegistry} from '@gustav/habbo-plugin/backend';
-import {ArcturusHabboService} from './arcturus-habbo.service';
+import {ArcturusHabboService} from './arcturus-habbo.service.js';
 
 @Global()
 @Module({

@@ -1,5 +1,5 @@
 import {Injectable, OnModuleInit, InternalServerErrorException} from '@nestjs/common';
-import {HabboService} from './habbo.service.interface';
+import {HabboService} from './habbo.service.interface.js';
 
 @Injectable()
 export class HabboRegistry implements OnModuleInit {

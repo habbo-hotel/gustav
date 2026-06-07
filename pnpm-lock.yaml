@@ -17,9 +17,15 @@ importers:
 
   apps/api:
     dependencies:
+      '@gustav/core-plugin':
+        specifier: workspace:*
+        version: link:../../plugins/core
       '@gustav/habbo-arcturus-plugin':
         specifier: workspace:*
         version: link:../../plugins/habbo-arcturus-plugin
+      '@gustav/habbo-plugin':
+        specifier: workspace:*
+        version: link:../../plugins/habbo
       '@gustav/types':
         specifier: workspace:*
         version: link:../../libs/types

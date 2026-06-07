@@ -5,7 +5,7 @@ import {
   Body,
   Param,
 } from '@nestjs/common';
-import {HabboRegistry} from './habbo.registry';
+import {HabboRegistry} from './habbo.registry.js';
 import {
   DynamicRecordQueryInput,
   DynamicRecordQueryWire,

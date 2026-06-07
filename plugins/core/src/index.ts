@@ -1,22 +1,22 @@
-import {Hero} from './components/Hero';
-import {Grid} from './components/Grid';
-import {Card} from './components/Card';
-import {Image} from './components/Image';
-import {Button} from './components/Button';
-import {Heading} from './components/Heading';
-import {Divider} from './components/Divider';
-import {RichText} from './components/RichText';
-import {ComponentDefinition, PluginDefinition} from './types';
+import {Hero} from './components/Hero.js';
+import {Grid} from './components/Grid.js';
+import {Card} from './components/Card.js';
+import {Image} from './components/Image.js';
+import {Button} from './components/Button.js';
+import {Heading} from './components/Heading.js';
+import {Divider} from './components/Divider.js';
+import {RichText} from './components/RichText.js';
+import {ComponentDefinition, PluginDefinition} from './types.js';
 
-export * from './types';
-export * from './components/RichText';
-export * from './components/Hero';
-export * from './components/Divider';
-export * from './components/Heading';
-export * from './components/Button';
-export * from './components/Image';
-export * from './components/Grid';
-export * from './components/Card';
+export * from './types.js';
+export * from './components/RichText.js';
+export * from './components/Hero.js';
+export * from './components/Divider.js';
+export * from './components/Heading.js';
+export * from './components/Button.js';
+export * from './components/Image.js';
+export * from './components/Grid.js';
+export * from './components/Card.js';
 
 const components: ComponentDefinition[] = [
   {

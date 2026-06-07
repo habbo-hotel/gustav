@@ -15,7 +15,7 @@ import {
 } from '@gustav/types';
 
 import {HabboService} from '@gustav/habbo-plugin/backend';
-import {MS3_SLUGS} from '../sdk/index';
+import {MS3_SLUGS} from '../sdk/index.js';
 
 const PLUGIN_NAME = '@gustav/habbo-arcturus-plugin';
 const MS3_DATABASE = process.env.MS3_DB_NAME || 'ms3';
