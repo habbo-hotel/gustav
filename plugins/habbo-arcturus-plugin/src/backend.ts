@@ -279,6 +279,7 @@ export class ArcturusHabboService implements HabboService, PluginSchemaProvider 
       name: table.name,
       slug: table.slug,
       description: `MS3 table: ${table.tableName}`,
+      folder: 'Habbo Arcturus',
       fields: table.fields,
       recordCount: await this.countRows(table.tableName),
       readOnly: !table.primaryKey,

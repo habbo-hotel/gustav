@@ -124,6 +124,7 @@ export class SchemaService {
     schema.name = normalized.name;
     schema.slug = normalized.slug;
     schema.description = normalized.description;
+    schema.folder = normalized.folder;
     schema.fields = JSON.stringify(normalized.fields);
 
     const saved = await this.schemaRepository.save(schema);
@@ -549,6 +550,7 @@ export class SchemaService {
       name: schema.name,
       slug: schema.slug,
       description: schema.description,
+      folder: schema.folder,
       fields: this.parseFields(schema.fields),
       recordCount,
       source: 'internal',
@@ -567,6 +569,7 @@ export class SchemaService {
       name: schema.name,
       slug: schema.slug,
       description: schema.description,
+      folder: schema.folder,
       fields: schema.fields,
       recordCount: schema.recordCount,
       source: 'plugin',

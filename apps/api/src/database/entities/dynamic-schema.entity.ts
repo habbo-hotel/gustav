@@ -15,6 +15,9 @@ export class DynamicSchema extends BaseEntity {
   @Column({type: 'text', nullable: true})
   description?: string;
 
+  @Column({type: 'varchar', length: 255, nullable: true})
+  folder?: string;
+
   @Column({type: 'text'})
   fields!: string;
 

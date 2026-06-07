@@ -229,6 +229,21 @@ export function AdminSchemas() {
     }));
   };
 
+  const groupedNavSchemas = useMemo(() => {
+    return schemas.reduce((acc, schema) => {
+      const folder = schema.folder || 'Uncategorized';
+      if (!acc[folder]) acc[folder] = [];
+      acc[folder].push(schema);
+      return acc;
+    }, {} as Record<string, DynamicSchemaWire[]>);
+  }, [schemas]);
+
+  const navFolders = Object.keys(groupedNavSchemas).sort((a, b) => {
+    if (a === 'Uncategorized') return -1;
+    if (b === 'Uncategorized') return 1;
+    return a.localeCompare(b);
+  });
+
   return (
     <div className="space-y-8">
       <div>
@@ -254,18 +269,32 @@ export function AdminSchemas() {
         >
           Definitions
         </Link>
-        {schemas.map(schema => (
-          <Link
-            key={schema.slug}
-            to={`/admin/schemas/${schema.slug}`}
-            className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-              slug === schema.slug
-                ? 'bg-indigo-600 text-white'
+        {navFolders.map(folder => (
+          <div key={folder} className="relative group">
+            <button className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-1 ${
+              groupedNavSchemas[folder].some(s => s.slug === slug)
+                ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10'
                 : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800'
-            }`}
-          >
-            {schema.name}
-          </Link>
+            }`}>
+              {folder}
+              <svg className="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+            <div className="absolute top-full left-0 mt-1 hidden group-hover:block min-w-48 bg-white dark:bg-zinc-900 shadow-xl border border-gray-100 dark:border-zinc-800 rounded-xl overflow-hidden z-50">
+              {groupedNavSchemas[folder].map(schema => (
+                <Link
+                  key={schema.slug}
+                  to={`/admin/schemas/${schema.slug}`}
+                  className={`block px-4 py-3 text-xs font-bold transition-colors ${
+                    slug === schema.slug
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  {schema.name}
+                </Link>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
 
@@ -382,6 +411,24 @@ export function AdminSchemas() {
                   />
                 </label>
               </div>
+
+              <label className="space-y-2 block">
+                <span className="text-xs font-black uppercase text-gray-500">
+                  Folder
+                </span>
+                <input
+                  value={schemaForm.folder || ''}
+                  onChange={e =>
+                    setSchemaForm(form => ({
+                      ...form,
+                      folder: e.target.value,
+                    }))
+                  }
+                  readOnly={editingSchema?.source === 'plugin'}
+                  className="w-full bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 dark:text-white disabled:opacity-50"
+                  placeholder="Optional category for grouping schemas"
+                />
+              </label>
 
               <label className="space-y-2 block">
                 <span className="text-xs font-black uppercase text-gray-500">
@@ -590,6 +637,154 @@ export function AdminSchemas() {
   );
 }
 
+function SchemaFolder({
+  folderName,
+  schemas,
+  onCreate,
+  onEdit,
+  onDelete,
+}: {
+  folderName: string;
+  schemas: DynamicSchemaWire[];
+  onCreate: () => void;
+  onEdit: (schema: DynamicSchemaWire) => void;
+  onDelete: (schema: DynamicSchemaWire) => void;
+}) {
+  const [expanded, setExpanded] = useState(true);
+
+  return (
+    <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden mb-6 shadow-sm">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className={`w-full flex items-center justify-between p-6 bg-gray-50/50 dark:bg-zinc-950/50 hover:bg-gray-50 dark:hover:bg-zinc-900 transition-colors ${expanded ? 'border-b border-gray-100 dark:border-zinc-800' : ''}`}
+      >
+        <div className="flex items-center gap-4">
+          <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tight">
+            {folderName}
+          </h3>
+          <span className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full text-xs font-bold">
+            {schemas.length} {schemas.length === 1 ? 'schema' : 'schemas'}
+          </span>
+        </div>
+        <svg
+          className={`w-6 h-6 text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </button>
+      {expanded && (
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {schemas.map(schema => (
+            <div
+              key={schema.slug}
+              className="border border-gray-100 dark:border-zinc-800 rounded-xl p-5 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 transition-colors group flex flex-col bg-white dark:bg-zinc-900"
+            >
+              <div className="flex justify-between items-start mb-3">
+                <Link
+                  to={`/admin/schemas/${schema.slug}`}
+                  className="font-black text-lg text-gray-900 dark:text-white group-hover:text-indigo-600 transition-colors line-clamp-1 mr-2"
+                >
+                  {schema.name}
+                </Link>
+                <span
+                  className={`shrink-0 px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${
+                    schema.source === 'plugin'
+                      ? 'bg-amber-500/10 text-amber-600'
+                      : 'bg-indigo-500/10 text-indigo-600'
+                  }`}
+                >
+                  {schema.source === 'plugin'
+                    ? schema.pluginName || 'Plugin'
+                    : 'Internal'}
+                </span>
+              </div>
+              <div className="text-xs text-gray-400 font-mono mb-3">
+                {schema.slug}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-zinc-400 mb-6 line-clamp-2 flex-1">
+                {schema.description || 'No description provided.'}
+              </p>
+
+              <div className="flex items-center justify-between text-xs font-bold text-gray-400 mb-6">
+                <div className="flex items-center gap-1.5">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M4 6h16M4 10h16M4 14h16M4 18h16"
+                    />
+                  </svg>
+                  {schema.fields.length} Fields
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
+                  </svg>
+                  {schema.recordCount || 0} Records
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-auto">
+                <button
+                  onClick={() => onEdit(schema)}
+                  className="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-lg text-xs font-bold hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  {schema.source === 'plugin' ? 'View Schema' : 'Edit Schema'}
+                </button>
+                {schema.source !== 'plugin' && (
+                  <button
+                    onClick={() => onDelete(schema)}
+                    className="px-3 py-2.5 bg-red-500/10 text-red-600 rounded-lg text-xs font-bold hover:bg-red-500/20 transition-colors"
+                    title="Delete Schema"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SchemaDefinitionsPanel({
   schemas,
   onCreate,
@@ -629,9 +824,24 @@ function SchemaDefinitionsPanel({
     );
   }
 
+  const groupedSchemas = schemas.reduce((acc, schema) => {
+    const folder = schema.folder || 'Uncategorized';
+    if (!acc[folder]) {
+      acc[folder] = [];
+    }
+    acc[folder].push(schema);
+    return acc;
+  }, {} as Record<string, DynamicSchemaWire[]>);
+
+  const folders = Object.keys(groupedSchemas).sort((a, b) => {
+    if (a === 'Uncategorized') return -1;
+    if (b === 'Uncategorized') return 1;
+    return a.localeCompare(b);
+  });
+
   return (
     <div className="space-y-5">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
         <div>
           <h2 className="text-2xl font-black text-gray-900 dark:text-white">
             Definitions
@@ -642,78 +852,23 @@ function SchemaDefinitionsPanel({
         </div>
         <button
           onClick={onCreate}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-black uppercase text-xs tracking-widest"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg shadow-indigo-500/20"
         >
           New Definition
         </button>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-gray-50 dark:bg-zinc-950 text-[10px] font-black uppercase tracking-widest text-gray-400">
-            <tr>
-              <th className="px-6 py-4">Schema</th>
-              <th className="px-6 py-4">Source</th>
-              <th className="px-6 py-4">Fields</th>
-              <th className="px-6 py-4">Records</th>
-              <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-            {schemas.map(schema => (
-              <tr key={schema.slug}>
-                <td className="px-6 py-5">
-                  <Link
-                    to={`/admin/schemas/${schema.slug}`}
-                    className="font-black text-gray-900 dark:text-white hover:text-indigo-600"
-                  >
-                    {schema.name}
-                  </Link>
-                  <div className="text-xs text-gray-400 font-mono">
-                    {schema.slug}
-                  </div>
-                </td>
-                <td className="px-6 py-5">
-                  <span
-                    className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest ${
-                      schema.source === 'plugin'
-                        ? 'bg-amber-500/10 text-amber-600'
-                        : 'bg-indigo-500/10 text-indigo-600'
-                    }`}
-                  >
-                    {schema.source === 'plugin'
-                      ? schema.pluginName || 'Plugin'
-                      : 'Internal'}
-                  </span>
-                </td>
-                <td className="px-6 py-5 text-sm text-gray-500">
-                  {schema.fields.map(field => field.label).join(', ')}
-                </td>
-                <td className="px-6 py-5 text-sm font-bold text-gray-700 dark:text-zinc-300">
-                  {schema.recordCount || 0}
-                </td>
-                <td className="px-6 py-5">
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => onEdit(schema)}
-                      className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-zinc-800 text-xs font-bold"
-                    >
-                      {schema.source === 'plugin' ? 'View' : 'Edit'}
-                    </button>
-                    {schema.source !== 'plugin' && (
-                      <button
-                        onClick={() => onDelete(schema)}
-                        className="px-3 py-2 rounded-lg bg-red-500/10 text-red-600 text-xs font-bold"
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div>
+        {folders.map(folder => (
+          <SchemaFolder
+            key={folder}
+            folderName={folder}
+            schemas={groupedSchemas[folder]}
+            onCreate={onCreate}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ))}
       </div>
     </div>
   );

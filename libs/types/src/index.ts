@@ -126,6 +126,7 @@ export interface DynamicSchemaInput {
   name: string;
   slug: string;
   description?: string;
+  folder?: string;
   fields: DynamicSchemaField[];
 }
 
@@ -134,6 +135,7 @@ export interface DynamicSchemaWire {
   name: string;
   slug: string;
   description?: string;
+  folder?: string;
   fields: DynamicSchemaField[];
   recordCount?: number;
   source?: 'internal' | 'plugin';
@@ -207,6 +209,7 @@ export const GUSTAV_PLUGIN_SCHEMA_REGISTRY = 'GUSTAV_PLUGIN_SCHEMA_REGISTRY';
 
 export interface PluginDynamicSchemaDefinition extends DynamicSchemaInput {
   pluginName: string;
+  folder?: string;
   recordCount?: number;
   readOnly?: boolean;
   createdAt?: Date | string;
