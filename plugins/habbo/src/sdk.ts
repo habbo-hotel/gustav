@@ -4,7 +4,7 @@ import {
   HabboRoom,
   HabboCatalogPage,
   HabboGuild,
-} from '../types/index';
+} from './types';
 import {
   DynamicRecordQueryInput,
   DynamicRecordQueryWire,

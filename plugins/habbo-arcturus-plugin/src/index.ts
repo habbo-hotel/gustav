@@ -1,8 +1,8 @@
 import {PluginDefinition} from '@gustav/types';
-import {registerArcturusHooks} from './web/index';
+import {registerArcturusHooks} from './web';
 
-export * from './types/index';
-export * from './sdk/index';
+export * from './types';
+export * from './sdk';
 
 registerArcturusHooks();
 

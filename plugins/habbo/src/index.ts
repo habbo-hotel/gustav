@@ -1,8 +1,8 @@
 import {PluginDefinition} from '@gustav/types';
 
-export * from './types/index';
-export * from './sdk/habbo.sdk';
-export * from './web/index';
+export * from './types';
+export * from './sdk';
+export * from './web';
 
 export const plugin: PluginDefinition = {
   name: '@gustav/habbo-plugin',
