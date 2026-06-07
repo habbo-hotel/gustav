@@ -16,6 +16,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@gustav/core-plugin": "workspace:*",
+    "@gustav/habbo-plugin": "workspace:*",
     "@gustav/ms3-database-plugin": "workspace:*",
     "@gustav/sdk": "workspace:*",
     "@gustav/types": "workspace:*",

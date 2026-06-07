@@ -1,10 +1,7 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
-  Module,
   NotFoundException,
-  OnModuleInit,
 } from '@nestjs/common';
 import {createPool, RowDataPacket} from 'mysql2/promise';
 import {
@@ -13,13 +10,12 @@ import {
   DynamicRecordQueryWire,
   DynamicRecordWire,
   DynamicSchemaField,
-  GUSTAV_PLUGIN_SCHEMA_REGISTRY,
   PluginDynamicSchemaDefinition,
   PluginSchemaProvider,
-  PluginSchemaRegistry,
 } from '@gustav/types';
 
-import {MS3_SLUGS} from './sdk';
+import {HabboService} from '@gustav/habbo-plugin/backend';
+import {MS3_SLUGS} from '../sdk/index';
 
 const PLUGIN_NAME = '@gustav/ms3-database-plugin';
 const MS3_DATABASE = process.env.MS3_DB_NAME || 'ms3';
@@ -135,7 +131,7 @@ const EXPLICIT_TABLES: TableMetadata[] = [
 ];
 
 @Injectable()
-class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
+export class Ms3HabboService implements HabboService, PluginSchemaProvider {
   pluginName = PLUGIN_NAME;
 
   private readonly pool: any;
@@ -153,6 +149,32 @@ class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
     });
   }
 
+  // HabboService Implementation
+  async queryUsers(query: DynamicRecordQueryInput): Promise<DynamicRecordQueryWire> {
+    return this.queryRecords(MS3_SLUGS.USERS, query);
+  }
+
+  async getUser(id: number | string): Promise<DynamicRecordWire> {
+    return this.findRecord(MS3_SLUGS.USERS, id);
+  }
+
+  async queryRooms(query: DynamicRecordQueryInput): Promise<DynamicRecordQueryWire> {
+    return this.queryRecords(MS3_SLUGS.ROOMS, query);
+  }
+
+  async getRoom(id: number | string): Promise<DynamicRecordWire> {
+    return this.findRecord(MS3_SLUGS.ROOMS, id);
+  }
+
+  async queryCatalogPages(query: DynamicRecordQueryInput): Promise<DynamicRecordQueryWire> {
+    return this.queryRecords(MS3_SLUGS.CATALOG_PAGES, query);
+  }
+
+  async queryGuilds(query: DynamicRecordQueryInput): Promise<DynamicRecordQueryWire> {
+    return this.queryRecords(MS3_SLUGS.GUILDS, query);
+  }
+
+  // PluginSchemaProvider Implementation
   async findSchemas(): Promise<PluginDynamicSchemaDefinition[]> {
     const now = new Date().toISOString();
 
@@ -242,7 +264,7 @@ class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
         : `INSERT INTO ${this.escapeIdentifier(table.tableName)} () VALUES ()`;
     const [result] = await this.pool.execute(sql, values);
     const primaryKey = this.requirePrimaryKey(table);
-    const id = input.data[primaryKey] ?? result.insertId;
+    const id = input.data[primaryKey] ?? (result as any).insertId;
 
     return this.findRecord(schemaSlug, id);
   }
@@ -408,21 +430,3 @@ class Ms3DatabaseSchemaProvider implements PluginSchemaProvider {
     return typeof serialized === 'string' ? serialized : undefined;
   }
 }
-
-@Injectable()
-class Ms3DatabasePluginRegistrar implements OnModuleInit {
-  constructor(
-    @Inject(GUSTAV_PLUGIN_SCHEMA_REGISTRY)
-    private readonly registry: PluginSchemaRegistry,
-    private readonly provider: Ms3DatabaseSchemaProvider
-  ) {}
-
-  onModuleInit(): void {
-    this.registry.registerProvider(this.provider);
-  }
-}
-
-@Module({
-  providers: [Ms3DatabaseSchemaProvider, Ms3DatabasePluginRegistrar],
-})
-export class PluginBackendModule {}

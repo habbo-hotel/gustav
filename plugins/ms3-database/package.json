@@ -11,8 +11,8 @@
       "import": "./dist/index.js"
     },
     "./backend": {
-      "types": "./dist/backend.d.ts",
-      "import": "./dist/backend.js"
+      "types": "./dist/api/index.d.ts",
+      "import": "./dist/api/index.js"
     }
   },
   "scripts": {
@@ -22,10 +22,12 @@
     "lint:fix": "pnpm exec eslint src/**/*.ts --fix --no-error-on-unmatched-pattern && pnpm exec prettier src/**/*.ts --write"
   },
   "dependencies": {
+    "@gustav/habbo-plugin": "workspace:*",
     "@gustav/sdk": "workspace:*",
     "@gustav/types": "workspace:*",
     "@nestjs/common": "^11.0.1",
-    "mysql2": "^3.22.4"
+    "@nestjs/core": "^11.0.1",
+    "mysql2": "^3.12.0"
   },
   "devDependencies": {
     "@gustav/config-eslint": "workspace:*",
