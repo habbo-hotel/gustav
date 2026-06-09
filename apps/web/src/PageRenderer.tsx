@@ -28,7 +28,10 @@ function DataSourceRenderer({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!schemaSlug) { setLoading(false); return; }
+    if (!schemaSlug) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -47,39 +50,61 @@ function DataSourceRenderer({
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [schemaSlug, limit, sortDirection]);
 
   const resolveDescendants = useCallback(
-    (parentId: number, record: Record<string, any>): Map<number, PageComponentWire> => {
+    (
+      parentId: number,
+      record: Record<string, any>
+    ): Map<number, PageComponentWire> => {
       const resolved = new Map<number, PageComponentWire>();
       const stack = [parentId];
       while (stack.length > 0) {
         const pid = stack.pop()!;
-        allComponents.filter(c => c.parentId === pid).forEach(child => {
-          resolved.set(child.id, {
-            ...child,
-            props: resolveTemplateTokens(child.props, record.data || record),
+        allComponents
+          .filter(c => c.parentId === pid)
+          .forEach(child => {
+            resolved.set(child.id, {
+              ...child,
+              props: resolveTemplateTokens(child.props, record.data || record),
+            });
+            stack.push(child.id);
           });
-          stack.push(child.id);
-        });
       }
       return resolved;
     },
     [allComponents]
   );
 
-  if (loading) return <div className="p-4 text-gray-400 text-xs">Loading data...</div>;
+  if (loading)
+    return (
+      <div className="p-4 text-text-secondary text-xs font-bold">
+        Loading data...
+      </div>
+    );
   if (!schemaSlug) return null;
-  if (records.length === 0) return <div className="p-4 text-gray-400 text-xs">No records found</div>;
+  if (records.length === 0)
+    return (
+      <div className="p-4 text-text-secondary text-xs font-bold">
+        No records found
+      </div>
+    );
 
   return (
     <>
       {records.map((record, index) => {
         const resolvedMap = resolveDescendants(dataSourceId, record);
-        const resolvedChildren = allComponents.map(c => resolvedMap.get(c.id) || c);
+        const resolvedChildren = allComponents.map(
+          c => resolvedMap.get(c.id) || c
+        );
         return (
-          <DataContext.Provider key={index} value={{fields, currentRecord: record.data || record}}>
+          <DataContext.Provider
+            key={index}
+            value={{fields, currentRecord: record.data || record}}
+          >
             {children.map((child: any) => {
               const resolvedChild = resolvedMap.get(child.id) || child;
               return renderComponent(resolvedChild, resolvedChildren);
@@ -91,10 +116,14 @@ function DataSourceRenderer({
   );
 }
 
-function resolveTemplateValue(value: unknown, record: Record<string, any>): unknown {
+function resolveTemplateValue(
+  value: unknown,
+  record: Record<string, any>
+): unknown {
   if (typeof value === 'string') {
-    return value.replace(/\{\{\s*([a-zA-Z0-9_-]+)\s*\}\}/g, (_: string, fieldName: string) =>
-      String(record[fieldName] ?? '')
+    return value.replace(
+      /\{\{\s*([a-zA-Z0-9_-]+)\s*\}\}/g,
+      (_: string, fieldName: string) => String(record[fieldName] ?? '')
     );
   }
   if (Array.isArray(value)) {
@@ -109,7 +138,10 @@ function resolveTemplateValue(value: unknown, record: Record<string, any>): unkn
   return value;
 }
 
-function resolveTemplateTokens(props: string, record: Record<string, any>): string {
+function resolveTemplateTokens(
+  props: string,
+  record: Record<string, any>
+): string {
   try {
     const parsed = JSON.parse(props);
     const resolved = resolveTemplateValue(parsed, record);
@@ -184,7 +216,10 @@ export function PageRenderer() {
       .sort((a, b) => a.displayOrder - b.displayOrder);
 
     // If it's a DataSource, render via DataSourceRenderer for data fetching
-    if (comp.componentName === 'DataSource' && comp.pluginName === '@gustav/core-plugin') {
+    if (
+      comp.componentName === 'DataSource' &&
+      comp.pluginName === '@gustav/core-plugin'
+    ) {
       return (
         <DataSourceRenderer
           key={comp.id}
@@ -233,7 +268,7 @@ export function PageRenderer() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-12 h-12 border-[3px] border-layer-primary border-t-transparent rounded-full animate-spin "></div>
       </div>
     );
   }
@@ -241,19 +276,19 @@ export function PageRenderer() {
   if (error || !page) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <h1 className="text-9xl font-black text-gray-100 dark:text-zinc-900 absolute -z-10 select-none">
+        <h1 className="text-9xl font-black text-l1-bg dark:text-zinc-900 absolute -z-10 select-none">
           404
         </h1>
         <div className="text-center z-10">
-          <h2 className="text-3xl font-black dark:text-white uppercase tracking-tighter mb-4">
+          <h2 className="layer-title text-3xl text-text dark:text-white mb-4">
             Discovery Failed
           </h2>
-          <p className="text-gray-400 font-medium mb-8">
+          <p className="text-text-secondary font-bold mb-8 text-sm">
             The coordinate {location.pathname} does not exist in our index.
           </p>
           <a
             href="/"
-            className="bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white text-xs font-black uppercase px-8 py-4 rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95"
+            className="inline-block bg-layer-primary text-white text-xs font-black uppercase px-8 py-4 rounded-2xl border-2 border-layer-primaryDark  transition-all hover:scale-105 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           >
             Return to Base
           </a>
@@ -263,7 +298,7 @@ export function PageRenderer() {
   }
 
   return (
-    <div className="gustav-page min-h-screen bg-white dark:bg-zinc-950">
+    <div className="gustav-page min-h-screen bg-white dark:bg-dark-bg">
       <div className="max-w-5xl mx-auto px-6 py-12">
         {rootComponents.map(comp =>
           renderComponent(comp, page.components || [])

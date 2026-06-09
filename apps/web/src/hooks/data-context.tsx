@@ -1,5 +1,6 @@
-import {createContext, useContext} from 'react';
 import type {DynamicSchemaField} from '@gustav/types';
+
+import {createContext, useContext} from 'react';
 
 export interface DataContextValue {
   fields: DynamicSchemaField[];

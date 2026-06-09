@@ -214,12 +214,14 @@ const components: ComponentDefinition[] = [
     canHaveChildren: true,
     defaultProps: {
       title: 'Card Title',
+      content: '<p>Card body text. Double-click to edit.</p>',
       padding: 'md',
       shadow: true,
       border: true,
     },
     schema: [
       {name: 'title', label: 'Title', type: 'text'},
+      {name: 'content', label: 'Body Content', type: 'textarea'},
       {
         name: 'padding',
         label: 'Padding',

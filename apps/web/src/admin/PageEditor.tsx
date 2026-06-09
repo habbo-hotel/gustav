@@ -112,8 +112,18 @@ const BlockIcon = memo(
       ),
       data: (
         <React.Fragment>
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 3v4m8-4v4M3 11h18" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M8 3v4m8-4v4M3 11h18"
+          />
         </React.Fragment>
       ),
     };
@@ -185,14 +195,14 @@ const DraggableLibraryComponent: React.FC<DraggableLibraryComponentProps> =
         style={style}
         {...listeners}
         {...attributes}
-        className={`w-full flex items-center space-x-3 p-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all text-left group cursor-grab active:cursor-grabbing ${
-          isDragging ? 'opacity-50 ring-2 ring-indigo-500/50' : ''
+        className={`w-full flex items-center gap-2.5 p-3 pr-4 bg-white dark:bg-dark-card border border-l5-border dark:border-dark-border rounded-lg hover:border-layer-primary hover:bg-layer-primary-light/30 transition-all text-left group cursor-grab active:cursor-grabbing ${
+          isDragging ? 'opacity-50 ring-2 ring-layer-primary' : ''
         }`}
       >
-        <div className="w-8 h-8 bg-white dark:bg-zinc-900 rounded-lg flex items-center justify-center text-indigo-500 shadow-sm border border-gray-100 dark:border-zinc-800 group-hover:scale-110 transition-transform">
+        <div className="w-9 h-9 bg-layer-primary-light dark:bg-layer-primary/20 border border-layer-primary/30 rounded-lg flex items-center justify-center text-layer-primary group-hover:scale-110 transition-transform">
           <BlockIcon name={component.icon} className="w-4 h-4" />
         </div>
-        <h4 className="font-bold text-gray-900 dark:text-white uppercase text-[10px] tracking-widest truncate">
+        <h4 className="font-bold text-text dark:text-white uppercase text-[0.625rem] tracking-tight truncate">
           {component.name}
         </h4>
       </div>
@@ -228,17 +238,17 @@ const DroppableSlot = memo(
     return (
       <div
         ref={setNodeRef}
-        className={`min-h-[100px] h-full transition-all rounded-xl group relative ${
+        className={`min-h-[100px] h-full transition-all rounded-lg group relative ${
           !isPreview && isOver
-            ? 'bg-indigo-50/50 dark:bg-indigo-500/10 ring-2 ring-indigo-500'
+            ? 'bg-layer-primary-light/50 ring-2 ring-layer-primary/50'
             : ''
         }`}
       >
         {children}
         {!isPreview && childrenCount === 0 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-100 dark:border-zinc-800 rounded-xl text-gray-300 dark:text-zinc-600 transition-colors group-hover:border-indigo-200 group-hover:bg-indigo-50/10">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 border-2 border-dashed border-white/10 rounded-lg text-white/30 transition-colors group-hover:border-white/25 group-hover:bg-white/5">
             <svg
-              className="w-5 h-5 mb-1 opacity-20 group-hover:opacity-40 transition-opacity"
+              className="w-5 h-5 mb-1 opacity-30 group-hover:opacity-60 transition-opacity"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -246,11 +256,11 @@ const DroppableSlot = memo(
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 d="M12 4v16m8-8H4"
               />
             </svg>
-            <span className="text-[7px] font-black uppercase tracking-[0.2em] opacity-40 group-hover:opacity-100 transition-opacity">
+            <span className="text-[0.5625rem] font-black uppercase tracking-wider opacity-50 group-hover:opacity-100 transition-opacity">
               Column {slotIndex + 1}
             </span>
           </div>
@@ -397,29 +407,21 @@ const SortableComponent: React.FC<SortableComponentProps> = memo(
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onClick={onClick}
-        className={`relative transition-all ${
-          isPreview ? '' : 'border-2 rounded-xl mb-4'
-        } ${
-          isDragging
-            ? 'border-indigo-500 bg-indigo-50 shadow-xl opacity-50 scale-[1.02]'
-            : isPreview
-              ? 'border-transparent'
-              : isHovered
-                ? 'border-indigo-300 ring-4 ring-indigo-500/5'
-                : 'border-transparent'
-        }`}
+        className="relative"
       >
         {/* Name Tag Handle (Top Left Corner) */}
         {!isPreview && (
           <div
             {...attributes}
             {...listeners}
-            className={`absolute -top-3 left-3 px-3 py-1 bg-indigo-500 text-white rounded-full flex items-center space-x-2 shadow-lg transition-opacity z-50 cursor-grab active:cursor-grabbing ${
-              isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            className={`absolute -top-3 left-3 px-3 py-1.5 bg-white/15 text-white ring-1 ring-white/20 rounded-lg flex items-center gap-2 transition-all z-50 cursor-grab active:cursor-grabbing backdrop-blur-sm ${
+              isHovered
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 -translate-y-1 pointer-events-none'
             }`}
           >
             <BlockIcon name={pluginComponent?.icon} className="w-3 h-3" />
-            <span className="text-[9px] font-black uppercase tracking-widest">
+            <span className="text-[0.5625rem] font-black uppercase tracking-wider">
               {getComponentDisplayId(component.id, allComponents)}
             </span>
           </div>
@@ -428,11 +430,15 @@ const SortableComponent: React.FC<SortableComponentProps> = memo(
         {/* Overlay controls (Top Right Corner) */}
         {!isPreview && (
           <div
-            className={`absolute top-2 right-2 flex items-center space-x-1 transition-opacity z-50 ${isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            className={`absolute top-3 right-3 flex items-center gap-1 transition-all z-50 ${
+              isHovered
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 -translate-y-1 pointer-events-none'
+            }`}
           >
             <button
               onClick={handleRemove}
-              className="p-2 bg-white shadow-sm border border-gray-200 rounded-lg hover:bg-rose-50 hover:text-rose-600 text-gray-400 transition-colors"
+              className="p-2 bg-white/10 border border-white/15 rounded-lg hover:bg-danger/20 hover:border-danger/40 hover:text-danger text-white/60 transition-colors"
               title="Delete Component"
             >
               <svg
@@ -453,7 +459,15 @@ const SortableComponent: React.FC<SortableComponentProps> = memo(
         )}
 
         <div
-          className={`transition-all ${isPreview ? '' : 'p-4 bg-white dark:bg-zinc-900 rounded-xl'}`}
+          className={`transition-all ${isPreview ? '' : 'p-4 bg-dark-card rounded-xl border mb-4'} ${
+            isDragging
+              ? 'border-layer-primary opacity-50 scale-[1.02]'
+              : isPreview
+                ? 'border-transparent'
+                : isHovered
+                  ? 'border-white/20 ring-2 ring-white/10'
+                  : 'border-dark-border'
+          }`}
         >
           <Comp
             {...props}
@@ -489,9 +503,9 @@ const SortableComponent: React.FC<SortableComponentProps> = memo(
               ) : (
                 pluginComponent?.canHaveChildren &&
                 !isPreview && (
-                  <div className="p-8 border-2 border-dashed border-gray-100 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center text-gray-300 dark:text-zinc-600">
+                  <div className="p-8 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center text-white/30">
                     <svg
-                      className="w-8 h-8 mb-2"
+                      className="w-8 h-8 mb-3"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -499,83 +513,22 @@ const SortableComponent: React.FC<SortableComponentProps> = memo(
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth="2"
+                        strokeWidth="1.5"
                         d="M4 5a1 1 0 011-1h14a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V5z"
                       />
                     </svg>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-center">
+                    <p className="text-[0.625rem] font-bold uppercase tracking-wider text-center">
                       Empty Container
                       <br />
-                      Drag items here
+                      <span className="text-[0.5625rem] font-medium mt-0.5 block">
+                        Drag items here
+                      </span>
                     </p>
                   </div>
                 )
               ))}
           </Comp>
         </div>
-      </div>
-    );
-  }
-);
-
-// --- Drawer Component ---
-interface DrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  children: React.ReactNode;
-  side?: 'left' | 'right';
-  isBlocking?: boolean;
-}
-
-const Drawer: React.FC<DrawerProps> = memo(
-  ({isOpen, onClose, title, children, side = 'right', isBlocking = true}) => {
-    if (!isOpen) return null;
-
-    const content = (
-      <div
-        className={`fixed inset-y-0 ${side === 'right' ? 'right-0' : 'left-0'} max-w-md w-full flex z-50`}
-      >
-        <div
-          className={`w-full bg-white dark:bg-zinc-900 shadow-2xl flex flex-col ${side === 'right' ? 'border-l' : 'border-r'} dark:border-zinc-800 animate-in ${side === 'right' ? 'slide-in-from-right' : 'slide-in-from-left'} duration-300`}
-        >
-          <div className="p-6 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
-            <h2 className="text-xl font-black dark:text-white tracking-tight uppercase">
-              {title}
-            </h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl text-gray-400 transition-colors"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-6">{children}</div>
-        </div>
-      </div>
-    );
-
-    if (!isBlocking) return content;
-
-    return (
-      <div className="fixed inset-0 z-50 overflow-hidden">
-        <div
-          className="absolute inset-0 bg-zinc-950/20 backdrop-blur-sm transition-opacity"
-          onClick={onClose}
-        />
-        {content}
       </div>
     );
   }
@@ -595,11 +548,11 @@ const EmptyCanvasPlaceholder: React.FC = memo(() => {
       ref={setNodeRef}
       className={`h-full flex flex-col items-center justify-center text-center py-20 rounded-3xl transition-all ${
         isOver
-          ? 'bg-indigo-50/50 dark:bg-indigo-500/10 border-2 border-indigo-500 scale-[0.98]'
-          : ''
+          ? 'bg-layer-primary-light border-2 border-layer-primary scale-[0.98] '
+          : 'border-2 border-dashed border-l5-border dark:border-dark-border'
       }`}
     >
-      <div className="w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-3xl flex items-center justify-center text-gray-300 dark:text-zinc-600 mb-6">
+      <div className="w-16 h-16 bg-layer-primary-light dark:bg-layer-primary/20 border-2 border-layer-primary/30 rounded-2xl flex items-center justify-center text-layer-primary mb-5 ">
         <svg
           className="w-8 h-8"
           fill="none"
@@ -610,16 +563,15 @@ const EmptyCanvasPlaceholder: React.FC = memo(() => {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth="2"
-            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
           />
         </svg>
       </div>
-      <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2 uppercase tracking-tight">
+      <h2 className="layer-title text-lg text-text dark:text-white mb-2">
         Empty Canvas
       </h2>
-      <p className="text-sm text-gray-400 max-w-xs mx-auto font-medium">
-        Your page has no components yet. Select a component from the library on
-        the right to start building.
+      <p className="text-sm font-bold text-text-secondary dark:text-text-secondary max-w-xs mx-auto">
+        Drop components from the library on the right to start building.
       </p>
     </div>
   );
@@ -653,10 +605,10 @@ const CanvasContainer: React.FC<{
           maxWidth: '100%',
           containerType: 'inline-size',
         }}
-        className={`gustav-canvas transition-all duration-500 ease-in-out ${isPreview ? 'p-0 border-none' : 'bg-white dark:bg-zinc-900 shadow-2xl border-x border-gray-100 dark:border-zinc-800 min-h-full'}`}
+        className={`gustav-canvas transition-all duration-500 ease-in-out ${isPreview ? 'p-0 border-none' : 'bg-dark-card shadow-lg border-x border-dark-border/50 min-h-full'}`}
       >
         <div
-          className={`transition-all duration-500 ${isPreview ? 'p-0' : 'p-12'} ${!isPreview && isOver ? 'bg-indigo-50/20' : ''}`}
+          className={`transition-all duration-500 ${isPreview ? 'p-0' : 'p-12'} ${!isPreview && isOver ? 'bg-layer-primary-light/20' : ''}`}
         >
           {children}
         </div>
@@ -715,9 +667,9 @@ const DragPreviewContent = memo(
     return (
       <div
         style={{width: targetWidth}}
-        className="pointer-events-none opacity-50 ring-2 ring-indigo-500 rounded-xl bg-white/80 dark:bg-zinc-900/80 shadow-2xl transition-[width] duration-150 ease-in-out overflow-hidden"
+        className="pointer-events-none opacity-50 ring-2 ring-layer-primary rounded-2xl bg-white/80 dark:bg-dark-card/80  transition-[width] duration-150 ease-in-out overflow-hidden"
       >
-        <div className="p-4 rounded-xl">
+        <div className="p-5 rounded-2xl">
           <Comp {...props} isPreview={true} />
         </div>
       </div>
@@ -754,6 +706,8 @@ export function PageEditor() {
   const [componentProps, setComponentProps] = useState<string>('');
   const [dynamicSchemas, setDynamicSchemas] = useState<DynamicSchemaWire[]>([]);
   const [sidebarTab, setSidebarTab] = useState<'design' | 'data'>('design');
+  const [expandedData, setExpandedData] = useState<Record<string, boolean>>({});
+  const [queryConfigs, setQueryConfigs] = useState<Record<string, {name: string; fetchMode: 'single' | 'collection'; limit: number; sortDirection: 'ASC' | 'DESC'}>>({});
   const saveTimeoutRef = React.useRef<any>(null);
   const toolsSidebarRef = useRef<HTMLElement>(null);
 
@@ -848,9 +802,15 @@ export function PageEditor() {
       );
       if (!pluginComp) return;
 
-      let propsToUse = propsOverride || pluginComp.defaultProps;
-      if (componentName === 'DataSource' && propsToUse.schemaSlug && !propsToUse.schemaName) {
-        const schema = dynamicSchemas.find((s: any) => s.slug === propsToUse.schemaSlug);
+      const propsToUse = propsOverride || pluginComp.defaultProps;
+      if (
+        componentName === 'DataSource' &&
+        propsToUse.schemaSlug &&
+        !propsToUse.schemaName
+      ) {
+        const schema = dynamicSchemas.find(
+          (s: any) => s.slug === propsToUse.schemaSlug
+        );
         if (schema) {
           propsToUse.schemaName = schema.name;
         }
@@ -900,7 +860,13 @@ export function PageEditor() {
           const overData = over.data.current;
 
           if (overId === 'empty-canvas' || overId === 'canvas-root') {
-            await handleAddComponent(componentName, undefined, undefined, undefined, propsOverride);
+            await handleAddComponent(
+              componentName,
+              undefined,
+              undefined,
+              undefined,
+              propsOverride
+            );
             return;
           }
 
@@ -1097,7 +1063,9 @@ export function PageEditor() {
             : componentProps;
         const newProps = {...currentProps, [name]: value};
 
-        const selectedComp = page?.components?.find(c => c.id === selectedComponentId);
+        const selectedComp = page?.components?.find(
+          c => c.id === selectedComponentId
+        );
         if (
           selectedComp &&
           selectedComp.componentName === 'DataSource' &&
@@ -1268,24 +1236,39 @@ export function PageEditor() {
       return p.parentId === parentId;
     });
 
-    return levelPages.map(p => (
+    const chipColors = [
+      '#e8a060', '#6a9aba', '#b88a6a', '#7aaa7a',
+      '#c87a7a', '#8a8aba', '#5a9a8a', '#c89a5a',
+    ];
+
+    return levelPages.map((p, idx) => (
       <React.Fragment key={p.id}>
         <Link
           to={`/admin/pages/${p.id}`}
           onClick={e => e.stopPropagation()}
           style={{paddingLeft: `${level * 1.5 + 0.75}rem`}}
-          className={`flex items-center space-x-3 p-2 rounded-xl transition-all relative ${p.id === page?.id ? 'bg-indigo-500 text-white shadow-lg' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}
+          className={`flex items-center gap-2.5 p-2 rounded-lg transition-all relative ${
+            p.id === page?.id
+              ? 'bg-layer-primary text-white'
+              : 'text-text-secondary dark:text-text-secondary hover:bg-black/5 dark:hover:bg-white/10'
+          }`}
         >
           {level > 0 && (
             <div
-              className="absolute left-2 w-px h-full bg-gray-100 dark:bg-zinc-800"
+              className="absolute left-2 w-0.5 h-full bg-l5-border dark:bg-dark-border"
               style={{left: `${(level - 0.5) * 1.5 + 0.5}rem`}}
             />
           )}
           <div
-            className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.status === 'published' ? 'bg-emerald-500' : 'bg-amber-500'}`}
-          />
+            className="w-5 h-5 rounded flex items-center justify-center text-[0.5rem] font-black shrink-0"
+            style={{backgroundColor: chipColors[idx % chipColors.length], color: '#ffffff'}}
+          >
+            {p.title.charAt(0).toUpperCase()}
+          </div>
           <span className="text-xs font-bold truncate">{p.title}</span>
+          <div className="text-[0.5rem] font-black bg-black/10 dark:bg-white/10 text-text-muted dark:text-dark-text-secondary px-1 py-0.5 rounded shrink-0 ml-auto leading-none">
+            v{p.versionNumber ?? 1}
+          </div>
         </Link>
         {renderPageLinks(p.id, level + 1)}
       </React.Fragment>
@@ -1303,8 +1286,8 @@ export function PageEditor() {
     const value = (currentProps as any)[field.name];
 
     return (
-      <div key={field.name} className="mb-6">
-        <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">
+      <div key={field.name} className="mb-5">
+        <label className="block layer-label text-text-muted dark:text-text-muted mb-2 ml-1">
           {field.label}
         </label>
         {field.type === 'text' && (
@@ -1326,7 +1309,7 @@ export function PageEditor() {
           <select
             value={value || ''}
             onChange={e => handlePropChange(field.name, e.target.value)}
-            className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none dark:text-white transition-all appearance-none"
+            className="w-full bg-white dark:bg-dark-surface border-2 border-l5-border dark:border-dark-border rounded-xl px-4 py-3 text-sm font-bold text-text dark:text-white focus:border-layer-primary focus: outline-none transition-all appearance-none"
           >
             {field.name === 'schemaSlug' ? (
               <>
@@ -1353,47 +1336,44 @@ export function PageEditor() {
             onChange={e =>
               handlePropChange(field.name, parseFloat(e.target.value))
             }
-            className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none dark:text-white transition-all"
+            className="w-full bg-white dark:bg-dark-surface border-2 border-l5-border dark:border-dark-border rounded-xl px-4 py-3 text-sm font-bold text-text dark:text-white focus:border-layer-primary focus: outline-none transition-all"
           />
         )}
         {field.type === 'color' && (
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-3">
             <input
               type="color"
               value={value || '#000000'}
               onChange={e => handlePropChange(field.name, e.target.value)}
-              className="w-12 h-12 rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 cursor-pointer p-1"
+              className="w-12 h-12 rounded-xl border-2 border-l5-border dark:border-dark-border bg-white dark:bg-dark-surface cursor-pointer p-0.5"
             />
             <input
               type="text"
               value={value || '#000000'}
               onChange={e => handlePropChange(field.name, e.target.value)}
-              className="flex-1 bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs font-mono focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none dark:text-white transition-all"
+              className="flex-1 bg-white dark:bg-dark-surface border-2 border-l5-border dark:border-dark-border rounded-xl px-4 py-3 text-xs font-mono font-bold text-text dark:text-white focus:border-layer-primary focus: outline-none transition-all"
             />
           </div>
         )}
         {field.type === 'checkbox' && (
-          <div className="flex items-center space-x-3 py-1">
+          <label className="flex items-center gap-3 p-3 bg-l1-bg/50 dark:bg-dark-surface border-2 border-l5-border dark:border-dark-border rounded-xl cursor-pointer">
             <input
               type="checkbox"
               id={`field-${field.name}`}
               checked={!!value}
               onChange={e => handlePropChange(field.name, e.target.checked)}
-              className="w-5 h-5 rounded-lg border-gray-200 dark:border-zinc-700 text-indigo-500 focus:ring-indigo-500/20 transition-all cursor-pointer"
+              className="w-5 h-5 rounded-lg border-text-muted text-layer-primary focus:ring-layer-primary/30"
             />
-            <label
-              htmlFor={`field-${field.name}`}
-              className="text-sm font-bold text-gray-600 dark:text-zinc-400 cursor-pointer"
-            >
+            <span className="text-xs font-black text-text dark:text-text/dark:text-dark-text uppercase tracking-tight">
               Enable
-            </label>
-          </div>
+            </span>
+          </label>
         )}
       </div>
     );
   };
 
-  const customCollisionDetection: CollisionDetection = useCallback((args) => {
+  const customCollisionDetection: CollisionDetection = useCallback(args => {
     const pointerCollisions = pointerWithin(args);
     if (pointerCollisions.length > 1) {
       const specific = pointerCollisions.filter(
@@ -1406,7 +1386,7 @@ export function PageEditor() {
 
   if (loading || !page)
     return (
-      <div className="p-8 animate-pulse text-gray-400 font-bold uppercase tracking-widest text-sm">
+      <div className="p-8 animate-pulse text-text-secondary font-black uppercase tracking-wider text-sm">
         Initializing visual builder...
       </div>
     );
@@ -1420,55 +1400,35 @@ export function PageEditor() {
     >
       <div
         onClick={handleDeselect}
-        className="flex h-[calc(100vh-10rem)] bg-gray-50 dark:bg-zinc-950 -mx-6 -my-8 overflow-hidden"
+        className="flex h-screen bg-l2-sidebar dark:bg-dark-sidebar overflow-hidden"
       >
         {/* Column 1: Page Sidebar */}
-        <aside className="w-72 bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800 flex flex-col shadow-sm">
-          <div className="p-6 border-b border-gray-100 dark:border-zinc-800">
-            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
-              Pages
-            </h2>
-            <div className="space-y-1 overflow-y-auto max-h-[calc(100vh-20rem)]">
+        <aside className="w-72 bg-l5-border/40 dark:bg-dark-surface border-r border-l5-border/60 dark:border-dark-border/50 flex flex-col">
+          <div className="p-5 border-b border-l5-border/60 dark:border-dark-border/50">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="layer-label text-text-muted dark:text-dark-text-secondary">Pages</h2>
+              <button onClick={e => { e.stopPropagation(); setShowSettings(true); }}
+                className="w-7 h-7 flex items-center justify-center text-text-muted hover:text-layer-primary transition-colors rounded-md hover:bg-white/50 dark:hover:bg-white/5" title="Page Settings">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              </button>
+            </div>
+            <div className="space-y-1 overflow-y-auto max-h-[calc(100vh-10rem)]">
               {renderPageLinks()}
             </div>
           </div>
         </aside>
 
         {/* Column 2: Main Canvas Area */}
-        <section className="flex-1 flex flex-col min-w-0">
+        <section className="flex-1 flex flex-col min-w-0 bg-l1-bg dark:bg-dark-bg">
           {/* Canvas Toolbar */}
           <div
             onClick={e => e.stopPropagation()}
-            className="p-4 bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 flex items-center justify-between sticky top-0 z-10"
+            className="p-4 bg-white dark:bg-dark-card border-b border-l5-border dark:border-dark-border flex items-center justify-between sticky top-0 z-10 "
           >
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-4">
               <Link
                 to="/admin/pages"
-                className="p-1.5 text-gray-400 hover:text-indigo-500 transition-colors"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </Link>
-              <h1 className="text-sm font-black uppercase tracking-tighter text-gray-900 dark:text-white truncate max-w-[200px]">
-                {page.title}
-              </h1>
-              <button
-                onClick={e => {
-                  e.stopPropagation();
-                  setShowSettings(true);
-                }}
-                className="p-1.5 text-gray-400 hover:text-indigo-500 transition-colors"
+                className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-layer-primary transition-colors bg-white dark:bg-dark-card border-2 border-l5-border dark:border-dark-border rounded-xl "
               >
                 <svg
                   className="w-4 h-4"
@@ -1479,99 +1439,127 @@ export function PageEditor() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth="2"
+                    strokeWidth="2.5"
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </Link>
+              <h1 className="text-sm font-black uppercase tracking-tighter text-text dark:text-white truncate max-w-[200px]">
+                {page.title}
+              </h1>
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  setShowSettings(true);
+                }}
+                className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-layer-primary transition-colors bg-white dark:bg-dark-card border-2 border-l5-border dark:border-dark-border rounded-xl "
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
                     d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z"
                   />
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth="2"
+                    strokeWidth="2.5"
                     d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
               </button>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="hidden md:flex items-center bg-gray-50 dark:bg-zinc-800 rounded-xl p-1 border border-gray-100 dark:border-zinc-700">
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      setDeviceMode('mobile');
-                    }}
-                    className={`p-1.5 rounded-lg transition-all ${deviceMode === 'mobile' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-500' : 'text-gray-400 hover:text-gray-600'}`}
-                    title="Mobile View"
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center bg-l5-border dark:bg-dark-surface border-2 border-l5-border dark:border-dark-border rounded-xl p-0.5">
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    setDeviceMode('mobile');
+                  }}
+                  className={`p-1.5 rounded-lg transition-all ${deviceMode === 'mobile' ? 'bg-white dark:bg-dark-card  text-layer-primary' : 'text-text-muted hover:text-text dark:hover:text-text/dark:text-dark-text'}`}
+                  title="Mobile View"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2.5"
-                        d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      setDeviceMode('tablet');
-                    }}
-                    className={`p-1.5 rounded-lg transition-all ${deviceMode === 'tablet' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-500' : 'text-gray-400 hover:text-gray-600'}`}
-                    title="Tablet View"
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
+                      d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    setDeviceMode('tablet');
+                  }}
+                  className={`p-1.5 rounded-lg transition-all ${deviceMode === 'tablet' ? 'bg-white dark:bg-dark-card  text-layer-primary' : 'text-text-muted hover:text-text dark:hover:text-text/dark:text-dark-text'}`}
+                  title="Tablet View"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2.5"
-                        d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      setDeviceMode('desktop');
-                    }}
-                    className={`p-1.5 rounded-lg transition-all ${deviceMode === 'desktop' ? 'bg-white dark:bg-zinc-700 shadow-sm text-indigo-500' : 'text-gray-400 hover:text-gray-600'}`}
-                    title="Desktop View"
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
+                      d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={e => {
+                    e.stopPropagation();
+                    setDeviceMode('desktop');
+                  }}
+                  className={`p-1.5 rounded-lg transition-all ${deviceMode === 'desktop' ? 'bg-white dark:bg-dark-card  text-layer-primary' : 'text-text-muted hover:text-text dark:hover:text-text/dark:text-dark-text'}`}
+                  title="Desktop View"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2.5"
-                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
+                      d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
+                  </svg>
+                </button>
+              </div>
 
               <button
                 onClick={e => {
                   e.stopPropagation();
                   setIsPreview(!isPreview);
                 }}
-                className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${isPreview ? 'bg-indigo-500 text-white shadow-lg' : 'bg-gray-100 dark:bg-zinc-800 text-gray-500'}`}
+                className={`px-4 py-1.5 rounded-xl text-[0.625rem] font-black uppercase transition-all border-2 ${
+                  isPreview
+                    ? 'bg-layer-primary text-white border-layer-primary '
+                    : 'bg-white dark:bg-dark-card text-text-secondary dark:text-text-secondary border-l5-border dark:border-dark-border '
+                }`}
               >
                 {isPreview ? 'Editor' : 'Preview'}
               </button>
 
-              <div className="h-4 w-px bg-gray-200 dark:bg-zinc-700 mx-1" />
+              <div className="h-6 w-px bg-l5-border dark:border-dark-border" />
 
               <button
                 onClick={e => {
@@ -1579,7 +1567,7 @@ export function PageEditor() {
                   handlePublish();
                 }}
                 disabled={!isDirty && page.status === PageStatus.PUBLISHED}
-                className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-[10px] font-black uppercase shadow-lg transition-all disabled:opacity-50 disabled:bg-gray-400"
+                className="px-5 py-1.5 bg-success hover:bg-green-600 text-white rounded-xl text-[0.625rem] font-black uppercase border-2 border-success  transition-all disabled:opacity-50 disabled:bg-text-muted disabled:border-text-muted disabled:shadow-none"
               >
                 Publish
               </button>
@@ -1587,7 +1575,7 @@ export function PageEditor() {
           </div>
 
           {/* Actual Canvas */}
-          <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-zinc-950/50">
+          <div className="flex-1 overflow-y-auto bg-l1-bg/50 dark:bg-dark-bg">
             <CanvasContainer isPreview={isPreview} deviceMode={deviceMode}>
               {rootComponents.length === 0 ? (
                 <EmptyCanvasPlaceholder />
@@ -1620,34 +1608,65 @@ export function PageEditor() {
         <aside
           ref={toolsSidebarRef}
           onClick={e => e.stopPropagation()}
-          className="w-80 bg-white dark:bg-zinc-900 border-l border-gray-200 dark:border-zinc-800 flex flex-col shadow-sm"
+          className="w-80 bg-white dark:bg-dark-surface border-l border-l5-border/60 dark:border-dark-border/50 flex flex-col"
         >
           {!selectedComponentId && (
-            <div className="flex mx-3 my-2 bg-gray-100 dark:bg-zinc-800 rounded-lg p-0.5">
+            <div className="flex mx-3 my-3 bg-l5-border/50 dark:bg-dark-surface border border-l5-border/50 dark:border-dark-border/50 rounded-lg p-0.5">
               <button
-                onClick={e => { e.stopPropagation(); setSidebarTab('design'); }}
-                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${
+                onClick={e => {
+                  e.stopPropagation();
+                  setSidebarTab('design');
+                }}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.625rem] font-black uppercase tracking-tight transition-all ${
                   sidebarTab === 'design'
-                    ? 'bg-white dark:bg-zinc-700 text-indigo-500 shadow-sm'
-                    : 'text-gray-500 dark:text-zinc-400 hover:text-gray-700'
+                    ? 'bg-white dark:bg-dark-card text-layer-primary '
+                    : 'text-text-secondary dark:text-text-secondary hover:text-text'
                 }`}
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                  />
                 </svg>
                 Design
               </button>
               <button
-                onClick={e => { e.stopPropagation(); setSidebarTab('data'); }}
-                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${
+                onClick={e => {
+                  e.stopPropagation();
+                  setSidebarTab('data');
+                }}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.625rem] font-black uppercase tracking-tight transition-all ${
                   sidebarTab === 'data'
-                    ? 'bg-white dark:bg-zinc-700 text-indigo-500 shadow-sm'
-                    : 'text-gray-500 dark:text-zinc-400 hover:text-gray-700'
+                    ? 'bg-white dark:bg-dark-card text-layer-primary '
+                    : 'text-text-secondary dark:text-text-secondary hover:text-text'
                 }`}
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 3v4m8-4v4M3 11h18" />
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    d="M8 3v4m8-4v4M3 11h18"
+                  />
                 </svg>
                 Data
               </button>
@@ -1656,18 +1675,16 @@ export function PageEditor() {
           {selectedComponentId ? (
             /* Property Editor View */
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="p-6 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
-                <div>
-                  <h2 className="text-sm font-black dark:text-white tracking-tight uppercase">
-                    {getComponentDisplayId(
-                      selectedComponentId,
-                      page.components || []
-                    )}
-                  </h2>
-                </div>
+              <div className="p-5 border-b border-l5-border dark:border-dark-border bg-layer-primary flex items-center justify-between">
+                <h2 className="text-sm font-black text-white tracking-tight uppercase">
+                  {getComponentDisplayId(
+                    selectedComponentId,
+                    page.components || []
+                  )}
+                </h2>
                 <button
                   onClick={() => setSelectedComponentId(null)}
-                  className="p-2 bg-gray-50 dark:bg-zinc-800 rounded-xl text-gray-400 hover:text-indigo-500 transition-colors"
+                  className="w-8 h-8 flex items-center justify-center bg-white/20 hover:bg-white/30 rounded-xl text-white transition-colors"
                 >
                   <svg
                     className="w-4 h-4"
@@ -1678,20 +1695,20 @@ export function PageEditor() {
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth="2"
+                      strokeWidth="3"
                       d="M6 18L18 6M6 6l12 12"
                     />
                   </svg>
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-5">
                 <form onSubmit={e => e.preventDefault()} className="space-y-2">
                   <div id="property-fields">
                     {pluginSchema?.map(field => renderPropertyField(field))}
                   </div>
 
-                  <details className="group border-t border-gray-100 dark:border-zinc-800 pt-6 mt-6">
-                    <summary className="list-none cursor-pointer flex items-center justify-between text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] hover:text-indigo-500 transition-colors">
+                  <details className="group border-t border-l5-border dark:border-dark-border pt-5 mt-5">
+                    <summary className="list-none cursor-pointer flex items-center justify-between layer-label text-text-muted dark:text-text-muted hover:text-layer-primary transition-colors">
                       <span>Advanced JSON</span>
                       <svg
                         className="w-3 h-3 group-open:rotate-180 transition-transform"
@@ -1712,34 +1729,42 @@ export function PageEditor() {
                         rows={8}
                         value={componentProps}
                         onChange={e => handleJsonChange(e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-[10px] focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none dark:text-white transition-all font-mono"
+                        className="w-full bg-transparent border border-l5-border/30 dark:border-dark-border/30 rounded-lg px-3 py-2 text-[0.625rem] focus:border-layer-primary focus: outline-none dark:text-white transition-all font-mono"
                       />
                     </div>
                   </details>
 
                   {getDataSourceFields(selectedComponentId!).length > 0 && (
-                    <div className="border-t border-gray-100 dark:border-zinc-800 pt-4 mt-6">
-                      <label className="block text-[10px] font-black text-gray-400 uppercase mb-3 tracking-widest">
+                    <div className="border-t border-l5-border dark:border-dark-border pt-4 mt-5">
+                      <label className="block layer-label text-text-muted dark:text-text-muted mb-3">
                         Data Fields
                       </label>
-                      <p className="text-[9px] text-gray-400 mb-3 font-medium">
+                      <p className="text-[0.5625rem] font-bold text-text-muted dark:text-text-muted mb-3">
                         Drag fields into text areas above
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {getDataSourceFields(selectedComponentId!).map(field => (
-                          <button
-                            key={field.name}
-                            type="button"
-                            draggable
-                            onDragStart={e => {
-                              e.dataTransfer.setData('application/x-gustav-field', field.name);
-                              e.dataTransfer.setData('text/plain', `{{${field.name}}}`);
-                            }}
-                            className="cursor-grab active:cursor-grabbing rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-300"
-                          >
-                            {field.label}
-                          </button>
-                        ))}
+                        {getDataSourceFields(selectedComponentId!).map(
+                          field => (
+                            <button
+                              key={field.name}
+                              type="button"
+                              draggable
+                              onDragStart={e => {
+                                e.dataTransfer.setData(
+                                  'application/x-gustav-field',
+                                  field.name
+                                );
+                                e.dataTransfer.setData(
+                                  'text/plain',
+                                  `{{${field.name}}}`
+                                );
+                              }}
+                              className="cursor-grab active:cursor-grabbing rounded-xl border-2 border-layer-primary/30 bg-layer-primary-light px-3 py-1.5 text-[0.625rem] font-black uppercase tracking-tight text-layer-primary dark:text-layer-primary hover:bg-layer-primary/20 transition-colors"
+                            >
+                              {field.label}
+                            </button>
+                          )
+                        )}
                       </div>
                     </div>
                   )}
@@ -1749,11 +1774,11 @@ export function PageEditor() {
           ) : sidebarTab === 'design' ? (
             /* Component Library View */
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-left-4 duration-300">
-              <div className="p-6 border-b border-gray-100 dark:border-zinc-800">
-                <h2 className="text-sm font-black dark:text-white tracking-tight uppercase">
+              <div className="p-5 border-b border-l5-border dark:border-dark-border">
+                <h2 className="layer-title text-sm text-text dark:text-white uppercase">
                   Library
                 </h2>
-                <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">
+                <p className="layer-label text-text-muted dark:text-text-muted mt-0.5">
                   Available Blocks
                 </p>
               </div>
@@ -1772,27 +1797,133 @@ export function PageEditor() {
           ) : (
             /* Data Sources View */
             <div className="flex flex-col h-full animate-in fade-in slide-in-from-left-4 duration-300">
-              <div className="p-6 border-b border-gray-100 dark:border-zinc-800">
-                <h2 className="text-sm font-black dark:text-white tracking-tight uppercase">Data Sources</h2>
-                <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">Schema Queries</p>
+              <div className="p-5 border-b border-l5-border dark:border-dark-border">
+                <h2 className="layer-title text-sm text-text dark:text-white uppercase">
+                  Data Sources
+                </h2>
+                <p className="layer-label text-text-muted dark:text-text-muted mt-0.5">
+                  Configure and name your queries
+                </p>
               </div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="flex-1 overflow-y-auto p-4 space-y-2">
                 {dynamicSchemas.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-[10px] text-gray-400 font-medium">No schemas defined yet.</p>
+                    <p className="text-xs font-bold text-text-muted dark:text-text-muted">
+                      No schemas defined yet.
+                    </p>
                   </div>
                 ) : (
-                  dynamicSchemas.map(schema => (
-                    <DraggableLibraryComponent
-                      key={schema.slug}
-                      component={{
-                        name: schema.name,
-                        icon: 'data',
-                        plugin: '@gustav/core-plugin',
-                        defaultProps: { schemaSlug: schema.slug, schemaName: schema.name, limit: 10, sortDirection: 'DESC' },
-                      }}
-                    />
-                  ))
+                  dynamicSchemas.map(schema => {
+                    const slug = schema.slug;
+                    const isOpen = expandedData[slug] ?? false;
+                    const config = queryConfigs[slug] ?? {name: '', fetchMode: 'collection' as const, limit: 10, sortDirection: 'DESC' as const};
+
+                    const updateConfig = (updates: Partial<typeof config>) => {
+                      setQueryConfigs(prev => ({...prev, [slug]: {...config, ...updates}}));
+                    };
+
+                    return (
+                      <div key={slug} className="bg-white dark:bg-dark-card border border-l5-border dark:border-dark-border rounded-lg overflow-hidden">
+                        <button
+                          onClick={() => setExpandedData(prev => ({...prev, [slug]: !isOpen}))}
+                          className="w-full flex items-center gap-3 px-3.5 py-3 text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                        >
+                          <div className="w-7 h-7 bg-layer-primary-light dark:bg-layer-primary/20 border border-layer-primary/30 rounded flex items-center justify-center text-layer-primary shrink-0">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 3v4m8-4v4M3 11h18" /></svg>
+                          </div>
+                          <span className="flex-1 text-xs font-bold text-text dark:text-white truncate">{schema.name}</span>
+                          <svg className={`w-3 h-3 text-text-muted transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        {isOpen && (
+                          <div className="px-3.5 pb-3.5 space-y-3 border-t border-l5-border dark:border-dark-border pt-3">
+                            <div>
+                              <label className="layer-label text-text-muted mb-1 block">Query Name</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Load Featured Posts"
+                                value={config.name}
+                                onChange={e => updateConfig({name: e.target.value})}
+                                className="w-full bg-l1-bg dark:bg-dark-surface border border-l5-border dark:border-dark-border rounded-md px-3 py-1.5 text-xs font-medium text-text dark:text-white outline-none focus:border-layer-primary"
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => updateConfig({fetchMode: 'single'})}
+                                className={`flex-1 px-3 py-1.5 rounded-md text-[0.625rem] font-bold uppercase transition-all border ${
+                                  config.fetchMode === 'single'
+                                    ? 'bg-layer-primary text-white border-layer-primary'
+                                    : 'bg-l1-bg dark:bg-dark-surface text-text-secondary border-l5-border dark:border-dark-border hover:border-layer-primary'
+                                }`}
+                              >Fetch One</button>
+                              <button
+                                onClick={() => updateConfig({fetchMode: 'collection'})}
+                                className={`flex-1 px-3 py-1.5 rounded-md text-[0.625rem] font-bold uppercase transition-all border ${
+                                  config.fetchMode === 'collection'
+                                    ? 'bg-layer-primary text-white border-layer-primary'
+                                    : 'bg-l1-bg dark:bg-dark-surface text-text-secondary border-l5-border dark:border-dark-border hover:border-layer-primary'
+                                }`}
+                              >Fetch Many</button>
+                            </div>
+                            {config.fetchMode === 'collection' && (
+                              <div className="flex gap-2">
+                                <div className="flex-1">
+                                  <label className="layer-label text-text-muted mb-1 block">Limit</label>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    max={100}
+                                    value={config.limit}
+                                    onChange={e => updateConfig({limit: parseInt(e.target.value) || 10})}
+                                    className="w-full bg-l1-bg dark:bg-dark-surface border border-l5-border dark:border-dark-border rounded-md px-3 py-1.5 text-xs font-medium text-text dark:text-white outline-none focus:border-layer-primary"
+                                  />
+                                </div>
+                                <div className="flex-1">
+                                  <label className="layer-label text-text-muted mb-1 block">Sort</label>
+                                  <select
+                                    value={config.sortDirection}
+                                    onChange={e => updateConfig({sortDirection: e.target.value as 'ASC' | 'DESC'})}
+                                    className="w-full bg-l1-bg dark:bg-dark-surface border border-l5-border dark:border-dark-border rounded-md px-3 py-1.5 text-xs font-medium text-text dark:text-white outline-none focus:border-layer-primary appearance-none"
+                                  >
+                                    <option value="DESC">Newest</option>
+                                    <option value="ASC">Oldest</option>
+                                  </select>
+                                </div>
+                              </div>
+                            )}
+                            <div
+                              onMouseDown={e => {
+                                const active = document.querySelector('.gustav-canvas');
+                                if (!active) return;
+                                const rect = active.getBoundingClientRect();
+                                const dropEvent = new DragEvent('dragstart', {bubbles: true, cancelable: true});
+                                active.dispatchEvent(dropEvent);
+                              }}
+                              className="flex items-center justify-center gap-2 px-3 py-2 bg-layer-primary/10 hover:bg-layer-primary/20 border border-dashed border-layer-primary/30 rounded-md text-[0.625rem] font-bold uppercase text-layer-primary transition-colors cursor-pointer"
+                              draggable
+                              onDragStart={e => {
+                                e.dataTransfer.setData('application/json', JSON.stringify({
+                                  type: 'library',
+                                  componentName: 'DataSource',
+                                  pluginName: '@gustav/core-plugin',
+                                  defaultProps: {
+                                    schemaSlug: slug,
+                                    schemaName: schema.name,
+                                    ...(config.fetchMode === 'single' ? {limit: 1} : {limit: config.limit}),
+                                    sortDirection: config.sortDirection,
+                                  },
+                                }));
+                              }}
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                              {config.name || `Add ${schema.name}`}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -1811,20 +1942,20 @@ export function PageEditor() {
         </DragOverlay>
       </div>
 
-      {/* Settings Modal (Less frequent, keeping as overlay) */}
+      {/* Settings Modal */}
       {showSettings && (
-        <div className="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 w-full max-w-md shadow-2xl border border-gray-100 dark:border-zinc-800 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-black dark:text-white tracking-tight uppercase">
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-[100]" onClick={() => setShowSettings(false)}>
+          <div className="w-full max-w-md bg-white dark:bg-dark-card border-2 border-layer-primary dark:border-layer-primary rounded-2xl animate-in zoom-in-95 duration-200 flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-l5-border dark:border-dark-border bg-layer-primary text-white rounded-t-[calc(1rem-2px)]">
+              <h3 className="text-base font-black uppercase tracking-tight">
                 Page Settings
               </h3>
               <button
                 onClick={() => setShowSettings(false)}
-                className="text-gray-400 hover:text-indigo-500 transition-colors"
+                className="w-8 h-8 flex items-center justify-center bg-white/20 hover:bg-white/30 rounded-xl transition-colors text-white"
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1832,15 +1963,15 @@ export function PageEditor() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth="2"
+                    strokeWidth="3"
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
               </button>
             </div>
-            <form onSubmit={handleUpdatePage} className="space-y-6">
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">
+            <form onSubmit={handleUpdatePage} className="p-6 space-y-5">
+              <div className="space-y-1.5">
+                <label className="layer-label text-text-secondary dark:text-text-secondary ml-1">
                   Title
                 </label>
                 <input
@@ -1850,11 +1981,11 @@ export function PageEditor() {
                   onChange={e =>
                     setPageSettings({...pageSettings, title: e.target.value})
                   }
-                  className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none dark:text-white transition-all"
+                  className="w-full bg-white dark:bg-dark-surface border-2 border-l5-border dark:border-dark-border rounded-xl px-4 py-3 text-sm font-bold text-text dark:text-white outline-none focus:border-layer-primary focus: transition-all"
                 />
               </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 ml-1 tracking-widest">
+              <div className="space-y-1.5">
+                <label className="layer-label text-text-secondary dark:text-text-secondary ml-1">
                   Slug
                 </label>
                 <input
@@ -1867,13 +1998,12 @@ export function PageEditor() {
                       slug: e.target.value.toLowerCase().replace(/\s+/g, '-'),
                     })
                   }
-                  className="w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none dark:text-white transition-all font-mono"
+                  className="w-full bg-white dark:bg-dark-surface border-2 border-l5-border dark:border-dark-border rounded-xl px-4 py-3 text-sm font-bold text-text dark:text-white outline-none focus:border-layer-primary focus: transition-all font-mono"
                 />
               </div>
-              <div className="flex items-center space-x-3 bg-gray-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-gray-100 dark:border-zinc-800">
+              <label className="flex items-center gap-3 p-4 bg-l1-bg/50 dark:bg-dark-surface border-2 border-l5-border dark:border-dark-border rounded-xl cursor-pointer">
                 <input
                   type="checkbox"
-                  id="showInNavigation"
                   checked={pageSettings.showInNavigation}
                   onChange={e =>
                     setPageSettings({
@@ -1881,28 +2011,27 @@ export function PageEditor() {
                       showInNavigation: e.target.checked,
                     })
                   }
-                  className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  className="w-5 h-5 rounded-lg border-text-muted text-layer-primary focus:ring-layer-primary/30"
                 />
-                <label
-                  htmlFor="showInNavigation"
-                  className="text-xs font-bold text-gray-700 dark:text-gray-300 cursor-pointer uppercase tracking-tight"
-                >
+                <span className="text-xs font-black text-text dark:text-dark-text uppercase tracking-tight">
                   Show in navigation
-                </label>
+                </span>
+              </label>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="submit"
+                  className="flex-1 bg-layer-primary text-white border-2 border-layer-primary font-black py-3.5 rounded-xl  transition-all hover:bg-blue-500 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none uppercase text-xs tracking-tight"
+                >
+                  Save Settings
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeletePage}
+                  className="flex-1 bg-danger text-white border-2 border-danger font-black py-3.5 rounded-xl  transition-all hover:bg-red-600 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none uppercase text-xs tracking-tight"
+                >
+                  Delete Page
+                </button>
               </div>
-              <button
-                type="submit"
-                className="w-full bg-zinc-900 dark:bg-white dark:text-zinc-900 text-white font-black py-4 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 uppercase text-xs tracking-widest"
-              >
-                Save Settings
-              </button>
-              <button
-                type="button"
-                onClick={handleDeletePage}
-                className="w-full mt-4 bg-rose-500 hover:bg-rose-600 text-white font-black py-4 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 uppercase text-xs tracking-widest"
-              >
-                Delete Page
-              </button>
             </form>
           </div>
         </div>
@@ -1964,7 +2093,7 @@ function TokenizedTextField({
       onBlur={syncValue}
       onDragOver={event => event.preventDefault()}
       onDrop={handleDrop}
-      className={`w-full bg-gray-50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none dark:text-white transition-all ${multiline ? 'min-h-28 whitespace-pre-wrap' : 'min-h-11 whitespace-pre-wrap'}`}
+      className={`w-full text-sm font-bold text-text dark:text-white outline-none transition-all ${multiline ? 'min-h-28 whitespace-pre-wrap' : 'min-h-11 whitespace-pre-wrap'}`}
     />
   );
 }
@@ -1986,7 +2115,7 @@ function renderTokenChipHtml(
   const field = fields.find(item => item.name === fieldName);
   const label = escapeHtml(field?.label || fieldName);
   const token = escapeHtml(fieldName);
-  return `<span contenteditable="false" data-gustav-token="${token}" class="inline-flex items-center rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2 py-0.5 mx-0.5 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-300">${label}</span>`;
+  return `<span contenteditable="false" data-gustav-token="${token}" class="inline-flex items-center rounded-xl border-2 border-layer-primary/30 bg-layer-primary-light px-2 py-0.5 mx-0.5 text-[0.625rem] font-black uppercase tracking-tight text-layer-primary">${label}</span>`;
 }
 
 function serializeTokenizedElement(element: HTMLElement): string {
