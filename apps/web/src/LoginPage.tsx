@@ -43,105 +43,119 @@ export function LoginPage({mode}: LoginPageProps) {
   };
 
   return (
-    <div className="w-screen min-h-screen bg-gray-100 dark:bg-zinc-900 flex flex-col items-center justify-center p-4">
-      <div className="bg-white dark:bg-zinc-800 p-8 rounded-xl shadow-xl w-full max-w-md border border-gray-200 dark:border-zinc-700">
-        <h1 className="text-3xl font-black mb-8 text-center text-gray-900 dark:text-white tracking-tight">
-          {isRegistering ? 'Create Account' : 'Welcome Back'}
-        </h1>
+    <div className="w-screen min-h-screen bg-l1-bg dark:bg-dark-bg flex flex-col items-center justify-center p-4 ">
+      <div className="bg-white dark:bg-dark-card border-2 border-layer-primary dark:border-layer-primary rounded-2xl  w-full max-w-md overflow-hidden">
+        <div className="p-6 bg-layer-primary text-white text-center border-b-2 border-layer-primary">
+          <img
+            src="/gustav.png"
+            alt="Gustav"
+            className="w-14 h-14 mx-auto mb-3 brightness-0 invert"
+          />
+          <h1 className="layer-title text-2xl text-white">
+            {isRegistering ? 'Create Account' : 'Welcome Back'}
+          </h1>
+          <p className="text-xs font-bold text-white/70 mt-1">
+            {isRegistering
+              ? 'Join the Gustav CMS community'
+              : 'Sign in to your dashboard'}
+          </p>
+        </div>
 
-        {error && (
-          <div
-            className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 px-4 py-3 rounded-lg mb-6 text-sm"
-            role="alert"
+        <div className="p-6">
+          {error && (
+            <div className="bg-danger-light border-2 border-danger/30 text-danger px-4 py-3 rounded-xl mb-5 text-xs font-bold">
+              {error}
+            </div>
+          )}
+
+          <form
+            onSubmit={isRegistering ? handleRegister : handleLogin}
+            className="space-y-4"
           >
-            <span className="block sm:inline font-medium">{error}</span>
-          </div>
-        )}
-
-        <form
-          onSubmit={isRegistering ? handleRegister : handleLogin}
-          className="space-y-5"
-        >
-          {isRegistering && (
-            <div>
-              <label className="block text-gray-700 dark:text-zinc-300 text-sm font-bold mb-1.5 ml-1">
-                Username
+            {isRegistering && (
+              <div className="space-y-1.5">
+                <label className="layer-label text-text-secondary dark:text-zinc-400 ml-1">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  className="w-full bg-white dark:bg-dark-surface border-2 border-l5-border dark:border-dark-border rounded-xl px-4 py-3 text-sm font-bold text-text dark:text-white placeholder:text-text-muted outline-none focus:border-layer-primary focus: transition-all"
+                  required
+                />
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <label className="layer-label text-text-secondary dark:text-zinc-400 ml-1">
+                Email Address
               </label>
               <input
-                type="text"
-                placeholder="Enter your username"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-900/50 border border-gray-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-600 text-gray-900 dark:text-white placeholder-gray-400 transition-all"
+                type="email"
+                placeholder="name@company.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full bg-white dark:bg-dark-surface border-2 border-l5-border dark:border-dark-border rounded-xl px-4 py-3 text-sm font-bold text-text dark:text-white placeholder:text-text-muted outline-none focus:border-layer-primary focus: transition-all"
                 required
               />
             </div>
-          )}
-          <div>
-            <label className="block text-gray-700 dark:text-zinc-300 text-sm font-bold mb-1.5 ml-1">
-              Email Address
-            </label>
-            <input
-              type="email"
-              placeholder="name@company.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-900/50 border border-gray-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-600 text-gray-900 dark:text-white placeholder-gray-400 transition-all"
-              required
-            />
+            <div className="space-y-1.5">
+              <label className="layer-label text-text-secondary dark:text-zinc-400 ml-1">
+                Password
+              </label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full bg-white dark:bg-dark-surface border-2 border-l5-border dark:border-dark-border rounded-xl px-4 py-3 text-sm font-bold text-text dark:text-white placeholder:text-text-muted outline-none focus:border-layer-primary focus: transition-all"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-layer-primary hover:bg-blue-500 text-white font-black py-3.5 px-4 rounded-xl border-2 border-layer-primary  transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none uppercase text-sm tracking-tight"
+            >
+              {isRegistering ? 'Register' : 'Login'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <Link
+              to={isRegistering ? '/login' : '/register'}
+              className="text-layer-primary hover:text-blue-600 text-xs font-black uppercase tracking-tight transition-colors"
+            >
+              {isRegistering
+                ? 'Already have an account? Sign in'
+                : "Don't have an account? Create one"}
+            </Link>
           </div>
-          <div>
-            <label className="block text-gray-700 dark:text-zinc-300 text-sm font-bold mb-1.5 ml-1">
-              Password
-            </label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-900/50 border border-gray-300 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-600 text-gray-900 dark:text-white placeholder-gray-400 transition-all"
-              required
-            />
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t-2 border-l5-border dark:border-dark-border"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="px-3 bg-white dark:bg-dark-card text-text-muted dark:text-zinc-500 font-black">
+                Or continue with
+              </span>
+            </div>
           </div>
+
           <button
-            type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-600/20"
+            onClick={loginWithDiscord}
+            className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-black py-3.5 px-4 rounded-xl border-2 border-[#4752C4]  flex items-center justify-center gap-2 transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none uppercase text-sm tracking-tight"
           >
-            {isRegistering ? 'Register' : 'Login'}
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.1776-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z" />
+            </svg>
+            Login with Discord
           </button>
-        </form>
-
-        <div className="mt-8 text-center">
-          <Link
-            to={isRegistering ? '/login' : '/register'}
-            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-bold transition-colors"
-          >
-            {isRegistering
-              ? 'Already have an account? Sign in'
-              : "Don't have an account? Create one"}
-          </Link>
         </div>
-
-        <div className="relative my-8">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300 dark:border-zinc-700"></div>
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="px-3 bg-white dark:bg-zinc-800 text-gray-500 dark:text-zinc-500 font-medium">
-              Or continue with
-            </span>
-          </div>
-        </div>
-
-        <button
-          onClick={loginWithDiscord}
-          className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-500/20"
-        >
-          Login with Discord
-        </button>
       </div>
-      <footer className="mt-8 text-gray-400 dark:text-zinc-600 text-sm font-medium">
-        Powered by Gustav
+      <footer className="mt-6 text-text-muted dark:text-zinc-500 text-[0.625rem] font-black uppercase tracking-wider">
+        Powered by Gustav CMS
       </footer>
     </div>
   );

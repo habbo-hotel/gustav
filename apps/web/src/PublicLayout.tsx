@@ -32,7 +32,7 @@ export function PublicLayout() {
     fetchInitialData();
   }, []);
 
-  const brandColor = settings.primaryBrandColor || '#4f46e5';
+  const brandColor = settings.primaryBrandColor || '#1e90ff';
 
   const rootPages = pages.filter(p => !p.parentId && p.path !== '/');
 
@@ -50,10 +50,10 @@ export function PublicLayout() {
       >
         <Link
           to={page.path}
-          className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center space-x-1 ${
+          className={`px-4 py-2 rounded-xl text-sm font-black transition-all flex items-center gap-1.5 ${
             isActive || isChildActive
               ? 'bg-opacity-10'
-              : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800'
+              : 'text-text-secondary dark:text-zinc-400 hover:bg-l1-bg dark:hover:bg-dark-hover'
           }`}
           style={
             isActive || isChildActive
@@ -77,7 +77,7 @@ export function PublicLayout() {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 d="M19 9l-7 7-7-7"
               />
             </svg>
@@ -86,15 +86,15 @@ export function PublicLayout() {
 
         {hasChildren && activeDropdown === page.id && (
           <div className="absolute top-full left-0 pt-1 w-48 z-50">
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="bg-white dark:bg-dark-card rounded-2xl border-2 border-l5-border dark:border-dark-border  py-1 animate-in fade-in slide-in-from-top-2 duration-200">
               {children.map(child => (
                 <Link
                   key={child.id}
                   to={child.path}
-                  className={`block px-4 py-2 text-sm font-bold transition-colors ${
+                  className={`block px-4 py-2.5 text-sm font-bold transition-colors ${
                     location.pathname === child.path
-                      ? 'text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10'
-                      : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white'
+                      ? 'bg-layer-primary-light text-layer-primary'
+                      : 'text-text-secondary dark:text-zinc-400 hover:bg-l1-bg dark:hover:bg-dark-hover hover:text-text dark:hover:text-white'
                   }`}
                   style={
                     location.pathname === child.path ? {color: brandColor} : {}
@@ -111,33 +111,33 @@ export function PublicLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 flex flex-col">
-      <header className="sticky top-0 z-40 w-full bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border-b border-gray-100 dark:border-zinc-800">
+    <div className="min-h-screen bg-white dark:bg-dark-bg flex flex-col">
+      <header className="sticky top-0 z-40 w-full bg-white/90 dark:bg-dark-card/90 backdrop-blur-md border-b border-l5-border dark:border-dark-border ">
         <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
-          <div className="flex items-center space-x-12">
-            <Link to="/" className="flex items-center space-x-3">
+          <div className="flex items-center gap-12">
+            <Link to="/" className="flex items-center gap-3">
               <div
-                className="w-16 h-16 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-105"
+                className="w-14 h-14 rounded-xl flex items-center justify-center  transition-transform hover:scale-105"
                 style={{backgroundColor: brandColor}}
               >
                 <img
                   src="/gustav.png"
                   alt="Gustav Logo"
-                  className="w-12 h-12 object-contain brightness-0 invert"
+                  className="w-10 h-10 object-contain brightness-0 invert"
                 />
               </div>
-              <span className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+              <span className="text-2xl font-black text-text dark:text-white uppercase tracking-tight ">
                 {settings.siteName || 'Gustav'}
               </span>
             </Link>
 
-            <nav className="hidden md:flex items-center space-x-1">
+            <nav className="hidden md:flex items-center gap-1">
               <Link
                 to="/"
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                className={`px-4 py-2 rounded-xl text-sm font-black transition-all ${
                   location.pathname === '/'
                     ? 'bg-opacity-10'
-                    : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                    : 'text-text-secondary dark:text-zinc-400 hover:bg-l1-bg dark:hover:bg-dark-hover'
                 }`}
                 style={
                   location.pathname === '/'
@@ -156,21 +156,25 @@ export function PublicLayout() {
             </nav>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-4">
             {user ? (
               <>
                 {user.isSuperAdmin && (
                   <Link
                     to="/admin"
-                    className="text-xs font-black uppercase transition-colors mr-4 hover:opacity-80"
-                    style={{color: brandColor}}
+                    className="text-xs font-black uppercase transition-all hover:opacity-80 border-2 border-current px-4 py-2 rounded-xl "
+                    style={{
+                      color: brandColor,
+                      borderColor: `${brandColor}40`,
+                      backgroundColor: `${brandColor}10`,
+                    }}
                   >
                     Admin Panel
                   </Link>
                 )}
                 <Link
                   to="/me"
-                  className="w-10 h-10 bg-gray-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center font-bold text-gray-500 dark:text-zinc-400 border border-gray-200 dark:border-zinc-700 hover:scale-105 transition-all"
+                  className="w-10 h-10 bg-l1-bg dark:bg-dark-surface border-2 border-l5-border dark:border-dark-border rounded-xl flex items-center justify-center font-black text-text-secondary dark:text-zinc-400  hover:scale-105 transition-all"
                 >
                   {user.username.charAt(0).toUpperCase()}
                 </Link>
@@ -178,8 +182,11 @@ export function PublicLayout() {
             ) : (
               <Link
                 to="/login"
-                className="text-white text-xs font-black uppercase px-6 py-3 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95"
-                style={{backgroundColor: brandColor}}
+                className="text-white text-xs font-black uppercase px-6 py-3 rounded-xl  transition-all hover:scale-105 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none border-2"
+                style={{
+                  backgroundColor: brandColor,
+                  borderColor: brandColor,
+                }}
               >
                 Login
               </Link>
@@ -192,10 +199,10 @@ export function PublicLayout() {
         <Outlet />
       </main>
 
-      <footer className="py-12 border-t border-gray-100 dark:border-zinc-800">
+      <footer className="py-10 border-t border-l5-border dark:border-dark-border">
         <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-[10px] font-black text-gray-400 dark:text-zinc-600 uppercase tracking-[0.2em]">
-            Built with {settings.siteName || 'Gustav'} CMS • &copy;{' '}
+          <p className="text-[0.625rem] font-black text-text-muted dark:text-zinc-500 uppercase tracking-wider">
+            Built with {settings.siteName || 'Gustav'} CMS &middot; &copy;{' '}
             {new Date().getFullYear()}
           </p>
         </div>

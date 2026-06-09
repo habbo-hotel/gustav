@@ -84,10 +84,10 @@ export const AuthProvider: React.FC<{children: ReactNode}> = ({children}) => {
 
   if (isLoading) {
     return (
-      <div className="w-screen min-h-screen bg-gray-100 dark:bg-zinc-900 flex items-center justify-center">
+      <div className="w-screen min-h-screen bg-l1-bg dark:bg-dark-bg flex items-center justify-center">
         <div className="flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-600 dark:text-zinc-400 font-medium">
+          <div className="w-14 h-14 border-2 border-layer-primary border-t-transparent rounded-full animate-spin mb-4 "></div>
+          <p className="text-text-secondary dark:text-zinc-400 font-black text-sm">
             Loading...
           </p>
         </div>
