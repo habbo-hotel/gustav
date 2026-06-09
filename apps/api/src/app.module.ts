@@ -9,6 +9,7 @@ import {SchemaModule} from './schema/schema.module';
 import {HealthModule} from './health/health.module';
 import {DatabaseModule} from './database/database.module';
 import {PluginSchemaModule} from './schema/plugin-schema.module';
+import {ThemeModule} from './theme/theme.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import {PluginSchemaModule} from './schema/plugin-schema.module';
     PluginSchemaModule,
     SchemaModule,
     HealthModule,
+    ThemeModule,
   ],
 })
 export class AppModule {

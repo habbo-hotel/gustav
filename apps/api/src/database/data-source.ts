@@ -14,6 +14,7 @@ import {DynamicRecord} from './entities/dynamic-record.entity';
 import {DynamicSchema} from './entities/dynamic-schema.entity';
 import {PageComponent} from './entities/page-component.entity';
 import {PluginSetting} from './entities/plugin-setting.entity';
+import {ThemeSetting} from './entities/theme-setting.entity';
 
 // Load environment variables from apps/api/.env
 dotenv.config({path: join(__dirname, '../../.env')});
@@ -33,6 +34,7 @@ export const AppDataSource = new DataSource({
     PluginSetting,
     DynamicSchema,
     DynamicRecord,
+    ThemeSetting,
   ],
   migrations: [join(__dirname, 'migrations/*{.ts,.js}')],
   synchronize: false, // Disabled in favor of migrations

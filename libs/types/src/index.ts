@@ -100,11 +100,46 @@ export interface ComponentDefinition {
   canHaveChildren?: boolean;
 }
 
+export interface ThemePageComponentDefinition {
+  pluginName: string;
+  componentName: string;
+  props: Record<string, any>;
+  displayOrder: number;
+  parentIndex?: number;
+  slot?: number;
+}
+
+export interface ThemePageDefinition {
+  title: string;
+  slug: string;
+  path: string;
+  showInNavigation: boolean;
+  parentPath?: string;
+  components: ThemePageComponentDefinition[];
+}
+
+export interface ThemeDefinition {
+  label?: string;
+  description?: string;
+  previewComponent?: any;
+  cssVariables?: Record<string, string>;
+  darkCssVariables?: Record<string, string>;
+  layout?: any;
+  fontFamily?: string;
+  defaultPages?: ThemePageDefinition[];
+  defaultPluginSettings?: Record<string, Record<string, any>>;
+}
+
+export interface ActiveThemeWire {
+  activeTheme: string | null;
+}
+
 export interface PluginDefinition {
   name: string;
   components: ComponentDefinition[];
   settingsSchema?: ComponentSchemaField[];
   schemas?: DynamicSchemaInput[];
+  theme?: ThemeDefinition;
 }
 
 export type DynamicSchemaFieldType =
