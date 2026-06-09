@@ -1,4 +1,4 @@
 {
-  "plugins": ["@gustav/core-plugin", "@gustav/habbo-arcturus-plugin", "@gustav/habbo-plugin"]
+  "plugins": ["@gustav/core-plugin", "@gustav/habbo-arcturus-plugin", "@gustav/habbo-plugin", "@gustav/peach-theme"]
 }
 

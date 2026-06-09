@@ -1,0 +1,32 @@
+{
+  "name": "@gustav/peach-theme",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/**/*.{ts,tsx}",
+    "lint:fix": "pnpm exec eslint src/**/*.{ts,tsx} --fix --no-error-on-unmatched-pattern && pnpm exec prettier src/**/*.{ts,tsx} --write"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-router-dom": "^6.0.0"
+  },
+  "devDependencies": {
+    "@gustav/config-eslint": "workspace:*",
+    "@gustav/config-typescript": "workspace:*",
+    "@gustav/types": "workspace:*",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "eslint": "8.57.1",
+    "prettier": "^3.8.3",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-router-dom": "^6.0.0",
+    "typescript": "^5.4.5"
+  }
+}
