@@ -45,7 +45,12 @@ function gustavPlugins() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), gustavPlugins()],
+  plugins: [
+    react({
+      jsxImportSource: '@emotion/react',
+    }),
+    gustavPlugins(),
+  ],
   server: {
     port: 5173,
   },
