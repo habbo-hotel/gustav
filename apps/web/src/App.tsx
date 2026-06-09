@@ -8,7 +8,7 @@ import {useAuth} from './AuthContext';
 import {LoginPage} from './LoginPage';
 import {ProfilePage} from './ProfilePage';
 import {PageRenderer} from './PageRenderer';
-import {PublicLayout} from './PublicLayout';
+import {ThemeLayoutWrapper} from './ThemeLayoutWrapper';
 import {AdminUsers} from './admin/AdminUsers';
 import {AdminPages} from './admin/AdminPages';
 import {PageEditor} from './admin/PageEditor';
@@ -16,6 +16,7 @@ import {AdminLayout} from './admin/AdminLayout';
 import {AdminSchemas} from './admin/AdminSchemas';
 import {AdminPlugins} from './admin/AdminPlugins';
 import {AdminDashboard} from './admin/AdminDashboard';
+import {AdminThemes} from './admin/AdminThemes';
 import {PluginSettingsPage} from './admin/PluginSettingsPage';
 
 function App() {
@@ -65,10 +66,11 @@ function App() {
             <Route path="schemas/:slug" element={<AdminSchemas />} />
             <Route path="plugins" element={<AdminPlugins />} />
             <Route path="plugins/:name" element={<PluginSettingsPage />} />
+            <Route path="themes" element={<AdminThemes />} />
           </Route>
 
           {/* Public Website Routes */}
-          <Route element={<PublicLayout />}>
+          <Route element={<ThemeLayoutWrapper />}>
             <Route
               path="/"
               element={

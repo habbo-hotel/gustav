@@ -21,6 +21,7 @@
     "@gustav/core-plugin": "workspace:*",
     "@gustav/habbo-arcturus-plugin": "workspace:*",
     "@gustav/habbo-plugin": "workspace:*",
+    "@gustav/peach-theme": "workspace:*",
     "@gustav/sdk": "workspace:*",
     "@gustav/types": "workspace:*",
     "react": "^18.3.1",
